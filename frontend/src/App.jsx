@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  const API_BASE = import.meta.env.VITE_API_URL || '';
+
   // Navigation & View Tabs
   const [activeTab, setActiveTab] = useState('transcript'); // transcript | insights | backlog | prd
   
@@ -41,7 +43,7 @@ export default function App() {
 
   // Fetch API Health & Loaded Transcripts
   useEffect(() => {
-    fetch('/api/health')
+    fetch(`${API_BASE}/api/health`)
       .then(res => res.json())
       .then(data => {
         setIsDemoMode(!data.groq_api_configured);
@@ -54,13 +56,14 @@ export default function App() {
   // Update transcript view when selectedId changes
   useEffect(() => {
     if (selectedId) {
-      fetch(`/api/transcripts/${selectedId}`)
+      fetch(`${API_BASE}/api/transcripts/${selectedId}`)
         .then(res => res.json())
         .then(data => {
           setActiveTranscript(data);
           // Set active audio url from backend static folder
           if (data.audio_filename) {
-            setAudioUrl(`http://localhost:8000/api/audio/${data.audio_filename}`);
+            const audioBase = API_BASE || 'http://localhost:8000';
+            setAudioUrl(`${audioBase}/api/audio/${data.audio_filename}`);
           } else {
             setAudioUrl(null);
           }
@@ -89,7 +92,7 @@ export default function App() {
   }, [currentTime, activeTranscript]);
 
   const refreshTranscriptsList = () => {
-    fetch('/api/transcripts')
+    fetch(`${API_BASE}/api/transcripts`)
       .then(res => res.json())
       .then(data => {
         setTranscripts(data);
@@ -163,7 +166,7 @@ export default function App() {
     const formData = new FormData();
     formData.append("file", file);
 
-    fetch('/api/upload', {
+    fetch(`${API_BASE}/api/upload`, {
       method: 'POST',
       body: formData
     })
@@ -182,7 +185,7 @@ export default function App() {
   const handleDeleteTranscript = (id, e) => {
     e.stopPropagation();
     if (window.confirm("Are you sure you want to delete this transcript? This action cannot be undone.")) {
-      fetch(`/api/transcripts/${id}`, { method: 'DELETE' })
+      fetch(`${API_BASE}/api/transcripts/${id}`, { method: 'DELETE' })
         .then(res => res.json())
         .then(() => {
           refreshTranscriptsList();
@@ -204,7 +207,7 @@ export default function App() {
   const runRAGAnalysis = () => {
     if (!selectedId) return;
     setIsAnalyzing(true);
-    fetch(`/api/analyze/${selectedId}`, { method: 'POST' })
+    fetch(`${API_BASE}/api/analyze/${selectedId}`, { method: 'POST' })
       .then(res => res.json())
       .then(data => {
         setIsAnalyzing(false);
@@ -224,7 +227,7 @@ export default function App() {
   const generatePRD = () => {
     if (!selectedId) return;
     setIsPrdLoading(true);
-    fetch(`/api/prd/${selectedId}`, {
+    fetch(`${API_BASE}/api/prd/${selectedId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
