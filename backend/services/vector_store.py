@@ -1,15 +1,16 @@
 import os
 import json
-import numpy as np
+import re
+import math
 from typing import List, Dict, Any
-from sentence_transformers import SentenceTransformer
 from backend.config import settings
+
+def tokenize(text: str) -> List[str]:
+    # Lowercase and extract alphanumeric words
+    return re.findall(r'\w+', text.lower())
 
 class VectorStoreService:
     def __init__(self):
-        # We load the lightweight embedding model. 
-        # This will download all-MiniLM-L6-v2 (~90MB) on first initialization.
-        self.model = SentenceTransformer("all-MiniLM-L6-v2")
         self.cache: Dict[str, Dict[str, Any]] = {}
 
     def _get_index_path(self, transcript_id: str) -> str:
@@ -17,21 +18,14 @@ class VectorStoreService:
 
     def add_transcript(self, transcript_id: str, segments: List[Dict[str, Any]]) -> None:
         """
-        Embeds each transcript segment and stores them along with their vectors in a JSON file.
+        Stores transcript segments in a JSON file for lightweight text search.
         """
         if not segments:
             return
-
-        texts = [seg["text"] for seg in segments]
-        embeddings = self.model.encode(texts)
-        
-        # Convert numpy embeddings to list of floats for JSON serialization
-        embeddings_list = embeddings.tolist()
-        
+            
         indexed_data = {
             "transcript_id": transcript_id,
-            "segments": segments,
-            "embeddings": embeddings_list
+            "segments": segments
         }
         
         # Save to disk
@@ -59,43 +53,6 @@ class VectorStoreService:
         self.cache[transcript_id] = data
         return data
 
-    def search(self, transcript_id: str, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
-        """
-        Performs semantic similarity search against transcript segments.
-        """
-        index_data = self._load_index(transcript_id)
-        segments = index_data["segments"]
-        embeddings = np.array(index_data["embeddings"])
-        
-        # Embed the query
-        query_vector = self.model.encode([query])[0]
-        
-        # Compute cosine similarity
-        # Cosine similarity = dot(A, B) / (norm(A) * norm(B))
-        dot_product = np.dot(embeddings, query_vector)
-        norms_embeddings = np.linalg.norm(embeddings, axis=1)
-        norm_query = np.linalg.norm(query_vector)
-        
-        # Prevent division by zero
-        norms_embeddings[norms_embeddings == 0] = 1e-9
-        if norm_query == 0:
-            norm_query = 1e-9
-            
-        similarities = dot_product / (norms_embeddings * norm_query)
-        
-        # Get top K indices
-        top_indices = np.argsort(similarities)[::-1][:top_k]
-        
-        results = []
-        for idx in top_indices:
-            score = float(similarities[idx])
-            results.append({
-                "segment": segments[idx],
-                "score": score
-            })
-            
-        return results
-
     def delete_transcript(self, transcript_id: str) -> None:
         """
         Removes transcript index from memory cache and deletes JSON index file from disk.
@@ -109,5 +66,68 @@ class VectorStoreService:
                 os.remove(index_path)
             except Exception as e:
                 print(f"Error removing vector index file: {e}")
+
+    def search(self, transcript_id: str, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+        """
+        Performs lightweight TF-IDF and word-overlap similarity search.
+        """
+        try:
+            index_data = self._load_index(transcript_id)
+        except FileNotFoundError:
+            return []
+            
+        segments = index_data.get("segments", [])
+        if not segments:
+            return []
+            
+        query_tokens = tokenize(query)
+        if not query_tokens:
+            # Return first top_k segments if query is empty
+            return [{"segment": seg, "score": 1.0} for seg in segments[:top_k]]
+            
+        # Calculate term frequency - inverse document frequency weights
+        # Document frequency for terms in this transcript
+        df = {}
+        for seg in segments:
+            tokens = set(tokenize(seg["text"]))
+            for t in tokens:
+                df[t] = df.get(t, 0) + 1
+                
+        num_docs = len(segments)
+        
+        scored_segments = []
+        for seg in segments:
+            seg_text = seg["text"]
+            seg_tokens = tokenize(seg_text)
+            seg_token_set = set(seg_tokens)
+            
+            # Compute TF-IDF score for matching query tokens
+            score = 0.0
+            for qt in query_tokens:
+                if qt in seg_token_set:
+                    # Term frequency in segment
+                    tf = seg_tokens.count(qt) / max(len(seg_tokens), 1)
+                    # Inverse document frequency
+                    idf = math.log((num_docs + 1) / (df.get(qt, 0) + 0.5)) + 1
+                    score += tf * idf
+            
+            # Phrase match bonus (gives precedence to consecutive keyword matches)
+            if query.lower() in seg_text.lower():
+                score += 2.0
+                
+            scored_segments.append((seg, score))
+            
+        # Sort descending by similarity score
+        scored_segments.sort(key=lambda x: x[1], reverse=True)
+        
+        # Format results
+        results = []
+        for seg, score in scored_segments[:top_k]:
+            results.append({
+                "segment": seg,
+                "score": float(score)
+            })
+            
+        return results
 
 vector_store_service = VectorStoreService()
