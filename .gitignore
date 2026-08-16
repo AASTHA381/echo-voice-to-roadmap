@@ -1,0 +1,25 @@
+# Virtual environments
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Frontend dependencies and builds
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.eslintcache
+
+# Environment secrets (DO NOT PUSH API KEYS)
+.env
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Backend uploads and indexes (preserve folders but ignore contents)
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/index/*
+!backend/index/.gitkeep

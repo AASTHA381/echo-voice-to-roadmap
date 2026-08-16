@@ -1,0 +1,9 @@
+{
+  "name": "echo-voice-to-roadmap",
+  "version": "1.0.0",
+  "description": "Echo - Voice to Roadmap AI Copilot",
+  "scripts": {
+    "start": "bash run.sh",
+    "dev": "bash run.sh"
+  }
+}
