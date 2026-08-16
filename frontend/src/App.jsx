@@ -907,69 +907,7 @@ export default function App() {
             </>
           ) : (
             <div className="empty-state glass">
-              <div className="visual-graphic-container">
-                {/* Process Step Diagram */}
-                <div className="visual-roadmap-flow">
-                  <div className="flow-step">
-                    <div className="flow-step-icon-wrapper src-audio">
-                      <Mic className="flow-icon" />
-                    </div>
-                    <div className="flow-step-body">
-                      <h5>Qualitative Feed</h5>
-                      <p>Raw audio files</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flow-line"></div>
-                  
-                  <div className="flow-step">
-                    <div className="flow-step-icon-wrapper rag-search">
-                      <Cpu className="flow-icon" />
-                    </div>
-                    <div className="flow-step-body">
-                      <h5>Whisper + RAG</h5>
-                      <p>Segment citations</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flow-line"></div>
-                  
-                  <div className="flow-step target">
-                    <div className="flow-step-icon-wrapper rice-backlog">
-                      <ListChecks className="flow-icon" />
-                    </div>
-                    <div className="flow-step-body">
-                      <h5>RICE Backlog</h5>
-                      <p>Interactive priorities</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Quadrant Matrix visual */}
-                <div className="visual-matrix">
-                  <div className="matrix-title">Prioritisation Grid</div>
-                  <div className="matrix-grid">
-                    <div className="matrix-quadrant high-value">
-                      <span className="quadrant-badge success">⚡ Quick Wins</span>
-                      <div className="matrix-item">
-                        <span className="item-name">Apple Pay Integration</span>
-                        <span className="item-rice-badge">RICE 12.1</span>
-                      </div>
-                      <div className="matrix-item">
-                        <span className="item-name">Sticky Cart Sidebar</span>
-                        <span className="item-rice-badge">RICE 8.4</span>
-                      </div>
-                    </div>
-                    <div className="matrix-quadrant secondary-value">
-                      <span className="quadrant-badge info">🎯 Strategic Bets</span>
-                      <div className="matrix-item muted">
-                        <span className="item-name">Redesign Purchase Flow</span>
-                        <span className="item-rice-badge">RICE 4.2</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+
 
               <h2>Echo Roadmap Workspace</h2>
               <p className="lead-text">Upload a user-interview recording to isolate customer friction, extract cited pain points, and prioritise your backlog based on quantitative RICE score analysis.</p>
