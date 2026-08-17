@@ -525,7 +525,7 @@ export default function App() {
                   disabled={!prd}
                   onClick={() => setActiveTab('prd')}
                 >
-                  <BookOpen className="icon-small" /> PRD & Strategy Draft
+                  <BookOpen className="icon-small" /> PRD & Executive Strategy Draft
                 </button>
               </nav>
 
