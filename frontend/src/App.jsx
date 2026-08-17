@@ -13,7 +13,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('transcript'); // transcript | insights | backlog | prd
   
   // API Config / Environment States
-  const [isDemoMode, setIsDemoMode] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // Transcripts list and selection
   const [transcripts, setTranscripts] = useState([]);
