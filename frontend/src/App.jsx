@@ -508,7 +508,7 @@ export default function App() {
                   disabled={!insights.features?.length}
                   onClick={() => setActiveTab('insights')}
                 >
-                  <Sparkles className="icon-small" /> {insights.mode === 'research' ? 'Key Themes & Citations' : 'Grounded Insights'}
+                  <Sparkles className="icon-small" /> Grounded Insights
                   {insights.features?.length > 0 && (
                     <span className="indicator-dot"></span>
                   )}
@@ -518,14 +518,14 @@ export default function App() {
                   disabled={!insights.features?.length}
                   onClick={() => setActiveTab('backlog')}
                 >
-                  <PieChart className="icon-small" /> {insights.mode === 'research' ? 'Recommendations Backlog' : 'RICE Roadmap Backlog'}
+                  <PieChart className="icon-small" /> RICE Roadmap Backlog
                 </button>
                 <button 
                   className={`tab-btn ${activeTab === 'prd' ? 'active' : ''}`}
                   disabled={!prd}
                   onClick={() => setActiveTab('prd')}
                 >
-                  <BookOpen className="icon-small" /> {insights.mode === 'research' ? 'Executive Strategy Brief' : 'PRD Draft'}
+                  <BookOpen className="icon-small" /> PRD & Strategy Draft
                 </button>
               </nav>
 
