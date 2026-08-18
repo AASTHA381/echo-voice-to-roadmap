@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const API_BASE = import.meta.env.VITE_API_URL || '';
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://echo-voice-to-roadmap-pgtn.onrender.com';
 
   // Navigation & View Tabs
   const [activeTab, setActiveTab] = useState('transcript'); // transcript | insights | backlog | prd
@@ -177,7 +177,14 @@ export default function App() {
       method: 'POST',
       body: formData
     })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(err => {
+            throw new Error(err.detail || 'Upload server returned an error.');
+          });
+        }
+        return res.json();
+      })
       .then(data => {
         setIsUploading(false);
         refreshTranscriptsList();
@@ -185,7 +192,7 @@ export default function App() {
       })
       .catch(err => {
         setIsUploading(false);
-        alert("Upload failed. Error: " + err.message);
+        alert("⚠️ Upload failed. Error: " + err.message);
       });
   };
 
@@ -291,7 +298,14 @@ export default function App() {
       method: 'POST',
       body: formData
     })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(err => {
+            throw new Error(err.detail || 'Upload server returned an error.');
+          });
+        }
+        return res.json();
+      })
       .then(data => {
         setIsUploading(false);
         refreshTranscriptsList();
@@ -299,7 +313,7 @@ export default function App() {
       })
       .catch(err => {
         setIsUploading(false);
-        alert("Upload failed. Error: " + err.message);
+        alert("⚠️ Upload failed. Error: " + err.message);
       });
   };
 
