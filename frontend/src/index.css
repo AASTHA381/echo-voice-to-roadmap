@@ -1508,7 +1508,134 @@ body {
     align-items: center !important;
   }
 
-  /* RICE Backlog Table responsive scroll */
+  /* ─── Insights Panels: Stack vertically on mobile ─── */
+  .insights-tab-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .insights-panel {
+    height: auto !important;
+    overflow: visible !important;
+    width: 100% !important;
+    border-radius: 16px !important;
+  }
+
+  .panel-header {
+    padding: 14px 16px !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .panel-header h2 {
+    font-size: 15px !important;
+    flex: 1 1 auto !important;
+    white-space: normal !important;
+    line-height: 1.3 !important;
+  }
+
+  .panel-header .count {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    background: rgba(79, 70, 229, 0.07) !important;
+    padding: 2px 8px !important;
+    border-radius: 20px !important;
+    font-size: 11px !important;
+  }
+
+  .panel-scroll {
+    overflow-y: visible !important;
+    padding: 12px !important;
+    padding-bottom: 8px !important;
+    gap: 12px !important;
+  }
+
+  /* ─── Insight Cards ─── */
+  .insight-card {
+    padding: 14px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .insight-card .card-header {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    align-items: flex-start !important;
+    margin-bottom: 10px !important;
+  }
+
+  .check-label {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  .check-label h3 {
+    font-size: 14px !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+
+  /* Badges always sit on their own line on mobile */
+  .severity-badge,
+  .moscow-badge {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    font-size: 10px !important;
+    padding: 3px 9px !important;
+  }
+
+  .insight-card .description {
+    font-size: 13px !important;
+    padding-left: 0 !important;
+    line-height: 1.55 !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* ─── RICE Metrics row: wrap onto two rows instead of overflowing ─── */
+  .metrics-summary {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 8px 12px !important;
+    padding: 10px 12px !important;
+    margin-left: 0 !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .rice-score-highlight {
+    grid-column: 1 / -1 !important;
+    margin-left: 0 !important;
+    padding-top: 4px !important;
+    border-top: 1px solid rgba(15, 23, 42, 0.06) !important;
+    font-size: 13px !important;
+  }
+
+  /* ─── Evidence citations ─── */
+  .citations-block {
+    padding-left: 0 !important;
+    margin-top: 8px !important;
+  }
+
+  .citation-bubble {
+    padding: 10px !important;
+  }
+
+  .citation-bubble .quote {
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+  }
+
+  .citation-bubble .cit-meta {
+    flex-direction: column !important;
+    gap: 2px !important;
+    font-size: 10px !important;
+  }
+
+  /* ─── RICE Backlog Table ─── */
   .table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -1519,7 +1646,7 @@ body {
     min-width: 600px;
   }
 
-  /* Floating Action Dock adjustments for mobile */
+  /* ─── Floating Action Dock ─── */
   .action-dock {
     left: 12px;
     right: 12px;
@@ -1546,7 +1673,7 @@ body {
     padding: 10px;
   }
 
-  /* Live Recording Modal on mobile */
+  /* ─── Live Recording Modal ─── */
   .recording-modal {
     width: 90% !important;
     padding: 24px !important;
