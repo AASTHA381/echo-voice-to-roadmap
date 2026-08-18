@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Echo Meeting Recorder",
+  "version": "1.0",
+  "description": "Records live browser meetings and uploads them to the Echo AI Roadmap dashboard.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://meet.google.com/*",
+    "https://*.zoom.us/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Echo Recorder"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://meet.google.com/*",
+        "https://*.zoom.us/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

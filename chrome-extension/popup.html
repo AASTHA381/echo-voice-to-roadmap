@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 280px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 16px;
+      background: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+    }
+    h2 {
+      font-size: 16px;
+      margin-top: 0;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #a855f7;
+    }
+    p {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #64748b;
+      display: block;
+      margin-bottom: 4px;
+    }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: #f8fafc;
+      font-size: 12px;
+      outline: none;
+    }
+    input:focus {
+      border-color: #a855f7;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #a855f7;
+      border: none;
+      color: white;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #9333ea;
+    }
+    .status {
+      font-size: 11px;
+      text-align: center;
+      margin-top: 8px;
+      color: #22c55e;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎙️ Echo Recorder</h2>
+  <p>Record your live Google Meet / Zoom meeting directly in the browser. Transcripts are sent straight to your dashboard.</p>
+  
+  <div class="form-group">
+    <label for="serverUrl">Echo Backend URL</label>
+    <input type="text" id="serverUrl" placeholder="https://your-backend.onrender.com">
+  </div>
+  
+  <button id="saveBtn">Save Settings</button>
+  <div id="statusMsg" class="status">Settings saved!</div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
