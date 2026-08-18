@@ -49,8 +49,9 @@ export default function App() {
   const timerIntervalRef = useRef(null);
 
   // File rename modal state
-  const [pendingFile, setPendingFile] = useState(null); // { file, defaultName }
+  const [pendingFile, setPendingFile] = useState(null);
   const [pendingFileName, setPendingFileName] = useState('');
+  const [serverWaking, setServerWaking] = useState(false); // shows 'server warming' hint during slow calls
 
   // Fetch API Health & Loaded Transcripts
   useEffect(() => {
@@ -62,6 +63,14 @@ export default function App() {
       .catch(() => setIsDemoMode(true));
 
     refreshTranscriptsList();
+  }, []);
+
+  // Keep-alive ping every 4 minutes so Render never cold-starts mid-session
+  useEffect(() => {
+    const keepAlive = setInterval(() => {
+      fetch(`${API_BASE}/api/health`).catch(() => {});
+    }, 4 * 60 * 1000);
+    return () => clearInterval(keepAlive);
   }, []);
 
   // Update transcript view when selectedId changes
@@ -371,62 +380,95 @@ export default function App() {
   };
 
   // LLM Insight Generation (Pain Points & Feature Backlog)
-  const runRAGAnalysis = () => {
+  const runRAGAnalysis = async () => {
     if (!selectedId) return;
     setIsAnalyzing(true);
-    fetch(`${API_BASE}/api/analyze/${selectedId}`, { method: 'POST' })
-      .then(res => {
-        if (!res.ok) {
-          return res.json().then(err => {
-            throw new Error(err.detail || 'Analysis pipeline returned an error.');
-          });
-        }
-        return res.json();
-      })
-      .then(data => {
-        setIsAnalyzing(false);
-        setInsights(data || { pain_points: [], features: [] });
-        // Pre-select all features and pain points by default
-        setSelectedPainPoints(data?.pain_points || []);
-        setSelectedFeatures(data?.features || []);
-        setActiveTab('insights');
-      })
-      .catch(err => {
-        setIsAnalyzing(false);
-        alert("⚠️ Analysis failed: " + err.message);
+    setServerWaking(true);
+
+    try {
+      // Step 1: Warm-up ping — ensure Render server is awake before the heavy analyze call
+      try {
+        await fetch(`${API_BASE}/api/health`, { method: 'GET' });
+      } catch (_) {
+        // ignore warm-up failure, proceed anyway
+      }
+      setServerWaking(false);
+
+      // Step 2: Run analysis with a generous 90-second timeout (Groq + RAG can be slow)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+      const res = await fetch(`${API_BASE}/api/analyze/${selectedId}`, {
+        method: 'POST',
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ detail: `Server error ${res.status}` }));
+        throw new Error(errBody.detail || `Server returned ${res.status}`);
+      }
+
+      const data = await res.json();
+      setIsAnalyzing(false);
+      setInsights(data || { pain_points: [], features: [] });
+      setSelectedPainPoints(data?.pain_points || []);
+      setSelectedFeatures(data?.features || []);
+      setActiveTab('insights');
+
+    } catch (err) {
+      setIsAnalyzing(false);
+      setServerWaking(false);
+      if (err.name === 'AbortError') {
+        alert("⚠️ Analysis timed out.\n\nThe AI server took too long. This usually happens on first load (server wakes up). Please wait 10 seconds and try again — it will be faster on the second attempt.");
+      } else {
+        alert("⚠️ Analysis failed: " + err.message + "\n\nPlease check your connection and try again.");
+      }
+    }
   };
 
   // Dynamic PRD/Research Brief Generation
-  const generatePRD = () => {
+  const generatePRD = async () => {
     if (!selectedId) return;
     setIsPrdLoading(true);
-    fetch(`${API_BASE}/api/prd/${selectedId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        selected_features: selectedFeatures,
-        selected_pain_points: selectedPainPoints,
-        mode: insights.mode || 'software'
-      })
-    })
-      .then(res => {
-        if (!res.ok) {
-          return res.json().then(err => {
-            throw new Error(err.detail || 'Document generation returned an error.');
-          });
-        }
-        return res.json();
-      })
-      .then(data => {
-        setIsPrdLoading(false);
-        setPrd(data.prd);
-        setActiveTab('prd');
-      })
-      .catch(err => {
-        setIsPrdLoading(false);
-        alert("⚠️ Document generation failed: " + err.message);
+    setServerWaking(true);
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+      const res = await fetch(`${API_BASE}/api/prd/${selectedId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selected_features: selectedFeatures,
+          selected_pain_points: selectedPainPoints,
+          mode: insights.mode || 'software'
+        }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+      setServerWaking(false);
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ detail: `Server error ${res.status}` }));
+        throw new Error(errBody.detail || `Server returned ${res.status}`);
+      }
+
+      const data = await res.json();
+      setIsPrdLoading(false);
+      setPrd(data.prd);
+      setActiveTab('prd');
+
+    } catch (err) {
+      setIsPrdLoading(false);
+      setServerWaking(false);
+      if (err.name === 'AbortError') {
+        alert("⚠️ Document generation timed out.\n\nThe AI server took too long. Please wait 10 seconds and try again.");
+      } else {
+        alert("⚠️ Document generation failed: " + err.message);
+      }
+    }
   };
 
   // Toggle selection checklists for PRD scope
@@ -737,7 +779,7 @@ export default function App() {
                 {isAnalyzing ? (
                   <>
                     <RefreshCw className="icon-medium animate-spin" />
-                    Extracting Insights...
+                    {serverWaking ? 'Waking server...' : 'Extracting Insights...'}
                   </>
                 ) : (
                   <>
@@ -746,6 +788,11 @@ export default function App() {
                   </>
                 )}
               </button>
+              {isAnalyzing && (
+                <p style={{fontSize:'11px', color:'#94a3b8', textAlign:'center', marginTop:'6px', lineHeight:1.4}}>
+                  ⏳ AI is reading your transcript. Takes 15–30s on first run.
+                </p>
+              )}
             </div>
           )}
 
