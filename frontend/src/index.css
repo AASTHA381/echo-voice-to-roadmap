@@ -1401,6 +1401,14 @@ body {
     max-width: 100% !important;
   }
 
+  .sidebar-integrations {
+    display: none !important;
+  }
+
+  .empty-state-cta {
+    display: none !important;
+  }
+
   .tab-navigation-bar {
     overflow-x: auto;
     white-space: nowrap;
