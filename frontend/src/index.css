@@ -1356,3 +1356,128 @@ body {
   color: var(--text-main);
 }
 
+/* Mobile Responsive Breakpoints */
+@media (max-width: 768px) {
+  .app-main-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+    flex-direction: column;
+  }
+  
+  .app-header {
+    padding: 12px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    height: auto;
+  }
+
+  .header-actions {
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .header-actions button,
+  .header-actions label {
+    flex: 1;
+    justify-content: center;
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--border-glass);
+    height: auto;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .tab-navigation-bar {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 8px 16px;
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+  }
+
+  .tab-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .dashboard-viewport {
+    padding: 12px;
+    height: auto;
+    overflow: visible;
+  }
+
+  .transcript-tab-container {
+    flex-direction: column;
+    height: auto;
+    gap: 16px;
+  }
+
+  .transcript-scroll-area {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .media-player-dock {
+    position: sticky;
+    bottom: 0;
+    margin-top: 12px;
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  /* RICE Backlog Table responsive scroll */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  .backlog-table {
+    min-width: 600px;
+  }
+
+  /* Floating Action Dock adjustments for mobile */
+  .action-dock {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    padding: 12px;
+    flex-direction: column;
+    gap: 12px;
+    border-radius: 12px;
+  }
+
+  .action-dock-content {
+    text-align: center;
+  }
+
+  .action-dock-buttons {
+    width: 100%;
+    justify-content: stretch;
+    gap: 8px;
+  }
+
+  .action-dock-buttons button {
+    flex: 1;
+    font-size: 12px;
+    padding: 10px;
+  }
+
+  /* Live Recording Modal on mobile */
+  .recording-modal {
+    width: 90% !important;
+    padding: 24px !important;
+  }
+}
+
+
