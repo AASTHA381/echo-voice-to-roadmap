@@ -1,27 +1,13 @@
 // SVG Icon Assets
 const logoSvg = `
-  <svg class="echo-logo-icon" viewBox="0 0 24 24" width="13" height="13" stroke="#c084fc" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 3px;">
+  <svg class="echo-logo-icon" viewBox="0 0 24 24" width="13" height="13" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 2v20M17 5v14M22 9v6M7 7v10M2 10v4"></path>
-  </svg>
-`;
-
-const micSvg = `
-  <svg class="echo-svg-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
-    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-    <line x1="12" y1="19" x2="12" y2="22"></line>
-  </svg>
-`;
-
-const stopSvg = `
-  <svg class="echo-svg-icon" viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="currentColor" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="5" y="5" width="14" height="14" rx="1.5" ry="1.5"></rect>
   </svg>
 `;
 
 const spinnerSvg = `
   <svg class="echo-spinner-icon" viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="animation: echo-spin 1s linear infinite;">
-    <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.2)"></circle>
+    <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.15)"></circle>
     <path d="M12 2a10 10 0 0 1 10 10"></path>
   </svg>
 `;
@@ -38,111 +24,98 @@ const styles = `
     -webkit-backdrop-filter: blur(12px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    padding: 6px 8px 6px 12px;
+    border-radius: 12px;
+    padding: 8px 16px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     color: #f8fafc;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   
   .echo-float-widget:hover {
     border-color: rgba(168, 85, 247, 0.4);
+    transform: translateY(-2px);
     box-shadow: 0 12px 36px rgba(168, 85, 247, 0.12), 0 10px 30px rgba(0, 0, 0, 0.4);
   }
 
-  .echo-status-container {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+  .echo-float-widget:active {
+    transform: translateY(0);
+  }
+
+  .echo-logo-icon {
+    stroke: #c084fc;
+    transition: stroke 0.3s ease;
   }
 
   .echo-brand {
     font-weight: 800;
     font-size: 11px;
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
     color: #ffffff;
     text-transform: uppercase;
-    margin-right: 2px;
-  }
-
-  .echo-status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-  }
-
-  .echo-status-dot.idle {
-    background: #10b981;
-    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
-  }
-
-  .echo-status-dot.recording {
-    background: #ef4444;
-    box-shadow: 0 0 10px #ef4444;
-    animation: echo-pulse 1.4s infinite ease-in-out;
-  }
-
-  .echo-status-dot.uploading {
-    background: #eab308;
-    box-shadow: 0 0 6px rgba(234, 179, 8, 0.6);
-    animation: echo-pulse 1s infinite alternate;
-  }
-
-  @keyframes echo-pulse {
-    0% { transform: scale(0.9); opacity: 0.6; }
-    50% { transform: scale(1.2); opacity: 1; }
-    100% { transform: scale(0.9); opacity: 0.6; }
+    transition: color 0.3s ease;
   }
 
   .echo-timer {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 11px;
     font-weight: 700;
-    color: #c084fc;
-    background: rgba(168, 85, 247, 0.15);
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
     padding: 1px 5px;
     border-radius: 4px;
-    border: 1px solid rgba(168, 85, 247, 0.25);
+    border: 1px solid rgba(239, 68, 68, 0.25);
     display: none;
     letter-spacing: 0.5px;
   }
 
-  .echo-rec-btn {
-    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
-    border: none;
-    color: #ffffff;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    cursor: pointer;
+  .echo-float-widget.recording {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    animation: echo-glowing-red 2s infinite ease-in-out;
+  }
+
+  .echo-float-widget.recording .echo-logo-icon {
+    stroke: #ef4444;
+  }
+
+  .echo-float-widget.recording .echo-brand {
+    color: #ef4444;
+  }
+
+  .echo-float-widget.uploading {
+    background: rgba(234, 179, 8, 0.1);
+    border-color: rgba(234, 179, 8, 0.3);
+    cursor: wait;
+    pointer-events: none;
+  }
+
+  .echo-float-widget.uploading .echo-logo-icon {
+    stroke: #eab308;
+  }
+
+  .echo-float-widget.uploading .echo-brand {
+    color: #eab308;
+  }
+
+  .echo-spinner-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 3px 8px rgba(124, 58, 237, 0.2);
-    padding: 0;
+    color: #eab308;
   }
 
-  .echo-rec-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-  }
-
-  .echo-rec-btn:active {
-    transform: scale(0.95);
-  }
-
-  .echo-rec-btn.recording {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    box-shadow: 0 3px 8px rgba(239, 68, 68, 0.2);
-  }
-
-  .echo-rec-btn.recording:hover {
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  @keyframes echo-glowing-red {
+    0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.1), 0 10px 30px rgba(0, 0, 0, 0.4); }
+    50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.35), 0 10px 30px rgba(0, 0, 0, 0.4); }
+    100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.1), 0 10px 30px rgba(0, 0, 0, 0.4); }
   }
 
   @keyframes echo-spin {
@@ -163,25 +136,23 @@ let recordingInterval = null;
 let recordingSeconds = 0;
 let isRecording = false;
 
-// Create widget container
-const widget = document.createElement("div");
+// Create widget container (as a unified button)
+const widget = document.createElement("button");
 widget.className = "echo-float-widget";
+widget.id = "echoWidget";
+widget.title = "Start Recording";
 widget.innerHTML = `
-  <div class="echo-status-container">
-    ${logoSvg}
-    <span class="echo-brand">ECHO</span>
-    <div class="echo-status-dot idle" id="echoDot"></div>
-  </div>
+  ${logoSvg}
+  <span class="echo-brand">ECHO</span>
   <span class="echo-timer" id="echoTimer">00:00</span>
-  <button class="echo-rec-btn" id="echoBtn" title="Start Recording">${micSvg}</button>
+  <span class="echo-spinner-container" id="echoSpinner" style="display: none;">${spinnerSvg}</span>
 `;
 document.body.appendChild(widget);
 
-const echoBtn = document.getElementById("echoBtn");
 const echoTimer = document.getElementById("echoTimer");
-const echoDot = document.getElementById("echoDot");
+const echoSpinner = document.getElementById("echoSpinner");
 
-echoBtn.addEventListener("click", () => {
+widget.addEventListener("click", () => {
   if (!isRecording) {
     startMeetingRecording();
   } else {
@@ -238,11 +209,8 @@ async function startMeetingRecording() {
     isRecording = true;
     
     // UI state transitions
-    echoBtn.innerHTML = stopSvg;
-    echoBtn.title = "Stop Recording";
-    echoBtn.classList.add("recording");
-    
-    echoDot.className = "echo-status-dot recording";
+    widget.classList.add("recording");
+    widget.title = "Stop Recording";
     echoTimer.style.display = "inline-block";
     
     recordingSeconds = 0;
@@ -272,12 +240,11 @@ function stopMeetingRecording() {
     clearInterval(recordingInterval);
     
     // Reset UI to uploading status
-    echoBtn.innerHTML = spinnerSvg;
-    echoBtn.disabled = true;
-    echoBtn.classList.remove("recording");
-    
-    echoDot.className = "echo-status-dot uploading";
+    widget.classList.remove("recording");
+    widget.classList.add("uploading");
+    widget.title = "Uploading call...";
     echoTimer.style.display = "none";
+    echoSpinner.style.display = "inline-block";
   }
 }
 
@@ -295,20 +262,18 @@ function uploadMeetingAudio(file) {
     })
       .then(res => res.json())
       .then(data => {
-        echoDot.className = "echo-status-dot idle";
-        echoBtn.innerHTML = micSvg;
-        echoBtn.title = "Start Recording";
-        echoBtn.disabled = false;
+        widget.classList.remove("uploading");
+        widget.title = "Start Recording";
+        echoSpinner.style.display = "none";
         
         // Open Vercel dashboard automatically
         window.open("https://echo-voice-to-roadmap-aastha381.vercel.app", "_blank");
       })
       .catch(err => {
         console.error("Upload failed:", err);
-        echoDot.className = "echo-status-dot idle";
-        echoBtn.innerHTML = micSvg;
-        echoBtn.title = "Start Recording";
-        echoBtn.disabled = false;
+        widget.classList.remove("uploading");
+        widget.title = "Start Recording";
+        echoSpinner.style.display = "none";
         alert("⚠️ Echo Recorder: Upload to server failed. Please check your backend URL settings.");
       });
   });
