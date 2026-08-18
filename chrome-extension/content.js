@@ -6,7 +6,7 @@ const logoSvg = `
 `;
 
 const micSvg = `
-  <svg class="echo-svg-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+  <svg class="echo-svg-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
     <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
     <line x1="12" y1="19" x2="12" y2="22"></line>
@@ -14,8 +14,15 @@ const micSvg = `
 `;
 
 const stopSvg = `
-  <svg class="echo-svg-icon" viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="currentColor" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
-    <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+  <svg class="echo-svg-icon" viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="5" y="5" width="14" height="14" rx="1.5" ry="1.5"></rect>
+  </svg>
+`;
+
+const spinnerSvg = `
+  <svg class="echo-spinner-icon" viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="animation: echo-spin 1s linear infinite;">
+    <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.2)"></circle>
+    <path d="M12 2a10 10 0 0 1 10 10"></path>
   </svg>
 `;
 
@@ -108,24 +115,25 @@ const styles = `
     background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
     border: none;
     color: #ffffff;
-    font-weight: 700;
-    padding: 6px 12px;
-    border-radius: 7px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
     cursor: pointer;
-    font-size: 11px;
     display: flex;
     align-items: center;
+    justify-content: center;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 3px 8px rgba(124, 58, 237, 0.2);
+    padding: 0;
   }
 
   .echo-rec-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
   }
 
   .echo-rec-btn:active {
-    transform: translateY(1px);
+    transform: scale(0.95);
   }
 
   .echo-rec-btn.recording {
@@ -135,6 +143,11 @@ const styles = `
 
   .echo-rec-btn.recording:hover {
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  }
+
+  @keyframes echo-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 `;
 
@@ -160,7 +173,7 @@ widget.innerHTML = `
     <div class="echo-status-dot idle" id="echoDot"></div>
   </div>
   <span class="echo-timer" id="echoTimer">00:00</span>
-  <button class="echo-rec-btn" id="echoBtn">${micSvg}Record</button>
+  <button class="echo-rec-btn" id="echoBtn" title="Start Recording">${micSvg}</button>
 `;
 document.body.appendChild(widget);
 
@@ -225,7 +238,8 @@ async function startMeetingRecording() {
     isRecording = true;
     
     // UI state transitions
-    echoBtn.innerHTML = `${stopSvg}Stop`;
+    echoBtn.innerHTML = stopSvg;
+    echoBtn.title = "Stop Recording";
     echoBtn.classList.add("recording");
     
     echoDot.className = "echo-status-dot recording";
@@ -258,7 +272,7 @@ function stopMeetingRecording() {
     clearInterval(recordingInterval);
     
     // Reset UI to uploading status
-    echoBtn.innerHTML = `Uploading...`;
+    echoBtn.innerHTML = spinnerSvg;
     echoBtn.disabled = true;
     echoBtn.classList.remove("recording");
     
@@ -282,7 +296,8 @@ function uploadMeetingAudio(file) {
       .then(res => res.json())
       .then(data => {
         echoDot.className = "echo-status-dot idle";
-        echoBtn.innerHTML = `${micSvg}Record`;
+        echoBtn.innerHTML = micSvg;
+        echoBtn.title = "Start Recording";
         echoBtn.disabled = false;
         
         // Open Vercel dashboard automatically
@@ -291,7 +306,8 @@ function uploadMeetingAudio(file) {
       .catch(err => {
         console.error("Upload failed:", err);
         echoDot.className = "echo-status-dot idle";
-        echoBtn.innerHTML = `${micSvg}Record`;
+        echoBtn.innerHTML = micSvg;
+        echoBtn.title = "Start Recording";
         echoBtn.disabled = false;
         alert("⚠️ Echo Recorder: Upload to server failed. Please check your backend URL settings.");
       });
