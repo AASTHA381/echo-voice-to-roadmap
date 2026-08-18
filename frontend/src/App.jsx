@@ -335,18 +335,25 @@ export default function App() {
     if (!selectedId) return;
     setIsAnalyzing(true);
     fetch(`${API_BASE}/api/analyze/${selectedId}`, { method: 'POST' })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(err => {
+            throw new Error(err.detail || 'Analysis pipeline returned an error.');
+          });
+        }
+        return res.json();
+      })
       .then(data => {
         setIsAnalyzing(false);
-        setInsights(data);
+        setInsights(data || { pain_points: [], features: [] });
         // Pre-select all features and pain points by default
-        setSelectedPainPoints(data.pain_points || []);
-        setSelectedFeatures(data.features || []);
+        setSelectedPainPoints(data?.pain_points || []);
+        setSelectedFeatures(data?.features || []);
         setActiveTab('insights');
       })
       .catch(err => {
         setIsAnalyzing(false);
-        alert("Analysis failed: " + err.message);
+        alert("⚠️ Analysis failed: " + err.message);
       });
   };
 
@@ -363,7 +370,14 @@ export default function App() {
         mode: insights.mode || 'software'
       })
     })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(err => {
+            throw new Error(err.detail || 'Document generation returned an error.');
+          });
+        }
+        return res.json();
+      })
       .then(data => {
         setIsPrdLoading(false);
         setPrd(data.prd);
@@ -371,7 +385,7 @@ export default function App() {
       })
       .catch(err => {
         setIsPrdLoading(false);
-        alert("Document generation failed: " + err.message);
+        alert("⚠️ Document generation failed: " + err.message);
       });
   };
 
@@ -786,15 +800,15 @@ export default function App() {
                     {/* Left Pane: Pain Points / Key Challenges */}
                     <div className="insights-panel glass">
                       <div className="panel-header">
-                        <h2>{insights.mode === 'research' ? '🔴 Key Challenges & Themes' : '🔴 Extracted Pain Points'}</h2>
+                        <h2>{insights?.mode === 'research' ? '🔴 Key Challenges & Themes' : '🔴 Extracted Pain Points'}</h2>
                         <span className="count">
-                          {insights.pain_points.length} {insights.mode === 'research' ? 'identified' : 'found'}
+                          {(insights?.pain_points || []).length} {insights?.mode === 'research' ? 'identified' : 'found'}
                         </span>
                       </div>
                       <div className="panel-scroll">
-                        {insights.pain_points.length === 0 ? (
+                        {(!insights?.pain_points || insights.pain_points.length === 0) ? (
                           <div className="no-data">
-                            {insights.mode === 'research' ? 'No key challenges identified.' : 'No pain points identified in context.'}
+                            {insights?.mode === 'research' ? 'No key challenges identified.' : 'No pain points identified in context.'}
                           </div>
                         ) : (
                           insights.pain_points.map((pp) => (
@@ -809,15 +823,15 @@ export default function App() {
                                   />
                                   <h3>{pp.title}</h3>
                                 </label>
-                                <span className={`severity-badge ${pp.severity.toLowerCase()}`}>
-                                  {pp.severity}
+                                <span className={`severity-badge ${(pp.severity || 'Medium').toLowerCase()}`}>
+                                  {pp.severity || 'Medium'}
                                 </span>
                               </div>
                               <p className="description">{pp.description}</p>
                               
                               <div className="citations-block">
                                 <h4 className="cit-title">Grounded Evidence Excerpts:</h4>
-                                {pp.citations.map((cit, idx) => (
+                                {(pp.citations || []).map((cit, idx) => (
                                   <div 
                                     key={idx} 
                                     className="citation-bubble"
@@ -842,15 +856,15 @@ export default function App() {
                     {/* Right Pane: Proposed Feature Roadmap / Actionable Recommendations */}
                     <div className="insights-panel glass">
                       <div className="panel-header">
-                        <h2>{insights.mode === 'research' ? '✨ Actionable Recommendations' : '✨ Proposed Features'}</h2>
+                        <h2>{insights?.mode === 'research' ? '✨ Actionable Recommendations' : '✨ Proposed Features'}</h2>
                         <span className="count">
-                          {insights.features.length} {insights.mode === 'research' ? 'recommendations' : 'suggested'}
+                          {(insights?.features || []).length} {insights?.mode === 'research' ? 'recommendations' : 'suggested'}
                         </span>
                       </div>
                       <div className="panel-scroll">
-                        {insights.features.length === 0 ? (
+                        {(!insights?.features || insights.features.length === 0) ? (
                           <div className="no-data">
-                            {insights.mode === 'research' ? 'No recommendations identified.' : 'No feature suggestions identified.'}
+                            {insights?.mode === 'research' ? 'No recommendations identified.' : 'No feature suggestions identified.'}
                           </div>
                         ) : (
                           insights.features.map((feat) => (
@@ -865,22 +879,22 @@ export default function App() {
                                   />
                                   <h3>{feat.title}</h3>
                                 </label>
-                                <span className="moscow-badge">{feat.moscow}</span>
+                                <span className="moscow-badge">{feat.moscow || 'Must-have'}</span>
                               </div>
                               <p className="description">{feat.description}</p>
 
                               {/* Backlog Scoring Summary Preview */}
                               <div className="metrics-summary">
-                                <div>Reach: <strong>{feat.rice.reach}</strong></div>
-                                <div>Impact: <strong>{feat.rice.impact}</strong></div>
-                                <div>Confidence: <strong>{feat.rice.confidence * 100}%</strong></div>
-                                <div>Effort: <strong>{feat.rice.effort}</strong></div>
-                                <div className="rice-score-highlight">RICE: <strong>{feat.rice.score}</strong></div>
+                                <div>Reach: <strong>{feat.rice?.reach || 0}</strong></div>
+                                <div>Impact: <strong>{feat.rice?.impact || 0}</strong></div>
+                                <div>Confidence: <strong>{Math.round((feat.rice?.confidence || 0) * 100)}%</strong></div>
+                                <div>Effort: <strong>{feat.rice?.effort || 1}</strong></div>
+                                <div className="rice-score-highlight">RICE: <strong>{feat.rice?.score || 0}</strong></div>
                               </div>
 
                               <div className="citations-block">
                                 <h4 className="cit-title">Grounded Evidence Excerpts:</h4>
-                                {feat.citations.map((cit, idx) => (
+                                {(feat.citations || []).map((cit, idx) => (
                                   <div 
                                     key={idx} 
                                     className="citation-bubble"
@@ -947,7 +961,7 @@ export default function App() {
                           </tr>
                         </thead>
                         <tbody>
-                          {insights.features.map((feat) => {
+                          {(insights?.features || []).map((feat) => {
                             const isSelected = selectedFeatures.some(f => f.id === feat.id);
                             return (
                               <tr key={feat.id} className={isSelected ? 'selected-row' : ''}>
@@ -965,16 +979,16 @@ export default function App() {
                                 <td>
                                   <button 
                                     onClick={() => cycleMoscow(feat.id)}
-                                    className={`moscow-tag-btn ${feat.moscow.toLowerCase().replace('-', '')}`}
+                                    className={`moscow-tag-btn ${(feat.moscow || 'Must-have').toLowerCase().replace('-', '')}`}
                                   >
-                                    {feat.moscow}
+                                    {feat.moscow || 'Must-have'}
                                   </button>
                                 </td>
                                 {/* Reach */}
                                 <td>
                                   <div className="metric-adjuster">
                                     <button onClick={() => updateRiceValue(feat.id, 'reach', -1)}><Minus className="icon-tiny"/></button>
-                                    <span>{feat.rice.reach}</span>
+                                    <span>{feat.rice?.reach || 0}</span>
                                     <button onClick={() => updateRiceValue(feat.id, 'reach', 1)}><Plus className="icon-tiny"/></button>
                                   </div>
                                 </td>
@@ -982,7 +996,7 @@ export default function App() {
                                 <td>
                                   <div className="metric-adjuster">
                                     <button onClick={() => updateRiceValue(feat.id, 'impact', -0.25)}><Minus className="icon-tiny"/></button>
-                                    <span>{feat.rice.impact}</span>
+                                    <span>{feat.rice?.impact || 0}</span>
                                     <button onClick={() => updateRiceValue(feat.id, 'impact', 0.25)}><Plus className="icon-tiny"/></button>
                                   </div>
                                 </td>
@@ -990,7 +1004,7 @@ export default function App() {
                                 <td>
                                   <div className="metric-adjuster">
                                     <button onClick={() => updateRiceValue(feat.id, 'confidence', -0.1)}><Minus className="icon-tiny"/></button>
-                                    <span>{Math.round(feat.rice.confidence * 100)}%</span>
+                                    <span>{Math.round((feat.rice?.confidence || 0) * 100)}%</span>
                                     <button onClick={() => updateRiceValue(feat.id, 'confidence', 0.1)}><Plus className="icon-tiny"/></button>
                                   </div>
                                 </td>
@@ -998,12 +1012,12 @@ export default function App() {
                                 <td>
                                   <div className="metric-adjuster">
                                     <button onClick={() => updateRiceValue(feat.id, 'effort', -1)}><Minus className="icon-tiny"/></button>
-                                    <span>{feat.rice.effort}</span>
+                                    <span>{feat.rice?.effort || 1}</span>
                                     <button onClick={() => updateRiceValue(feat.id, 'effort', 1)}><Plus className="icon-tiny"/></button>
                                   </div>
                                 </td>
                                 <td className="text-center font-bold text-indigo">
-                                  {feat.rice.score}
+                                  {feat.rice?.score || 0}
                                 </td>
                               </tr>
                             );
