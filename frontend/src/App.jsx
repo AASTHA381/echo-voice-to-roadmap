@@ -195,7 +195,18 @@ export default function App() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
       
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      // Dynamically select the best recording format supported by the browser
+      let options = { mimeType: 'audio/webm' };
+      if (typeof MediaRecorder.isTypeSupported === 'function') {
+        if (!MediaRecorder.isTypeSupported('audio/webm')) {
+          options = { mimeType: 'audio/mp4' };
+          if (!MediaRecorder.isTypeSupported('audio/mp4')) {
+            options = {}; // Fallback to browser defaults (e.g. Safari on iOS)
+          }
+        }
+      }
+      
+      const recorder = new MediaRecorder(stream, options);
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
@@ -203,12 +214,23 @@ export default function App() {
       };
       
       recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        // Detect actual mimeType to match the correct file extension for Groq decoding
+        const actualMimeType = recorder.mimeType || 'audio/webm';
+        let extension = 'webm';
+        if (actualMimeType.includes('mp4') || actualMimeType.includes('aac') || actualMimeType.includes('m4a')) {
+          extension = 'mp4';
+        } else if (actualMimeType.includes('ogg')) {
+          extension = 'ogg';
+        } else if (actualMimeType.includes('wav')) {
+          extension = 'wav';
+        }
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
         const now = new Date();
         const dateStr = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
         const timeStr = String(now.getHours()).padStart(2, '0') + "_" + String(now.getMinutes()).padStart(2, '0');
-        const fileName = `Live_Meeting_${dateStr}_${timeStr}.webm`;
-        const audioFile = new File([audioBlob], fileName, { type: 'audio/webm' });
+        const fileName = `Live_Meeting_${dateStr}_${timeStr}.${extension}`;
+        const audioFile = new File([audioBlob], fileName, { type: actualMimeType });
         
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
@@ -233,6 +255,10 @@ export default function App() {
   };
 
   const stopRecording = () => {
+    if (recordingTime < 3) {
+      alert("⚠️ Recording is too short. Please record for at least 3 seconds to generate a valid audio file.");
+      return;
+    }
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
