@@ -1,12 +1,16 @@
 import os
 import uuid
 import json
+import zipfile
+import io
 from datetime import datetime
 from typing import List, Dict, Any
+from fastapi.responses import StreamingResponse
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from groq import Groq
 
 from backend.config import settings
 from backend.services.transcription import transcription_service
@@ -299,3 +303,71 @@ def generate_prd(transcript_id: str, request: PRDRequest):
         return {"prd": prd_text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class CopilotChatRequest(BaseModel):
+    message: str
+    history: List[Dict[str, str]] = []
+
+@app.post("/api/copilot/chat")
+def copilot_chat(req: CopilotChatRequest):
+    if not settings.GROQ_API_KEY:
+        return {"response": "The Groq API key is not configured in the backend environment. Please check your config."}
+        
+    try:
+        client = Groq(api_key=settings.GROQ_API_KEY)
+        
+        system_prompt = (
+            "You are the PayEase AI Finance Copilot, a smart personal finance assistant inside the PayEase mobile app.\n"
+            "Your tone is professional, friendly, helpful, and concise. Keep responses focused on budgeting, saving, and bill tracking.\n\n"
+            "CRITICAL GUIDELINES:\n"
+            "1. DO NOT claim guaranteed returns or give formal financial advice.\n"
+            "2. DO NOT use the phrase 'exact amount' or guarantee target achievements. Instead use terms like 'suggested estimation', 'indicative planning', or 'suggested amount'.\n"
+            "3. If the user asks about investments or SIPs, suggest conservative estimates and always include a short disclaimer: 'Illustrative projection only. Mutual Fund investments are subject to market risks. Read all scheme-related documents carefully.'\n"
+            "4. If you recommend a specific action, format it clearly so it stands out."
+        )
+        
+        messages = [{"role": "system", "content": system_prompt}]
+        for item in req.history:
+            messages.append({"role": item.get("role", "user"), "content": item.get("content", "")})
+        messages.append({"role": "user", "content": req.message})
+        
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            temperature=0.3,
+            max_tokens=300
+        )
+        
+        reply = completion.choices[0].message.content
+        return {"response": reply}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/extension/download")
+def download_extension():
+    """
+    Packs the /chrome-extension directory files into a ZIP archive and serves it.
+    """
+    extension_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "chrome-extension")
+    if not os.path.exists(extension_dir):
+        # Try current working directory fallback
+        extension_dir = os.path.join(os.getcwd(), "chrome-extension")
+         
+    if not os.path.exists(extension_dir):
+        raise HTTPException(status_code=404, detail="Extension directory not found")
+        
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for root, dirs, files in os.walk(extension_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, extension_dir)
+                zip_file.write(file_path, arcname)
+                
+    zip_buffer.seek(0)
+    
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=echo-chrome-extension.zip"}
+    )

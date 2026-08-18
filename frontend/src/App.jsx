@@ -664,6 +664,16 @@ export default function App() {
               </button>
             </div>
           )}
+
+          <div className="sidebar-integrations">
+            <a 
+              href={`${API_BASE}/api/extension/download`} 
+              className="btn btn-outline btn-extension w-full"
+              download
+            >
+              <Cpu className="icon-small text-purple" /> Get Chrome Extension
+            </a>
+          </div>
         </aside>
 
         {/* Right Content Space */}
@@ -1100,6 +1110,17 @@ export default function App() {
                   <h4>📊 Prioritized Backlog</h4>
                   <p>RICE & MoSCoW backlogs and direct markdown PRD drafting.</p>
                 </div>
+              </div>
+
+              <div className="empty-state-cta">
+                <a 
+                  href={`${API_BASE}/api/extension/download`} 
+                  className="btn btn-secondary btn-extension-hero"
+                  download
+                >
+                  <Cpu className="icon-medium" /> Get Chrome Extension
+                </a>
+                <p className="cta-note">Record live Google Meet & Zoom meetings natively in Chrome.</p>
               </div>
             </div>
           )}
