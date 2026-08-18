@@ -1,6 +1,12 @@
 // SVG Icon Assets
+const logoSvg = `
+  <svg class="echo-logo-icon" viewBox="0 0 24 24" width="13" height="13" stroke="#c084fc" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 3px;">
+    <path d="M12 2v20M17 5v14M22 9v6M7 7v10M2 10v4"></path>
+  </svg>
+`;
+
 const micSvg = `
-  <svg class="echo-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+  <svg class="echo-svg-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
     <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
     <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
     <line x1="12" y1="19" x2="12" y2="22"></line>
@@ -8,7 +14,7 @@ const micSvg = `
 `;
 
 const stopSvg = `
-  <svg class="echo-svg-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="3" fill="currentColor" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+  <svg class="echo-svg-icon" viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="currentColor" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
     <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
   </svg>
 `;
@@ -32,8 +38,6 @@ const styles = `
     gap: 10px;
     color: #f8fafc;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-    font-size: 12px;
-    font-weight: 500;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
   
@@ -46,6 +50,15 @@ const styles = `
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+
+  .echo-brand {
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: #ffffff;
+    text-transform: uppercase;
+    margin-right: 2px;
   }
 
   .echo-status-dot {
@@ -78,18 +91,6 @@ const styles = `
     100% { transform: scale(0.9); opacity: 0.6; }
   }
 
-  .echo-status {
-    font-size: 11px;
-    color: #94a3b8;
-    font-weight: 600;
-    letter-spacing: -0.1px;
-    transition: color 0.3s ease;
-  }
-
-  .echo-status.recording-active {
-    color: #f1f5f9;
-  }
-
   .echo-timer {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 11px;
@@ -107,7 +108,7 @@ const styles = `
     background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
     border: none;
     color: #ffffff;
-    font-weight: 600;
+    font-weight: 700;
     padding: 6px 12px;
     border-radius: 7px;
     cursor: pointer;
@@ -154,16 +155,16 @@ const widget = document.createElement("div");
 widget.className = "echo-float-widget";
 widget.innerHTML = `
   <div class="echo-status-container">
+    ${logoSvg}
+    <span class="echo-brand">ECHO</span>
     <div class="echo-status-dot idle" id="echoDot"></div>
-    <span class="echo-status" id="echoStatus">Echo Ready</span>
   </div>
   <span class="echo-timer" id="echoTimer">00:00</span>
-  <button class="echo-rec-btn" id="echoBtn">${micSvg}Record Call</button>
+  <button class="echo-rec-btn" id="echoBtn">${micSvg}Record</button>
 `;
 document.body.appendChild(widget);
 
 const echoBtn = document.getElementById("echoBtn");
-const echoStatus = document.getElementById("echoStatus");
 const echoTimer = document.getElementById("echoTimer");
 const echoDot = document.getElementById("echoDot");
 
@@ -224,13 +225,11 @@ async function startMeetingRecording() {
     isRecording = true;
     
     // UI state transitions
-    echoBtn.innerHTML = `${stopSvg}Stop & Transcribe`;
+    echoBtn.innerHTML = `${stopSvg}Stop`;
     echoBtn.classList.add("recording");
     
     echoDot.className = "echo-status-dot recording";
     echoTimer.style.display = "inline-block";
-    echoStatus.textContent = "Recording";
-    echoStatus.classList.add("recording-active");
     
     recordingSeconds = 0;
     recordingInterval = setInterval(() => {
@@ -259,13 +258,12 @@ function stopMeetingRecording() {
     clearInterval(recordingInterval);
     
     // Reset UI to uploading status
-    echoBtn.innerHTML = `${micSvg}Record Call`;
+    echoBtn.innerHTML = `Uploading...`;
+    echoBtn.disabled = true;
     echoBtn.classList.remove("recording");
     
     echoDot.className = "echo-status-dot uploading";
     echoTimer.style.display = "none";
-    echoStatus.textContent = "Uploading...";
-    echoStatus.classList.remove("recording-active");
   }
 }
 
@@ -284,10 +282,8 @@ function uploadMeetingAudio(file) {
       .then(res => res.json())
       .then(data => {
         echoDot.className = "echo-status-dot idle";
-        echoStatus.textContent = "Upload Success!";
-        setTimeout(() => {
-          echoStatus.textContent = "Echo Ready";
-        }, 3000);
+        echoBtn.innerHTML = `${micSvg}Record`;
+        echoBtn.disabled = false;
         
         // Open Vercel dashboard automatically
         window.open("https://echo-voice-to-roadmap-aastha381.vercel.app", "_blank");
@@ -295,12 +291,9 @@ function uploadMeetingAudio(file) {
       .catch(err => {
         console.error("Upload failed:", err);
         echoDot.className = "echo-status-dot idle";
-        echoStatus.textContent = "Upload Failed";
+        echoBtn.innerHTML = `${micSvg}Record`;
+        echoBtn.disabled = false;
         alert("⚠️ Echo Recorder: Upload to server failed. Please check your backend URL settings.");
-        setTimeout(() => {
-          echoStatus.textContent = "Echo Ready";
-        }, 3000);
       });
   });
 }
-
