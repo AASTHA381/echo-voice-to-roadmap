@@ -1097,7 +1097,7 @@ export default function App() {
                   <p>Grounded quotes matching back to transcript source blocks.</p>
                 </div>
                 <div className="feat-col">
-                  <h4>📊 prioritised Matrix</h4>
+                  <h4>📊 Prioritized Backlog</h4>
                   <p>RICE & MoSCoW backlogs and direct markdown PRD drafting.</p>
                 </div>
               </div>
