@@ -817,36 +817,40 @@ export default function App() {
                   className={`tab-btn ${activeTab === 'transcript' ? 'active' : ''}`}
                   onClick={() => setActiveTab('transcript')}
                 >
-                  <FileText className="icon-small" /> Transcript View
+                  <FileText className="icon-small" /> Transcript
                 </button>
                 <button 
                   className={`tab-btn ${activeTab === 'insights' ? 'active' : ''}`}
-                  disabled={!insights.features?.length}
+                  disabled={!insights?.pain_points?.length && !insights?.features?.length}
                   onClick={() => setActiveTab('insights')}
                 >
-                  <Sparkles className="icon-small" /> Grounded Insights
-                  {insights.features?.length > 0 && (
+                  <Sparkles className="icon-small" /> Insights
+                  {(insights?.pain_points?.length > 0 || insights?.features?.length > 0) && (
                     <span className="indicator-dot"></span>
                   )}
                 </button>
                 <button 
                   className={`tab-btn ${activeTab === 'backlog' ? 'active' : ''}`}
-                  disabled={!insights.features?.length}
+                  disabled={!insights?.features?.length}
                   onClick={() => setActiveTab('backlog')}
                 >
-                  <PieChart className="icon-small" /> RICE Roadmap Backlog
+                  <PieChart className="icon-small" /> Backlog
+                  {insights?.features?.length > 0 && (
+                    <span className="indicator-dot"></span>
+                  )}
                 </button>
                 <button 
                   className={`tab-btn ${activeTab === 'prd' ? 'active' : ''}`}
                   disabled={!prd}
                   onClick={() => setActiveTab('prd')}
                 >
-                  <BookOpen className="icon-small" /> PRD & Executive Strategy Draft
+                  <BookOpen className="icon-small" /> PRD Draft
+                  {prd && <span className="indicator-dot" style={{background:'#10b981'}}></span>}
                 </button>
               </nav>
 
               {/* Tab Content Rendering */}
-              <div className={`tab-viewport ${(selectedFeatures.length > 0 || selectedPainPoints.length > 0) ? 'has-action-dock' : ''}`}>
+              <div className="tab-viewport">
                 
                 {/* 1. Transcript Tab */}
                 {activeTab === 'transcript' && (
@@ -875,7 +879,7 @@ export default function App() {
                       ))}
                     </div>
 
-                    {/* Interactive Player Controls */}
+                    {/* Audio Player — lives inside transcript container, above action dock */}
                     <div className="player-dock glass">
                       <button className="btn-circle btn-play-pause" onClick={playPauseAudio}>
                         {isPlaying ? <Pause className="icon-large" /> : <Play className="icon-large" />}
@@ -898,8 +902,6 @@ export default function App() {
                           {String(Math.floor(selectedTranscript.duration % 60)).padStart(2, '0')}
                         </span>
                       </div>
-                      
-                      {/* Hidden dummy HTML5 Audio player so we have local sync triggers */}
                       <audio 
                         ref={audioRef}
                         src={audioUrl || ""}
@@ -1145,7 +1147,7 @@ export default function App() {
                   </div>
                 )}
 
-                {/* 4. PRD Markdown editor */}
+                {/* 4. PRD Rendered Viewer */}
                 {activeTab === 'prd' && (
                   <div className="prd-tab-container glass">
                     <div className="prd-header">
@@ -1153,12 +1155,12 @@ export default function App() {
                         <h2>
                           {insights.mode === 'research' 
                             ? 'Generated Executive Strategy Brief' 
-                            : 'Generated Product Requirement Document (PRD) Draft'}
+                            : 'Generated PRD Draft'}
                         </h2>
                         <p className="desc">
                           {insights.mode === 'research'
-                            ? 'Directly grounded in the selected challenges and prioritized strategic recommendations.'
-                            : 'Directly grounded in the selected pain points and prioritized roadmap backlog features.'}
+                            ? 'Grounded in selected challenges and strategic recommendations.'
+                            : 'Grounded in selected pain points and prioritized backlog features.'}
                         </p>
                       </div>
                       <div className="actions">
@@ -1171,43 +1173,77 @@ export default function App() {
                       </div>
                     </div>
                     
-                    <textarea 
-                      className="prd-editor" 
-                      value={prd} 
-                      onChange={(e) => setPrd(e.target.value)}
-                      placeholder="Your draft PRD will be loaded here..."
-                    />
+                    {/* Rendered markdown view instead of raw textarea */}
+                    <div className="prd-rendered">
+                      {prd.split('\n').map((line, i) => {
+                        const trimmed = line.trim();
+                        // Render headings
+                        if (trimmed.startsWith('### ')) {
+                          return <h4 key={i} className="prd-h3">{trimmed.slice(4).replace(/\*\*(.*?)\*\*/g, '$1')}</h4>;
+                        }
+                        if (trimmed.startsWith('## ')) {
+                          return <h3 key={i} className="prd-h2">{trimmed.slice(3).replace(/\*\*(.*?)\*\*/g, '$1')}</h3>;
+                        }
+                        if (trimmed.startsWith('# ')) {
+                          return <h2 key={i} className="prd-h1">{trimmed.slice(2).replace(/\*\*(.*?)\*\*/g, '$1')}</h2>;
+                        }
+                        // Render bullet points
+                        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+                          const content = trimmed.slice(2);
+                          return (
+                            <li key={i} className="prd-li" dangerouslySetInnerHTML={{
+                              __html: content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            }} />
+                          );
+                        }
+                        // Horizontal rule
+                        if (trimmed === '---') return <hr key={i} className="prd-hr" />;
+                        // Blank line = spacer
+                        if (!trimmed) return <div key={i} className="prd-spacer" />;
+                        // Regular paragraph with **bold** support
+                        return (
+                          <p key={i} className="prd-p" dangerouslySetInnerHTML={{
+                            __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                          }} />
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
               </div>
               
-              {/* Sticky bottom Action Dock to generate roadmap / PRD updates */}
-              {(selectedFeatures.length > 0 || selectedPainPoints.length > 0) && (
+              {/* Sticky bottom Action Dock — only show when insights exist AND not on PRD tab */}
+              {(selectedFeatures.length > 0 || selectedPainPoints.length > 0) && activeTab !== 'prd' && (
                 <div className="action-dock glass">
                   <div className="selection-count">
                     <CheckCircle className="icon-medium text-pink" />
                     <span>
                       {insights.mode === 'research' ? (
                         <>
-                          Selected <strong>{selectedPainPoints.length}</strong> challenges and <strong>{selectedFeatures.length}</strong> recommendations.
+                          <strong>{selectedPainPoints.length}</strong> challenges · <strong>{selectedFeatures.length}</strong> recommendations
                         </>
                       ) : (
                         <>
-                          Selected <strong>{selectedPainPoints.length}</strong> pain points and <strong>{selectedFeatures.length}</strong> features.
+                          <strong>{selectedPainPoints.length}</strong> pain points · <strong>{selectedFeatures.length}</strong> features
                         </>
                       )}
                     </span>
                   </div>
                   <button 
                     className="btn btn-primary btn-dock-cta"
-                    onClick={generatePRD}
+                    onClick={prd ? () => setActiveTab('prd') : generatePRD}
                     disabled={isPrdLoading}
                   >
                     {isPrdLoading ? (
                       <>
                         <RefreshCw className="icon-medium animate-spin" />
-                        {insights.mode === 'research' ? 'Drafting...' : 'Drafting PRD...'}
+                        Drafting...
+                      </>
+                    ) : prd ? (
+                      <>
+                        <BookOpen className="icon-medium" />
+                        View PRD Draft
                       </>
                     ) : (
                       <>
