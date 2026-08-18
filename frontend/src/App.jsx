@@ -48,6 +48,10 @@ export default function App() {
   const audioChunksRef = useRef([]);
   const timerIntervalRef = useRef(null);
 
+  // File rename modal state
+  const [pendingFile, setPendingFile] = useState(null); // { file, defaultName }
+  const [pendingFileName, setPendingFileName] = useState('');
+
   // Fetch API Health & Loaded Transcripts
   useEffect(() => {
     fetch(`${API_BASE}/api/health`)
@@ -159,41 +163,21 @@ export default function App() {
     }, 3000);
   };
 
-  // File Upload Handler
+  // File Upload Handler — shows rename dialog first
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    e.target.value = ''; // reset input so same file can be re-selected
 
     if (file.size > 25 * 1024 * 1024) {
       alert("⚠️ File exceeds 25MB limit. Please compress your audio or upload in smaller clips.");
       return;
     }
 
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    fetch(`${API_BASE}/api/upload`, {
-      method: 'POST',
-      body: formData
-    })
-      .then(res => {
-        if (!res.ok) {
-          return res.json().then(err => {
-            throw new Error(err.detail || 'Upload server returned an error.');
-          });
-        }
-        return res.json();
-      })
-      .then(data => {
-        setIsUploading(false);
-        refreshTranscriptsList();
-        setSelectedId(data.id);
-      })
-      .catch(err => {
-        setIsUploading(false);
-        alert("⚠️ Upload failed. Error: " + err.message);
-      });
+    // Show rename modal before uploading
+    const base = file.name.replace(/\.[^.]+$/, '');
+    setPendingFile(file);
+    setPendingFileName(base);
   };
 
   // Live Meeting Recording Handlers
@@ -236,14 +220,15 @@ export default function App() {
         const now = new Date();
         const dateStr = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
         const timeStr = String(now.getHours()).padStart(2, '0') + "_" + String(now.getMinutes()).padStart(2, '0');
-        const fileName = `Live_Meeting_${dateStr}_${timeStr}.${extension}`;
-        const audioFile = new File([audioBlob], fileName, { type: actualMimeType });
+        const defaultName = `Live_Meeting_${dateStr}_${timeStr}`;
+        const audioFile = new File([audioBlob], `${defaultName}.${extension}`, { type: actualMimeType });
         
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
         
-        // Trigger upload
-        uploadRecordedFile(audioFile);
+        // Show rename modal before uploading
+        setPendingFile(audioFile);
+        setPendingFileName(defaultName);
       };
       
       mediaRecorderRef.current = recorder;
@@ -315,6 +300,17 @@ export default function App() {
         setIsUploading(false);
         alert("⚠️ Upload failed. Error: " + err.message);
       });
+  };
+
+  // Confirm rename and start the actual upload
+  const confirmAndUpload = () => {
+    if (!pendingFile) return;
+    const originalExt = pendingFile.name.match(/\.[^.]+$/)?.[0] || '';
+    const cleanName = (pendingFileName.trim() || 'Recording') + originalExt;
+    const renamedFile = new File([pendingFile], cleanName, { type: pendingFile.type });
+    setPendingFile(null);
+    setPendingFileName('');
+    uploadRecordedFile(renamedFile);
   };
 
   const formatRecordingTime = (secs) => {
@@ -563,7 +559,7 @@ export default function App() {
             style={{ marginRight: '10px' }}
           >
             <Mic className="icon-medium text-purple" />
-            Record Live
+            Record
           </button>
           <label className="btn btn-primary btn-upload">
             <UploadCloud className="icon-medium" />
@@ -624,6 +620,36 @@ export default function App() {
             <RefreshCw className="icon-large animate-spin text-purple" />
             <h2>Transcribing Audio File...</h2>
             <p>Whisper is converting your qualitative interview into timestamped transcript blocks.</p>
+          </div>
+        </div>
+      )}
+
+      {/* File Rename Modal */}
+      {pendingFile && (
+        <div className="recording-modal-overlay">
+          <div className="recording-modal glass rename-modal">
+            <div className="rename-icon-wrap">
+              <FileText className="rename-icon" />
+            </div>
+            <h2>Name Your Recording</h2>
+            <p className="recording-note">Give this file a meaningful name so you can identify it later.</p>
+            <input
+              className="rename-input"
+              type="text"
+              value={pendingFileName}
+              onChange={(e) => setPendingFileName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') confirmAndUpload(); }}
+              placeholder="e.g. User Interview - John"
+              autoFocus
+            />
+            <div className="recording-actions">
+              <button className="btn btn-primary" onClick={confirmAndUpload}>
+                <UploadCloud className="icon-medium" /> Upload & Transcribe
+              </button>
+              <button className="btn btn-outline" onClick={() => { setPendingFile(null); setPendingFileName(''); }}>
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1060,7 +1086,7 @@ export default function App() {
                       </div>
                       <div className="actions">
                         <button className="btn btn-secondary" onClick={copyPrdToClipboard}>
-                          <Copy className="icon-medium" /> Copy Code
+                          <Copy className="icon-medium" /> Copy
                         </button>
                         <button className="btn btn-secondary" onClick={downloadPrdMarkdown}>
                           <Download className="icon-medium" /> Download MD
@@ -1081,9 +1107,9 @@ export default function App() {
               
               {/* Sticky bottom Action Dock to generate roadmap / PRD updates */}
               {(selectedFeatures.length > 0 || selectedPainPoints.length > 0) && (
-                <div className="action-dock glass animate-slide-up">
+                <div className="action-dock glass">
                   <div className="selection-count">
-                    <CheckCircle className="icon-medium text-pink animate-pulse" />
+                    <CheckCircle className="icon-medium text-pink" />
                     <span>
                       {insights.mode === 'research' ? (
                         <>
@@ -1091,30 +1117,28 @@ export default function App() {
                         </>
                       ) : (
                         <>
-                          Selected <strong>{selectedPainPoints.length}</strong> pain points and <strong>{selectedFeatures.length}</strong> prioritized features.
+                          Selected <strong>{selectedPainPoints.length}</strong> pain points and <strong>{selectedFeatures.length}</strong> features.
                         </>
                       )}
                     </span>
                   </div>
-                  <div className="actions-cluster">
-                    <button 
-                      className="btn btn-primary"
-                      onClick={generatePRD}
-                      disabled={isPrdLoading}
-                    >
-                      {isPrdLoading ? (
-                        <>
-                          <RefreshCw className="icon-medium animate-spin" />
-                          {insights.mode === 'research' ? 'Drafting Brief...' : 'Drafting PRD...'}
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="icon-medium text-amber" />
-                          {insights.mode === 'research' ? 'Draft Executive Brief' : 'Draft PRD Document'}
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  <button 
+                    className="btn btn-primary btn-dock-cta"
+                    onClick={generatePRD}
+                    disabled={isPrdLoading}
+                  >
+                    {isPrdLoading ? (
+                      <>
+                        <RefreshCw className="icon-medium animate-spin" />
+                        {insights.mode === 'research' ? 'Drafting...' : 'Drafting PRD...'}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="icon-medium text-amber" />
+                        {insights.mode === 'research' ? 'Draft Brief' : 'Draft PRD'}
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
             </>
