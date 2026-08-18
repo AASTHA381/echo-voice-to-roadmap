@@ -6,6 +6,141 @@ import {
   RefreshCw, Music, Copy, Trash2, Mic, Cpu, ListChecks
 } from 'lucide-react';
 
+// Robust, clean markdown-to-HTML parser to display Strategy Briefs and PRDs professionally
+const renderMarkdown = (mdText) => {
+  if (!mdText) return null;
+  const lines = mdText.split('\n');
+  const elements = [];
+  let listItems = [];
+  let inList = false;
+  let tableRows = [];
+  let inTable = false;
+
+  const parseInlineMarkdown = (text) => {
+    // Replace **bold** with <strong>bold</strong>
+    let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Replace *italic* with <em>italic</em>
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    return html;
+  };
+
+  const flushList = (key) => {
+    if (listItems.length > 0) {
+      elements.push(
+        <ul key={`list-${key}`} className="prd-ul" style={{margin: '8px 0 12px 20px'}}>
+          {listItems.map((item, idx) => (
+            <li key={idx} className="prd-li" dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(item) }} />
+          ))}
+        </ul>
+      );
+      listItems = [];
+      inList = false;
+    }
+  };
+
+  const flushTable = (key) => {
+    if (tableRows.length > 0) {
+      // Helper to split row and cleanup empty cells
+      const splitRow = (row) => {
+        const cells = row.split('|').map(s => s.trim());
+        if (cells.length > 0 && cells[0] === '') cells.shift();
+        if (cells.length > 0 && cells[cells.length - 1] === '') cells.pop();
+        return cells;
+      };
+
+      const headers = splitRow(tableRows[0]);
+      let startIndex = 1;
+      // Skip markdown separator row if present
+      if (tableRows[1] && tableRows[1].replace(/[\s\-|:]/g, '') === '') {
+        startIndex = 2;
+      }
+      
+      const bodyRows = tableRows.slice(startIndex).map(row => splitRow(row));
+
+      elements.push(
+        <div key={`table-wrapper-${key}`} className="prd-table-wrapper">
+          <table className="prd-table">
+            <thead>
+              <tr>
+                {headers.map((h, idx) => (
+                  <th key={idx} dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(h) }} />
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {bodyRows.map((row, rIdx) => (
+                <tr key={rIdx}>
+                  {row.map((cell, cIdx) => (
+                    <td key={cIdx} dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(cell) }} />
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+      tableRows = [];
+      inTable = false;
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Table detection
+    if (trimmed.startsWith('|')) {
+      flushList(i);
+      inTable = true;
+      tableRows.push(line);
+      continue;
+    } else if (inTable) {
+      flushTable(i);
+    }
+
+    // Bullet list detection
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      inList = true;
+      listItems.push(trimmed.slice(2));
+      continue;
+    } else if (inList) {
+      flushList(i);
+    }
+
+    // Headings
+    if (trimmed.startsWith('# ')) {
+      elements.push(<h2 key={i} className="prd-h1" dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(trimmed.slice(2)) }} />);
+    } else if (trimmed.startsWith('## ')) {
+      elements.push(<h3 key={i} className="prd-h2" dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(trimmed.slice(3)) }} />);
+    } else if (trimmed.startsWith('### ')) {
+      elements.push(<h4 key={i} className="prd-h3" dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(trimmed.slice(4)) }} />);
+    } else if (trimmed === '---') {
+      elements.push(<hr key={i} className="prd-hr" />);
+    } else if (!trimmed) {
+      elements.push(<div key={i} className="prd-spacer" />);
+    } else {
+      // Numbered list items
+      const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
+      if (numMatch) {
+        const content = numMatch[2];
+        elements.push(
+          <p key={i} className="prd-p" style={{marginLeft: '16px', textIndent: '-16px'}} dangerouslySetInnerHTML={{
+            __html: `<strong>${numMatch[1]}.</strong> ${parseInlineMarkdown(content)}`
+          }} />
+        );
+      } else {
+        elements.push(<p key={i} className="prd-p" dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(line) }} />);
+      }
+    }
+  }
+
+  // Flush any open lists or tables
+  flushList(lines.length);
+  flushTable(lines.length);
+
+  return elements;
+};
+
 export default function App() {
   const API_BASE = import.meta.env.VITE_API_URL || 'https://echo-voice-to-roadmap-pgtn.onrender.com';
 
@@ -52,6 +187,7 @@ export default function App() {
   const [pendingFile, setPendingFile] = useState(null);
   const [pendingFileName, setPendingFileName] = useState('');
   const [serverWaking, setServerWaking] = useState(false); // shows 'server warming' hint during slow calls
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // collapse by default on mobile, toggleable
 
   // Fetch API Health & Loaded Transcripts
   useEffect(() => {
@@ -729,10 +865,15 @@ export default function App() {
       <main className="app-main-layout">
         
         {/* Left Sidebar: Transcript Navigation Shelf */}
-        <aside className="sidebar glass">
-          <div className="sidebar-header">
+        <aside className={`sidebar glass ${sidebarCollapsed ? 'collapsed' : ''}`}>
+          <div className="sidebar-header" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{cursor: 'pointer'}}>
             <h3>Recent Interviews</h3>
-            <span className="count-badge">{transcripts.length}</span>
+            <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+              <span className="count-badge">{transcripts.length}</span>
+              <span className="sidebar-toggle-btn" style={{fontSize: '11.5px', color: 'var(--color-primary)', fontWeight: '700'}}>
+                {sidebarCollapsed ? '▼' : '▲'}
+              </span>
+            </div>
           </div>
 
           <div className="transcript-list">
@@ -808,7 +949,7 @@ export default function App() {
         </aside>
 
         {/* Right Content Space */}
-        <section className="content-pane">
+        <section className={`content-pane ${(selectedFeatures.length > 0 || selectedPainPoints.length > 0) && activeTab !== 'prd' ? 'has-action-dock' : ''}`}>
           {selectedTranscript ? (
             <>
               {/* Tab Navigation Menu */}
@@ -831,11 +972,11 @@ export default function App() {
                 </button>
                 <button 
                   className={`tab-btn ${activeTab === 'backlog' ? 'active' : ''}`}
-                  disabled={!insights?.features?.length}
+                  disabled={!insights?.pain_points?.length && !insights?.features?.length}
                   onClick={() => setActiveTab('backlog')}
                 >
                   <PieChart className="icon-small" /> Backlog
-                  {insights?.features?.length > 0 && (
+                  {(insights?.features?.length > 0 || insights?.pain_points?.length > 0) && (
                     <span className="indicator-dot"></span>
                   )}
                 </button>
@@ -1080,8 +1221,18 @@ export default function App() {
                           </tr>
                         </thead>
                         <tbody>
-                          {(insights?.features || []).map((feat) => {
-                            const isSelected = selectedFeatures.some(f => f.id === feat.id);
+                          {(insights?.features || []).length === 0 ? (
+                            <tr>
+                              <td colSpan="8" style={{padding: '40px 20px', color: 'var(--text-muted)', textAlign: 'center'}}>
+                                <AlertTriangle className="icon-medium" style={{margin: '0 auto 8px', display: 'block', color: 'var(--color-purple)'}} />
+                                {insights?.mode === 'research' 
+                                  ? 'No strategic recommendations identified to prioritize.' 
+                                  : 'No suggested features identified to prioritize.'}
+                              </td>
+                            </tr>
+                          ) : (
+                            (insights?.features || []).map((feat) => {
+                              const isSelected = selectedFeatures.some(f => f.id === feat.id);
                             return (
                               <tr key={feat.id} className={isSelected ? 'selected-row' : ''}>
                                 <td className="text-center">
@@ -1140,7 +1291,7 @@ export default function App() {
                                 </td>
                               </tr>
                             );
-                          })}
+                          }))}
                         </tbody>
                       </table>
                     </div>
@@ -1175,38 +1326,7 @@ export default function App() {
                     
                     {/* Rendered markdown view instead of raw textarea */}
                     <div className="prd-rendered">
-                      {prd.split('\n').map((line, i) => {
-                        const trimmed = line.trim();
-                        // Render headings
-                        if (trimmed.startsWith('### ')) {
-                          return <h4 key={i} className="prd-h3">{trimmed.slice(4).replace(/\*\*(.*?)\*\*/g, '$1')}</h4>;
-                        }
-                        if (trimmed.startsWith('## ')) {
-                          return <h3 key={i} className="prd-h2">{trimmed.slice(3).replace(/\*\*(.*?)\*\*/g, '$1')}</h3>;
-                        }
-                        if (trimmed.startsWith('# ')) {
-                          return <h2 key={i} className="prd-h1">{trimmed.slice(2).replace(/\*\*(.*?)\*\*/g, '$1')}</h2>;
-                        }
-                        // Render bullet points
-                        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-                          const content = trimmed.slice(2);
-                          return (
-                            <li key={i} className="prd-li" dangerouslySetInnerHTML={{
-                              __html: content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                            }} />
-                          );
-                        }
-                        // Horizontal rule
-                        if (trimmed === '---') return <hr key={i} className="prd-hr" />;
-                        // Blank line = spacer
-                        if (!trimmed) return <div key={i} className="prd-spacer" />;
-                        // Regular paragraph with **bold** support
-                        return (
-                          <p key={i} className="prd-p" dangerouslySetInnerHTML={{
-                            __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                          }} />
-                        );
-                      })}
+                      {renderMarkdown(prd)}
                     </div>
                   </div>
                 )}
@@ -1232,8 +1352,8 @@ export default function App() {
                   </div>
                   <button 
                     className="btn btn-primary btn-dock-cta"
-                    onClick={prd ? () => setActiveTab('prd') : generatePRD}
-                    disabled={isPrdLoading}
+                    onClick={generatePRD}
+                    disabled={isPrdLoading || !!prd}
                   >
                     {isPrdLoading ? (
                       <>
@@ -1242,8 +1362,8 @@ export default function App() {
                       </>
                     ) : prd ? (
                       <>
-                        <BookOpen className="icon-medium" />
-                        View PRD Draft
+                        <Check className="icon-medium text-emerald" />
+                        {insights.mode === 'research' ? 'Brief Drafted' : 'PRD Drafted'}
                       </>
                     ) : (
                       <>
