@@ -1358,11 +1358,31 @@ body {
 
 /* Mobile Responsive Breakpoints */
 @media (max-width: 768px) {
+  html, body {
+    overflow: auto !important;
+    height: auto !important;
+  }
+
+  .echo-app {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
   .app-main-layout {
     grid-template-columns: 1fr;
-    height: auto;
-    overflow: visible;
+    height: auto !important;
+    overflow: visible !important;
     flex-direction: column;
+  }
+
+  .content-pane {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .tab-viewport {
+    height: auto !important;
+    overflow: visible !important;
   }
   
   .app-header {
