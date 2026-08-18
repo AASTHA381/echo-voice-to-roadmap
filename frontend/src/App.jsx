@@ -41,6 +41,13 @@ export default function App() {
   // Flash highlight state for RAG citation jumps
   const [highlightedSegmentId, setHighlightedSegmentId] = useState(null);
 
+  // Live Recording States
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const timerIntervalRef = useRef(null);
+
   // Fetch API Health & Loaded Transcripts
   useEffect(() => {
     fetch(`${API_BASE}/api/health`)
@@ -180,6 +187,100 @@ export default function App() {
         setIsUploading(false);
         alert("Upload failed. Error: " + err.message);
       });
+  };
+
+  // Live Meeting Recording Handlers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      recorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const now = new Date();
+        const dateStr = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
+        const timeStr = String(now.getHours()).padStart(2, '0') + "_" + String(now.getMinutes()).padStart(2, '0');
+        const fileName = `Live_Meeting_${dateStr}_${timeStr}.webm`;
+        const audioFile = new File([audioBlob], fileName, { type: 'audio/webm' });
+        
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Trigger upload
+        uploadRecordedFile(audioFile);
+      };
+      
+      mediaRecorderRef.current = recorder;
+      recorder.start(1000); // Capture chunks every 1 second
+      
+      setIsRecording(true);
+      setRecordingTime(0);
+      timerIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+    } catch (err) {
+      console.error("Microphone access denied:", err);
+      alert("⚠️ Microphone access denied or not supported on this browser.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      clearInterval(timerIntervalRef.current);
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      // Disable onstop so we don't trigger upload
+      mediaRecorderRef.current.onstop = null;
+      mediaRecorderRef.current.stop();
+      
+      // Stop all mic tracks
+      if (mediaRecorderRef.current.stream) {
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      }
+      
+      setIsRecording(false);
+      clearInterval(timerIntervalRef.current);
+    }
+  };
+
+  const uploadRecordedFile = (file) => {
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      body: formData
+    })
+      .then(res => res.json())
+      .then(data => {
+        setIsUploading(false);
+        refreshTranscriptsList();
+        setSelectedId(data.id);
+      })
+      .catch(err => {
+        setIsUploading(false);
+        alert("Upload failed. Error: " + err.message);
+      });
+  };
+
+  const formatRecordingTime = (secs) => {
+    const minutes = Math.floor(secs / 60);
+    const seconds = secs % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
   const handleDeleteTranscript = (id, e) => {
@@ -401,6 +502,15 @@ export default function App() {
             </div>
           )}
 
+          <button 
+            className="btn btn-secondary btn-record"
+            onClick={startRecording}
+            disabled={isUploading || isRecording}
+            style={{ marginRight: '10px' }}
+          >
+            <Mic className="icon-medium text-purple" />
+            Record Live
+          </button>
           <label className="btn btn-primary btn-upload">
             <UploadCloud className="icon-medium" />
             Upload Interview
@@ -408,11 +518,50 @@ export default function App() {
               type="file" 
               accept="audio/*" 
               onChange={handleFileUpload} 
+              disabled={isUploading}
               style={{ display: 'none' }} 
             />
           </label>
         </div>
       </header>
+
+      {/* Live Recording Modal Overlay */}
+      {isRecording && (
+        <div className="recording-modal-overlay">
+          <div className="recording-modal glass">
+            <div className="recording-pulse-wrapper">
+              <div className="recording-dot"></div>
+              <div className="recording-pulse-ring"></div>
+            </div>
+            
+            <h2>Recording Live Meeting...</h2>
+            <div className="recording-timer">{formatRecordingTime(recordingTime)}</div>
+            
+            {/* Waveform Visualizer */}
+            <div className="recording-waveform">
+              <span className="wave-bar bar-1"></span>
+              <span className="wave-bar bar-2"></span>
+              <span className="wave-bar bar-3"></span>
+              <span className="wave-bar bar-4"></span>
+              <span className="wave-bar bar-5"></span>
+              <span className="wave-bar bar-6"></span>
+              <span className="wave-bar bar-7"></span>
+              <span className="wave-bar bar-8"></span>
+            </div>
+            
+            <p className="recording-note">Speak clearly. We will capture and transcribe your meeting in the background.</p>
+            
+            <div className="recording-actions">
+              <button className="btn btn-danger" onClick={stopRecording}>
+                <CheckCircle className="icon-medium" /> Stop & Transcribe
+              </button>
+              <button className="btn btn-outline" onClick={cancelRecording}>
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Loading Overlay */}
       {isUploading && (
