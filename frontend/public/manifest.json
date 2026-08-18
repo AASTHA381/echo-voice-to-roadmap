@@ -3,7 +3,7 @@
   "name": "Echo - Voice to Roadmap AI Copilot",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/5985/5985554.png",
+      "src": "/icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
