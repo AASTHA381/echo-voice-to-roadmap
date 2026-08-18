@@ -186,37 +186,61 @@ export default function App() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
       
-      // Dynamically select the best recording format supported by the browser
-      let options = { mimeType: 'audio/webm' };
+      // Priority order of MIME types — most compatible first for iOS/Android/Desktop
+      const mimeTypes = [
+        'audio/webm;codecs=opus',  // Chrome/Firefox desktop
+        'audio/webm',               // Chrome desktop fallback
+        'audio/mp4;codecs=mp4a.40.2', // iOS Safari
+        'audio/mp4',               // iOS Safari fallback
+        'audio/ogg;codecs=opus',   // Firefox
+        'audio/ogg',               // Firefox fallback
+      ];
+
+      let selectedMime = '';
       if (typeof MediaRecorder.isTypeSupported === 'function') {
-        if (!MediaRecorder.isTypeSupported('audio/webm')) {
-          options = { mimeType: 'audio/mp4' };
-          if (!MediaRecorder.isTypeSupported('audio/mp4')) {
-            options = {}; // Fallback to browser defaults (e.g. Safari on iOS)
+        for (const mime of mimeTypes) {
+          if (MediaRecorder.isTypeSupported(mime)) {
+            selectedMime = mime;
+            break;
           }
         }
       }
+
+      // Build options — if no supported MIME found, let browser decide
+      const options = selectedMime ? { mimeType: selectedMime } : {};
       
       const recorder = new MediaRecorder(stream, options);
       recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
       
       recorder.onstop = () => {
-        // Detect actual mimeType to match the correct file extension for Groq decoding
-        const actualMimeType = recorder.mimeType || 'audio/webm';
-        let extension = 'webm';
-        if (actualMimeType.includes('mp4') || actualMimeType.includes('aac') || actualMimeType.includes('m4a')) {
-          extension = 'mp4';
+        // Detect actual mimeType from the recorder (may differ from what we requested)
+        const actualMimeType = recorder.mimeType || selectedMime || 'audio/mp4';
+        
+        // Map mimeType to correct file extension
+        let extension = 'mp4'; // safe default — Groq supports mp4
+        if (actualMimeType.includes('webm')) {
+          extension = 'webm';
         } else if (actualMimeType.includes('ogg')) {
           extension = 'ogg';
         } else if (actualMimeType.includes('wav')) {
           extension = 'wav';
+        } else if (actualMimeType.includes('mp4') || actualMimeType.includes('aac') || actualMimeType.includes('m4a')) {
+          extension = 'mp4';
         }
 
         const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+
+        // Guard: check blob is not empty
+        if (audioBlob.size < 100) {
+          alert('⚠️ Recording captured no audio data. Please check your microphone permissions and try again.');
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+
         const now = new Date();
         const dateStr = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
         const timeStr = String(now.getHours()).padStart(2, '0') + "_" + String(now.getMinutes()).padStart(2, '0');
@@ -241,8 +265,14 @@ export default function App() {
       }, 1000);
       
     } catch (err) {
-      console.error("Microphone access denied:", err);
-      alert("⚠️ Microphone access denied or not supported on this browser.");
+      console.error("Recording error:", err);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        alert("⚠️ Microphone access denied.\n\nPlease go to your browser Settings → Site Permissions → Microphone and allow access for this site, then try again.");
+      } else if (err.name === 'NotFoundError') {
+        alert("⚠️ No microphone found. Please connect a microphone and try again.");
+      } else {
+        alert("⚠️ Could not start recording: " + err.message);
+      }
     }
   };
 

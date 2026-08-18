@@ -127,14 +127,45 @@ async def upload_audio(file: UploadFile = File(...)):
     """
     # Create unique ID for this transcript
     transcript_id = str(uuid.uuid4())
-    filename = file.filename or "interview.wav"
-    
+    original_filename = file.filename or "interview"
+    content_type = file.content_type or ""
+
+    # Determine the best file extension from content_type + filename
+    # Groq Whisper supports: mp3, mp4, mpeg, mpga, m4a, wav, webm, ogg
+    ext_map = {
+        "audio/webm": ".webm",
+        "audio/ogg": ".ogg",
+        "audio/wav": ".wav",
+        "audio/wave": ".wav",
+        "audio/x-wav": ".wav",
+        "audio/mpeg": ".mp3",
+        "audio/mp3": ".mp3",
+        "audio/mp4": ".m4a",       # iOS Safari records mp4 audio — use .m4a for Groq
+        "audio/x-m4a": ".m4a",
+        "video/mp4": ".m4a",       # iOS sometimes reports video/mp4 for audio-only
+        "audio/aac": ".m4a",
+    }
+    # Get extension from original filename first
+    _, orig_ext = os.path.splitext(original_filename)
+    if orig_ext.lower() in (".mp4", ".m4a"):
+        safe_ext = ".m4a"   # always use .m4a for mp4 containers (Groq prefers it)
+    elif orig_ext.lower() in (".webm", ".ogg", ".wav", ".mp3"):
+        safe_ext = orig_ext.lower()
+    else:
+        # Fall back to content_type mapping
+        base_content_type = content_type.split(";")[0].strip().lower()
+        safe_ext = ext_map.get(base_content_type, ".m4a")
+
+    # Build safe filename with correct extension
+    base_name = os.path.splitext(original_filename)[0]
+    filename = base_name + safe_ext
+
     # Save the file temporarily
     file_path = os.path.join(settings.UPLOAD_DIR, f"{transcript_id}_{filename}")
     with open(file_path, "wb") as f:
         content = await file.read()
         f.write(content)
-        
+
     try:
         # Check if Groq API key is present
         if not settings.GROQ_API_KEY:
@@ -156,7 +187,7 @@ async def upload_audio(file: UploadFile = File(...)):
         
         transcript_meta = {
             "id": transcript_id,
-            "filename": filename,
+            "filename": original_filename,   # Show user's original name in UI
             "uploaded_at": datetime.now().isoformat(),
             "duration": round(duration, 2),
             "text": transcription_results["text"],
@@ -172,7 +203,9 @@ async def upload_audio(file: UploadFile = File(...)):
         # Clean up uploaded file if process failed
         if os.path.exists(file_path):
             os.remove(file_path)
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_detail = f"{str(e)}\n\nFile: {filename} | ContentType: {content_type}"
+        raise HTTPException(status_code=500, detail=error_detail)
 
 @app.get("/api/transcripts")
 def get_transcripts():
