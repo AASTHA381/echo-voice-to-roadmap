@@ -99,6 +99,11 @@ class AnalyzerService:
             "      },\n"
             "      \"moscow\": \"Must-have\" | \"Should-have\" | \"Could-have\" | \"Won't-have\"\n"
             "    }\n"
+            "  ],\n"
+            "  \"suggested_questions\": [\n"
+            "    \"First specific question about this meeting (e.g. 'Why did Speaker 1 complain about checkout latency?')\",\n"
+            "    \"Second specific question about this meeting\",\n"
+            "    \"Third specific question about this meeting\"\n"
             "  ]\n"
             "}"
         )

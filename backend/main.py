@@ -287,8 +287,14 @@ def analyze_transcript(transcript_id: str):
         if not settings.GROQ_API_KEY:
             # Standard Mock fallback
             return {
+                "mode": "software",
                 "pain_points": MOCK_PAIN_POINTS,
-                "features": MOCK_FEATURES
+                "features": MOCK_FEATURES,
+                "suggested_questions": [
+                    "What were the key issues with the Checkout button placement?",
+                    "Why did users prefer the alternative Payment Gateway?",
+                    "What is the estimated impact of resolving the card entry delay?"
+                ]
             }
             
         # Call the live Groq RAG analysis pipeline

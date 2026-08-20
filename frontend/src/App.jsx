@@ -217,6 +217,7 @@ export default function App() {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [selectedSpeakerFilter, setSelectedSpeakerFilter] = useState(null);
   const [isStatsCollapsed, setIsStatsCollapsed] = useState(true);
+  const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(false);
 
   // File rename modal state
   const [pendingFile, setPendingFile] = useState(null);
@@ -266,6 +267,7 @@ export default function App() {
           setSelectedSpeakerFilter(null);
           setIsPlaying(false);
           setCurrentTime(0);
+          setIsChatSidebarOpen(false);
           setActiveTab('transcript');
         })
         .catch(err => console.error("Error fetching transcript:", err));
@@ -962,6 +964,27 @@ export default function App() {
                 <Download className="icon-small text-emerald" />
                 Download Audio
               </a>
+              <button 
+                className={`btn btn-secondary btn-chat-toggle ${isChatSidebarOpen ? 'active' : ''}`}
+                onClick={() => setIsChatSidebarOpen(!isChatSidebarOpen)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginRight: '6px',
+                  padding: '8px 12px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  border: isChatSidebarOpen ? '1px solid var(--color-primary)' : '1px solid var(--border-glass)',
+                  background: isChatSidebarOpen ? 'rgba(79, 70, 229, 0.08)' : 'transparent',
+                  color: isChatSidebarOpen ? 'var(--color-primary)' : 'var(--text-main)',
+                  cursor: 'pointer'
+                }}
+                title="Toggle AI Meeting Copilot Chat Sidebar"
+              >
+                <Cpu className="icon-small text-purple" />
+                AI Chat
+              </button>
             </>
           )}
 
@@ -1218,14 +1241,6 @@ export default function App() {
                 >
                   <BookOpen className="icon-small" /> PRD Draft
                   {prd && <span className="indicator-dot" style={{background:'#10b981'}}></span>}
-                </button>
-                <button 
-                  className={`tab-btn ${activeTab === 'chat' ? 'active' : ''}`}
-                  disabled={!insights?.pain_points?.length && !insights?.features?.length}
-                  onClick={() => setActiveTab('chat')}
-                >
-                  <Cpu className="icon-small" /> AI Chat
-                  {chatMessages.length > 0 && <span className="indicator-dot" style={{background: 'var(--color-primary)'}}></span>}
                 </button>
               </nav>
 
@@ -1672,89 +1687,15 @@ export default function App() {
                     
                     {/* Rendered markdown view instead of raw textarea */}
                     <div className="prd-rendered">
-                      {renderMarkdown(prd)}
-                    </div>
-                  </div>
-                )}
-
-                {/* 5. AI Chat Tab */}
-                {activeTab === 'chat' && (
-                  <div className="chat-tab-container glass">
-                    <div className="chat-header">
-                      <div>
-                        <h2>Meeting AI Copilot</h2>
-                        <p className="desc">Ask questions about this meeting's transcript context. Echo will reply based on facts in the audio.</p>
-                      </div>
-                    </div>
-                    
-                    <div className="chat-messages-area">
-                      {chatMessages.length === 0 ? (
-                        <div className="chat-empty-state">
-                          <Cpu className="chat-empty-icon animate-pulse" />
-                          <h3>Ask your Meeting Copilot</h3>
-                          <p>Analyze trends, clarify facts, or extract quick summaries. Try asking:</p>
-                          <div className="chat-suggestions">
-                            <button className="suggestion-pill" onClick={() => setChatQuestion("What were the main customer pain points discussed?")}>
-                              "What were the main pain points?"
-                            </button>
-                            <button className="suggestion-pill" onClick={() => setChatQuestion("Summarize the key recommendations or features suggested.")}>
-                              "What were the recommended features?"
-                            </button>
-                            <button className="suggestion-pill" onClick={() => setChatQuestion("List any action items or next steps mentioned.")}>
-                              "What are the action items?"
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        chatMessages.map((msg, idx) => (
-                          <div key={idx} className={`chat-message-row ${msg.role}`}>
-                            <div className="chat-bubble">
-                              <div className="sender-lbl">{msg.role === 'user' ? 'You' : 'Echo Copilot'}</div>
-                              <div className="message-content" dangerouslySetInnerHTML={{
-                                __html: msg.content.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                              }} />
-                            </div>
-                          </div>
-                        ))
-                      )}
-                      {isChatLoading && (
-                        <div className="chat-message-row assistant typing">
-                          <div className="chat-bubble animate-pulse">
-                            <div className="sender-lbl">Echo Copilot</div>
-                            <div className="message-content">
-                              <RefreshCw className="icon-small animate-spin text-purple mr-2 inline-block" />
-                              Thinking...
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="chat-input-dock">
-                      <input 
-                        type="text"
-                        placeholder="Ask anything about the call transcript..."
-                        value={chatQuestion}
-                        onChange={(e) => setChatQuestion(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') sendChatMessage(); }}
-                        disabled={isChatLoading}
-                        className="chat-input-field"
-                      />
-                      <button 
-                        onClick={sendChatMessage}
-                        disabled={isChatLoading || !chatQuestion.trim()}
-                        className="btn btn-primary btn-chat-send"
-                      >
-                        Ask Copilot
-                      </button>
+                    {renderMarkdown(prd)}
                     </div>
                   </div>
                 )}
 
               </div>
               
-              {/* Sticky bottom Action Dock — only show when insights exist AND not on PRD/Chat tabs */}
-              {(selectedFeatures.length > 0 || selectedPainPoints.length > 0) && activeTab !== 'prd' && activeTab !== 'chat' && (
+              {/* Sticky bottom Action Dock — only show when insights exist AND not on PRD tab */}
+              {(selectedFeatures.length > 0 || selectedPainPoints.length > 0) && activeTab !== 'prd' && (
                 <div className="action-dock glass">
                   <div className="selection-count">
                     <CheckCircle className="icon-medium text-pink" />
@@ -1830,6 +1771,81 @@ export default function App() {
             </div>
           )}
         </section>
+
+        {/* Right Sidebar: AI Meeting Copilot Chatbot */}
+        {selectedTranscript && (
+          <aside className={`chat-sidebar glass ${isChatSidebarOpen ? 'open' : ''}`}>
+            <div className="chat-sidebar-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Cpu className="icon-medium text-purple" />
+                <h3>Meeting Copilot</h3>
+              </div>
+              <button className="btn-close-chat" onClick={() => setIsChatSidebarOpen(false)}>×</button>
+            </div>
+            
+            <div className="chat-messages-area">
+              {chatMessages.length === 0 ? (
+                <div className="chat-empty-state">
+                  <Cpu className="chat-empty-icon animate-pulse" />
+                  <h3>Ask your Meeting Copilot</h3>
+                  <p>Echo analyzes the meeting transcript to answer questions instantly. Try asking:</p>
+                  <div className="chat-suggestions">
+                    {(insights?.suggested_questions || [
+                      "What were the main customer pain points discussed?",
+                      "Summarize the key recommendations or features suggested.",
+                      "List any action items or next steps mentioned."
+                    ]).map((q, idx) => (
+                      <button key={idx} className="suggestion-pill" onClick={() => setChatQuestion(q)}>
+                        "{q}"
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                chatMessages.map((msg, idx) => (
+                  <div key={idx} className={`chat-message-row ${msg.role}`}>
+                    <div className="chat-bubble">
+                      <div className="sender-lbl">{msg.role === 'user' ? 'You' : 'Echo Copilot'}</div>
+                      <div className="message-content" dangerouslySetInnerHTML={{
+                        __html: msg.content.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      }} />
+                    </div>
+                  </div>
+                ))
+              )}
+              {isChatLoading && (
+                <div className="chat-message-row assistant typing">
+                  <div className="chat-bubble animate-pulse">
+                    <div className="sender-lbl">Echo Copilot</div>
+                    <div className="message-content">
+                      <RefreshCw className="icon-small animate-spin text-purple mr-2 inline-block" />
+                      Thinking...
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="chat-input-dock">
+              <input 
+                type="text"
+                placeholder="Ask about this meeting..."
+                value={chatQuestion}
+                onChange={(e) => setChatQuestion(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') sendChatMessage(); }}
+                disabled={isChatLoading}
+                className="chat-input-field"
+              />
+              <button 
+                onClick={sendChatMessage}
+                disabled={isChatLoading || !chatQuestion.trim()}
+                className="btn btn-primary btn-chat-send"
+              >
+                Ask
+              </button>
+            </div>
+          </aside>
+        )}
       </main>
     </div>
   );

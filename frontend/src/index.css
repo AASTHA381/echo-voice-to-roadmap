@@ -2177,9 +2177,77 @@ body {
   font-weight: 700;
 }
 
+/* AI Chat Right Sidebar styling */
+.chat-sidebar {
+  position: fixed;
+  top: 72px; /* aligns below the header */
+  right: -400px; /* starts hidden off-screen */
+  width: 380px;
+  height: calc(100vh - 72px);
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border-left: 1px solid var(--border-glass);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+}
+.chat-sidebar.open {
+  right: 0;
+}
+.chat-sidebar-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-glass);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.4);
+}
+.chat-sidebar-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.btn-close-chat {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+}
+.btn-close-chat:hover {
+  color: var(--color-pink);
+}
+
+/* Adjust the content-pane right margin when sidebar is open on desktop */
+@media (min-width: 769px) {
+  .app-main-layout:has(.chat-sidebar.open) .content-pane {
+    margin-right: 380px;
+    transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .content-pane {
+    transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Mobile overrides for chat sidebar */
 @media (max-width: 768px) {
-  .chat-tab-container {
-    height: calc(100vh - 240px) !important;
+  .chat-sidebar {
+    top: 130px; /* fits below stacked mobile header actions */
+    right: -100%;
+    width: 100%;
+    height: calc(100vh - 130px);
+    border-left: none;
+  }
+  .chat-sidebar.open {
+    right: 0;
   }
   .chat-bubble {
     max-width: 90% !important;
