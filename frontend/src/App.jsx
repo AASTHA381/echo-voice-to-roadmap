@@ -6,6 +6,30 @@ import {
   RefreshCw, Music, Copy, Trash2, Mic, Cpu, ListChecks
 } from 'lucide-react';
 
+// Parser to convert MM:SS, HH:MM:SS or ranges into raw seconds for seeking
+const parseTimestampToSeconds = (timestampStr) => {
+  if (typeof timestampStr === 'number') return timestampStr;
+  if (!timestampStr) return 0;
+  
+  let cleanStr = String(timestampStr).split('-')[0].trim().replace(/s$/, '');
+  const parts = cleanStr.split(':');
+  
+  if (parts.length === 2) {
+    const mins = parseFloat(parts[0]) || 0;
+    const secs = parseFloat(parts[1]) || 0;
+    return mins * 60 + secs;
+  } else if (parts.length === 3) {
+    const hrs = parseFloat(parts[0]) || 0;
+    const mins = parseFloat(parts[1]) || 0;
+    const secs = parseFloat(parts[2]) || 0;
+    return hrs * 3600 + mins * 60 + secs;
+  }
+  
+  return parseFloat(cleanStr) || 0;
+};
+
+const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 // Robust, clean markdown-to-HTML parser to display Strategy Briefs and PRDs professionally
 const renderMarkdown = (mdText) => {
   if (!mdText) return null;
@@ -187,6 +211,13 @@ export default function App() {
   const activeDisplayStreamRef = useRef(null);
   const activeAudioCtxRef = useRef(null);
 
+  // Chatbot & Speaker Analytics States
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatQuestion, setChatQuestion] = useState('');
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [selectedSpeakerFilter, setSelectedSpeakerFilter] = useState(null);
+  const [isStatsCollapsed, setIsStatsCollapsed] = useState(true);
+
   // File rename modal state
   const [pendingFile, setPendingFile] = useState(null);
   const [pendingFileName, setPendingFileName] = useState('');
@@ -231,6 +262,10 @@ export default function App() {
           setPrd('');
           setSelectedFeatures([]);
           setSelectedPainPoints([]);
+          setChatMessages([]);
+          setSelectedSpeakerFilter(null);
+          setIsPlaying(false);
+          setCurrentTime(0);
           setActiveTab('transcript');
         })
         .catch(err => console.error("Error fetching transcript:", err));
@@ -294,8 +329,9 @@ export default function App() {
 
   // RAG Citation: Jump straight to the source quote in the transcript tab
   const jumpToCitation = (segmentId, startSec) => {
+    const seconds = parseTimestampToSeconds(startSec);
     setActiveTab('transcript');
-    seekTo(startSec, segmentId);
+    seekTo(seconds, segmentId);
     setHighlightedSegmentId(segmentId);
     
     // Smooth scroll to the cited segment card
@@ -310,6 +346,71 @@ export default function App() {
     setTimeout(() => {
       setHighlightedSegmentId(null);
     }, 3000);
+  };
+
+  // Calculate speaker statistics dynamically
+  const getSpeakerStats = () => {
+    if (!activeTranscript || !activeTranscript.segments) return [];
+    
+    const stats = {};
+    let totalDuration = 0;
+    
+    activeTranscript.segments.forEach(seg => {
+      const dur = (seg.end - seg.start) || 0;
+      const speaker = seg.speaker || 'Unknown';
+      if (!stats[speaker]) {
+        stats[speaker] = { duration: 0, count: 0 };
+      }
+      stats[speaker].duration += dur;
+      stats[speaker].count += 1;
+      totalDuration += dur;
+    });
+
+    if (totalDuration === 0) totalDuration = 1;
+
+    return Object.entries(stats).map(([speaker, val]) => ({
+      speaker,
+      duration: Math.round(val.duration),
+      count: val.count,
+      percentage: Math.max(1, Math.round((val.duration / totalDuration) * 100))
+    })).sort((a, b) => b.duration - a.duration);
+  };
+
+  // Send message to the transcript-grounded chatbot
+  const sendChatMessage = async () => {
+    if (!chatQuestion.trim() || !selectedId || isChatLoading) return;
+    
+    const currentQuestion = chatQuestion;
+    setChatQuestion('');
+    setIsChatLoading(true);
+    
+    // Append user message immediately
+    const newUserMsg = { role: 'user', content: currentQuestion };
+    setChatMessages(prev => [...prev, newUserMsg]);
+    
+    try {
+      const history = chatMessages.map(m => ({ role: m.role, content: m.content }));
+      
+      const res = await fetch(`${API_BASE}/api/chat/${selectedId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: currentQuestion, history })
+      });
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Chat server returned an error.");
+      }
+      
+      const data = await res.json();
+      const newAssistantMsg = { role: 'assistant', content: data.response };
+      setChatMessages(prev => [...prev, newAssistantMsg]);
+    } catch (err) {
+      console.error("Chat error:", err);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Error: Could not get a response. ${err.message}` }]);
+    } finally {
+      setIsChatLoading(false);
+    }
   };
 
   // File Upload Handler — shows rename dialog first
@@ -387,6 +488,9 @@ export default function App() {
 
         // 3. Mix the streams using Web Audio API
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
         const dest = audioCtx.createMediaStreamDestination();
 
         const micSource = audioCtx.createMediaStreamSource(micStream);
@@ -831,11 +935,34 @@ export default function App() {
         {/* Global Controls & Selected Document Details */}
         <div className="header-actions">
           {selectedTranscript && (
-            <div className="active-doc-chip">
-              <FileText className="icon-small text-indigo" />
-              <span className="doc-name truncate">{selectedTranscript.filename}</span>
-              <span className="doc-duration">({selectedTranscript.duration}s)</span>
-            </div>
+            <>
+              <div className="active-doc-chip">
+                <FileText className="icon-small text-indigo" />
+                <span className="doc-name truncate">{selectedTranscript.filename}</span>
+                <span className="doc-duration">({selectedTranscript.duration}s)</span>
+              </div>
+              <a 
+                href={audioUrl || '#'}
+                download={selectedTranscript.filename}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-secondary btn-download-audio"
+                style={{
+                  display: audioUrl ? 'flex' : 'none',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginRight: '6px',
+                  padding: '8px 12px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  textDecoration: 'none'
+                }}
+                title="Download raw audio recording"
+              >
+                <Download className="icon-small text-emerald" />
+                Download Audio
+              </a>
+            </>
           )}
 
           <div className="record-mode-selector">
@@ -848,15 +975,17 @@ export default function App() {
               <Mic style={{ width: '13px', height: '13px' }} />
               Mic Only
             </button>
-            <button
-              className={`btn-toggle-mode ${recordingMode === 'meeting' ? 'active' : ''}`}
-              onClick={() => setRecordingMode('meeting')}
-              disabled={isRecording}
-              title="Record meeting call silently (requires Chrome/Edge/Firefox on desktop)"
-            >
-              <Cpu style={{ width: '13px', height: '13px' }} />
-              Meeting Call
-            </button>
+            {!isMobileDevice && (
+              <button
+                className={`btn-toggle-mode ${recordingMode === 'meeting' ? 'active' : ''}`}
+                onClick={() => setRecordingMode('meeting')}
+                disabled={isRecording}
+                title="Record meeting call silently (requires Chrome/Edge/Firefox on desktop)"
+              >
+                <Cpu style={{ width: '13px', height: '13px' }} />
+                Meeting Call
+              </button>
+            )}
           </div>
 
           <button 
@@ -1090,6 +1219,14 @@ export default function App() {
                   <BookOpen className="icon-small" /> PRD Draft
                   {prd && <span className="indicator-dot" style={{background:'#10b981'}}></span>}
                 </button>
+                <button 
+                  className={`tab-btn ${activeTab === 'chat' ? 'active' : ''}`}
+                  disabled={!insights?.pain_points?.length && !insights?.features?.length}
+                  onClick={() => setActiveTab('chat')}
+                >
+                  <Cpu className="icon-small" /> AI Chat
+                  {chatMessages.length > 0 && <span className="indicator-dot" style={{background: 'var(--color-primary)'}}></span>}
+                </button>
               </nav>
 
               {/* Tab Content Rendering */}
@@ -1099,27 +1236,134 @@ export default function App() {
                 {activeTab === 'transcript' && (
                   <div className="transcript-tab-container">
                     <div className="transcript-scroll-area">
-                      {activeTranscript?.segments?.map((seg) => (
-                        <div 
-                          key={seg.id} 
-                          id={`segment-${seg.id}`}
-                          className={`transcript-segment-row ${
-                            activeSegmentId === seg.id ? 'playing-active' : ''
-                          } ${
-                            highlightedSegmentId === seg.id ? 'rag-highlighted' : ''
-                          }`}
-                          onClick={() => seekTo(seg.start, seg.id)}
-                        >
-                          <div className="segment-metadata">
-                            <span className="segment-speaker">{seg.speaker}</span>
-                            <span className="segment-timestamp">
-                              {Math.floor(seg.start / 60)}:
-                              {String(Math.floor(seg.start % 60)).padStart(2, '0')}
+                      {/* Collapsible Speaker Contribution Stats */}
+                      {activeTranscript?.segments?.length > 0 && (
+                        <div className="speaker-stats-card glass">
+                          <div 
+                            className="stats-header" 
+                            onClick={() => setIsStatsCollapsed(!isStatsCollapsed)}
+                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '10px 14px' }}
+                          >
+                            <h4 style={{ margin: 0, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <PieChart className="icon-small text-purple" /> 
+                              Speaker Contribution Stats
+                            </h4>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              {isStatsCollapsed ? 'Show Details ▼' : 'Hide ▲'}
                             </span>
                           </div>
-                          <div className="segment-text">{seg.text}</div>
+                          
+                          {!isStatsCollapsed && (
+                            <div className="stats-body" style={{ padding: '0 14px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {getSpeakerStats().map((stat, idx) => (
+                                <div 
+                                  key={idx} 
+                                  className={`speaker-stat-row ${selectedSpeakerFilter === stat.speaker ? 'active-filter' : ''}`}
+                                  onClick={() => setSelectedSpeakerFilter(selectedSpeakerFilter === stat.speaker ? null : stat.speaker)}
+                                  style={{
+                                    cursor: 'pointer',
+                                    padding: '8px',
+                                    borderRadius: '6px',
+                                    background: selectedSpeakerFilter === stat.speaker ? 'rgba(79, 70, 229, 0.08)' : 'rgba(0,0,0,0.01)',
+                                    border: selectedSpeakerFilter === stat.speaker ? '1px solid rgba(79, 70, 229, 0.2)' : '1px solid transparent',
+                                    transition: 'all 0.2s ease'
+                                  }}
+                                  title={`Click to filter transcript by ${stat.speaker}`}
+                                >
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
+                                    <strong>{stat.speaker}</strong>
+                                    <span style={{ color: 'var(--text-muted)' }}>{stat.percentage}% ({stat.duration}s)</span>
+                                  </div>
+                                  <div className="progress-bar-bg" style={{ height: '6px', background: 'rgba(0,0,0,0.04)', borderRadius: '3px', overflow: 'hidden' }}>
+                                    <div 
+                                      className="progress-bar-fill" 
+                                      style={{ 
+                                        height: '100%', 
+                                        width: `${stat.percentage}%`, 
+                                        background: idx === 0 ? 'var(--color-primary)' : idx === 1 ? 'var(--color-purple)' : 'var(--color-pink)',
+                                        borderRadius: '3px' 
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                              <p style={{ margin: '4px 0 0', fontSize: '10px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                                💡 Click on any speaker card above to filter the transcript by that speaker.
+                              </p>
+                            </div>
+                          )}
                         </div>
-                      ))}
+                      )}
+
+                      {/* Active Filter Reset Banner */}
+                      {selectedSpeakerFilter && (
+                        <div className="filter-active-banner" style={{
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center', 
+                          padding: '8px 12px', 
+                          background: 'rgba(79, 70, 229, 0.06)', 
+                          border: '1px solid rgba(79, 70, 229, 0.12)', 
+                          borderRadius: '8px',
+                          fontSize: '12.5px',
+                          color: 'var(--color-primary)',
+                          marginBottom: '10px'
+                        }}>
+                          <span>Showing only segments spoken by <strong>{selectedSpeakerFilter}</strong></span>
+                          <button 
+                            onClick={() => setSelectedSpeakerFilter(null)}
+                            style={{
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--color-pink)',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              textDecoration: 'underline'
+                            }}
+                          >
+                            Reset Filter
+                          </button>
+                        </div>
+                      )}
+
+                      {activeTranscript?.segments
+                        ?.filter(seg => !selectedSpeakerFilter || seg.speaker === selectedSpeakerFilter)
+                        ?.map((seg) => (
+                          <div 
+                            key={seg.id} 
+                            id={`segment-${seg.id}`}
+                            className={`transcript-segment-row ${
+                              activeSegmentId === seg.id ? 'playing-active' : ''
+                            } ${
+                              highlightedSegmentId === seg.id ? 'rag-highlighted' : ''
+                            }`}
+                            onClick={() => seekTo(seg.start, seg.id)}
+                          >
+                            <div className="segment-metadata">
+                              <span 
+                                className="segment-speaker hover-clickable"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedSpeakerFilter(selectedSpeakerFilter === seg.speaker ? null : seg.speaker);
+                                }}
+                                title={`Click to filter by ${seg.speaker}`}
+                                style={{
+                                  cursor: 'pointer',
+                                  textDecoration: 'underline',
+                                  textDecorationStyle: 'dotted'
+                                }}
+                              >
+                                {seg.speaker}
+                              </span>
+                              <span className="segment-timestamp">
+                                {Math.floor(seg.start / 60)}:
+                                {String(Math.floor(seg.start % 60)).padStart(2, '0')}
+                              </span>
+                            </div>
+                            <div className="segment-text">{seg.text}</div>
+                          </div>
+                        ))
+                      }
                     </div>
 
                     {/* Audio Player — lives inside transcript container, above action dock */}
@@ -1433,10 +1677,84 @@ export default function App() {
                   </div>
                 )}
 
+                {/* 5. AI Chat Tab */}
+                {activeTab === 'chat' && (
+                  <div className="chat-tab-container glass">
+                    <div className="chat-header">
+                      <div>
+                        <h2>Meeting AI Copilot</h2>
+                        <p className="desc">Ask questions about this meeting's transcript context. Echo will reply based on facts in the audio.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="chat-messages-area">
+                      {chatMessages.length === 0 ? (
+                        <div className="chat-empty-state">
+                          <Cpu className="chat-empty-icon animate-pulse" />
+                          <h3>Ask your Meeting Copilot</h3>
+                          <p>Analyze trends, clarify facts, or extract quick summaries. Try asking:</p>
+                          <div className="chat-suggestions">
+                            <button className="suggestion-pill" onClick={() => setChatQuestion("What were the main customer pain points discussed?")}>
+                              "What were the main pain points?"
+                            </button>
+                            <button className="suggestion-pill" onClick={() => setChatQuestion("Summarize the key recommendations or features suggested.")}>
+                              "What were the recommended features?"
+                            </button>
+                            <button className="suggestion-pill" onClick={() => setChatQuestion("List any action items or next steps mentioned.")}>
+                              "What are the action items?"
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        chatMessages.map((msg, idx) => (
+                          <div key={idx} className={`chat-message-row ${msg.role}`}>
+                            <div className="chat-bubble">
+                              <div className="sender-lbl">{msg.role === 'user' ? 'You' : 'Echo Copilot'}</div>
+                              <div className="message-content" dangerouslySetInnerHTML={{
+                                __html: msg.content.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                              }} />
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      {isChatLoading && (
+                        <div className="chat-message-row assistant typing">
+                          <div className="chat-bubble animate-pulse">
+                            <div className="sender-lbl">Echo Copilot</div>
+                            <div className="message-content">
+                              <RefreshCw className="icon-small animate-spin text-purple mr-2 inline-block" />
+                              Thinking...
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="chat-input-dock">
+                      <input 
+                        type="text"
+                        placeholder="Ask anything about the call transcript..."
+                        value={chatQuestion}
+                        onChange={(e) => setChatQuestion(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') sendChatMessage(); }}
+                        disabled={isChatLoading}
+                        className="chat-input-field"
+                      />
+                      <button 
+                        onClick={sendChatMessage}
+                        disabled={isChatLoading || !chatQuestion.trim()}
+                        className="btn btn-primary btn-chat-send"
+                      >
+                        Ask Copilot
+                      </button>
+                    </div>
+                  </div>
+                )}
+
               </div>
               
-              {/* Sticky bottom Action Dock — only show when insights exist AND not on PRD tab */}
-              {(selectedFeatures.length > 0 || selectedPainPoints.length > 0) && activeTab !== 'prd' && (
+              {/* Sticky bottom Action Dock — only show when insights exist AND not on PRD/Chat tabs */}
+              {(selectedFeatures.length > 0 || selectedPainPoints.length > 0) && activeTab !== 'prd' && activeTab !== 'chat' && (
                 <div className="action-dock glass">
                   <div className="selection-count">
                     <CheckCircle className="icon-medium text-pink" />

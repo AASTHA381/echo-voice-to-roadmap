@@ -337,6 +337,63 @@ def generate_prd(transcript_id: str, request: PRDRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class MeetingChatRequest(BaseModel):
+    question: str
+    history: List[Dict[str, str]] = []
+
+@app.post("/api/chat/{transcript_id}")
+def chat_about_meeting(transcript_id: str, req: MeetingChatRequest):
+    """
+    Answers questions about a specific meeting transcript using LLM.
+    """
+    registry = load_registry()
+    transcript = next((item for item in registry if item["id"] == transcript_id), None)
+    if not transcript:
+        raise HTTPException(status_code=404, detail="Transcript index not found")
+        
+    try:
+        # Load the transcript segments text
+        text_content = transcript.get("text", "")
+        if not text_content and transcript.get("segments"):
+            text_content = " ".join([seg["text"] for seg in transcript["segments"]])
+            
+        if not settings.GROQ_API_KEY:
+            # Fallback mock chat response for demo mode
+            return {"response": f"This is a demonstration response since no GROQ_API_KEY is configured. Based on the mockup for '{transcript['filename']}', the user mentioned button layout issues and payment gate latency."}
+            
+        # Call Groq LLM
+        client = Groq(api_key=settings.GROQ_API_KEY)
+        
+        system_prompt = (
+            "You are an expert product analyst and qualitative research assistant.\n"
+            "Your task is to answer user questions about the following customer interview or meeting transcript.\n"
+            "Here is the full text of the transcript:\n"
+            "-------------------\n"
+            f"{text_content}\n"
+            "-------------------\n"
+            "CRITICAL GUIDELINES:\n"
+            "1. Answer the user's questions truthfully and accurately based ONLY on the provided transcript.\n"
+            "2. If the user asks about facts or figures not mentioned in the transcript, state clearly that it is not discussed.\n"
+            "3. Keep your answers concise, structured, and professional. Use markdown formatting and bullet points where helpful."
+        )
+        
+        messages = [{"role": "system", "content": system_prompt}]
+        for item in req.history:
+            messages.append({"role": item.get("role", "user"), "content": item.get("content", "")})
+        messages.append({"role": "user", "content": req.question})
+        
+        completion = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=messages,
+            temperature=0.3,
+            max_tokens=800
+        )
+        
+        reply = completion.choices[0].message.content
+        return {"response": reply}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 class CopilotChatRequest(BaseModel):
     message: str
     history: List[Dict[str, str]] = []
