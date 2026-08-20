@@ -115,13 +115,24 @@ const renderMarkdown = (mdText) => {
     const trimmed = line.trim();
 
     // Table detection
+    if (inTable) {
+      if (!trimmed || trimmed.startsWith('#') || trimmed === '---' || trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+        flushTable(i);
+      } else {
+        if (trimmed.startsWith('|')) {
+          tableRows.push(line);
+        } else if (tableRows.length > 0) {
+          tableRows[tableRows.length - 1] += '<br/>' + line;
+        }
+        continue;
+      }
+    }
+
     if (trimmed.startsWith('|')) {
       flushList(i);
       inTable = true;
       tableRows.push(line);
       continue;
-    } else if (inTable) {
-      flushTable(i);
     }
 
     // Bullet list detection
