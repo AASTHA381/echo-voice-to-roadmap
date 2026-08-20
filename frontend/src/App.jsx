@@ -3,7 +3,7 @@ import {
   UploadCloud, FileText, PieChart, BookOpen, Download, 
   Play, Pause, Plus, Minus, Check, CheckCircle, 
   ExternalLink, AlertTriangle, FileSpreadsheet, Sparkles, 
-  RefreshCw, Music, Copy, Trash2, Mic, Cpu, ListChecks
+  RefreshCw, Music, Copy, Trash2, Mic, Cpu, Bot, ListChecks
 } from 'lucide-react';
 
 // Parser to convert MM:SS, HH:MM:SS or ranges into raw seconds for seeking
@@ -1756,7 +1756,7 @@ export default function App() {
           <aside className={`chat-sidebar glass ${isChatSidebarOpen ? 'open' : ''}`}>
             <div className="chat-sidebar-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Cpu className="icon-medium text-purple" />
+                <Bot className="icon-medium text-purple" />
                 <h3>Meeting Copilot</h3>
               </div>
               <button className="btn-close-chat" onClick={() => setIsChatSidebarOpen(false)}>×</button>
@@ -1765,7 +1765,7 @@ export default function App() {
             <div className="chat-messages-area">
               {chatMessages.length === 0 ? (
                 <div className="chat-empty-state">
-                  <Cpu className="chat-empty-icon animate-pulse" />
+                  <Bot className="chat-empty-icon animate-pulse" />
                   <h3>Ask your Meeting Copilot</h3>
                   <p>Echo analyzes the meeting transcript to answer questions instantly. Try asking:</p>
                   <div className="chat-suggestions">
@@ -1850,7 +1850,7 @@ export default function App() {
             transition: 'all 0.2s ease'
           }}
         >
-          <Cpu className="icon-medium" />
+          <Bot className="icon-medium" />
         </button>
       )}
       </main>
