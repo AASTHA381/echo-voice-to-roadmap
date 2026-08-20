@@ -179,9 +179,13 @@ export default function App() {
   // Live Recording States
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [recordingMode, setRecordingMode] = useState('mic'); // mic | meeting
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerIntervalRef = useRef(null);
+  const activeMicStreamRef = useRef(null);
+  const activeDisplayStreamRef = useRef(null);
+  const activeAudioCtxRef = useRef(null);
 
   // File rename modal state
   const [pendingFile, setPendingFile] = useState(null);
@@ -325,10 +329,93 @@ export default function App() {
     setPendingFileName(base);
   };
 
+  // Helper to stop all active hardware streams and close AudioContext safely
+  const cleanupRecordingResources = () => {
+    if (activeMicStreamRef.current) {
+      activeMicStreamRef.current.getTracks().forEach(track => track.stop());
+      activeMicStreamRef.current = null;
+    }
+    if (activeDisplayStreamRef.current) {
+      activeDisplayStreamRef.current.getTracks().forEach(track => track.stop());
+      activeDisplayStreamRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+    if (activeAudioCtxRef.current) {
+      activeAudioCtxRef.current.close().catch(() => {});
+      activeAudioCtxRef.current = null;
+    }
+  };
+
   // Live Meeting Recording Handlers
   const startRecording = async () => {
+    let stream;
+    let micStream = null;
+    let displayStream = null;
+    let audioCtx = null;
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (recordingMode === 'meeting') {
+        try {
+          // 1. Request screen share with system audio
+          displayStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          });
+        } catch (e) {
+          throw new Error("Screen sharing permission denied. Please click 'Record' again, select a tab/screen, and make sure to check the 'Share system audio' box.");
+        }
+
+        // Check if displayStream has audio
+        if (displayStream.getAudioTracks().length === 0) {
+          displayStream.getTracks().forEach(t => t.stop());
+          throw new Error("System audio was not shared. Please make sure to check the 'Share system audio' box at the bottom of the screen selection pop-up.");
+        }
+
+        try {
+          // 2. Request microphone
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (e) {
+          displayStream.getTracks().forEach(t => t.stop());
+          throw new Error("Microphone permission denied. Microphone access is required to record your side of the call.");
+        }
+
+        // 3. Mix the streams using Web Audio API
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const dest = audioCtx.createMediaStreamDestination();
+
+        const micSource = audioCtx.createMediaStreamSource(micStream);
+        const displaySource = audioCtx.createMediaStreamSource(displayStream);
+
+        micSource.connect(dest);
+        displaySource.connect(dest);
+
+        // Store active streams for dynamic cleanup
+        activeMicStreamRef.current = micStream;
+        activeDisplayStreamRef.current = displayStream;
+        activeAudioCtxRef.current = audioCtx;
+
+        stream = dest.stream;
+
+        // Auto-stop recording if user clicks "Stop Sharing" in browser native controls
+        const displayTrack = displayStream.getVideoTracks()[0] || displayStream.getAudioTracks()[0];
+        if (displayTrack) {
+          displayTrack.onended = () => {
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+              stopRecording();
+            }
+          };
+        }
+      } else {
+        // Standard microphone only
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+
       audioChunksRef.current = [];
       
       // Priority order of MIME types — most compatible first for iOS/Android/Desktop
@@ -362,11 +449,11 @@ export default function App() {
       };
       
       recorder.onstop = () => {
-        // Detect actual mimeType from the recorder (may differ from what we requested)
+        // Detect actual mimeType from the recorder
         const actualMimeType = recorder.mimeType || selectedMime || 'audio/mp4';
         
         // Map mimeType to correct file extension
-        let extension = 'mp4'; // safe default — Groq supports mp4
+        let extension = 'mp4'; // safe default
         if (actualMimeType.includes('webm')) {
           extension = 'webm';
         } else if (actualMimeType.includes('ogg')) {
@@ -382,18 +469,17 @@ export default function App() {
         // Guard: check blob is not empty
         if (audioBlob.size < 100) {
           alert('⚠️ Recording captured no audio data. Please check your microphone permissions and try again.');
-          stream.getTracks().forEach(track => track.stop());
+          cleanupRecordingResources();
           return;
         }
 
         const now = new Date();
         const dateStr = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
         const timeStr = String(now.getHours()).padStart(2, '0') + "_" + String(now.getMinutes()).padStart(2, '0');
-        const defaultName = `Live_Meeting_${dateStr}_${timeStr}`;
+        const defaultName = recordingMode === 'meeting' ? `Meeting_Call_${dateStr}_${timeStr}` : `Mic_Record_${dateStr}_${timeStr}`;
         const audioFile = new File([audioBlob], `${defaultName}.${extension}`, { type: actualMimeType });
         
-        // Stop all tracks to release microphone
-        stream.getTracks().forEach(track => track.stop());
+        cleanupRecordingResources();
         
         // Show rename modal before uploading
         setPendingFile(audioFile);
@@ -411,13 +497,8 @@ export default function App() {
       
     } catch (err) {
       console.error("Recording error:", err);
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        alert("⚠️ Microphone access denied.\n\nPlease go to your browser Settings → Site Permissions → Microphone and allow access for this site, then try again.");
-      } else if (err.name === 'NotFoundError') {
-        alert("⚠️ No microphone found. Please connect a microphone and try again.");
-      } else {
-        alert("⚠️ Could not start recording: " + err.message);
-      }
+      cleanupRecordingResources();
+      alert("⚠️ Recording failed: " + err.message);
     }
   };
 
@@ -439,10 +520,7 @@ export default function App() {
       mediaRecorderRef.current.onstop = null;
       mediaRecorderRef.current.stop();
       
-      // Stop all mic tracks
-      if (mediaRecorderRef.current.stream) {
-        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-      }
+      cleanupRecordingResources();
       
       setIsRecording(false);
       clearInterval(timerIntervalRef.current);
@@ -760,11 +838,31 @@ export default function App() {
             </div>
           )}
 
+          <div className="record-mode-selector">
+            <button
+              className={`btn-toggle-mode ${recordingMode === 'mic' ? 'active' : ''}`}
+              onClick={() => setRecordingMode('mic')}
+              disabled={isRecording}
+              title="Record standard microphone audio (in-person or solo voice)"
+            >
+              <Mic style={{ width: '13px', height: '13px' }} />
+              Mic Only
+            </button>
+            <button
+              className={`btn-toggle-mode ${recordingMode === 'meeting' ? 'active' : ''}`}
+              onClick={() => setRecordingMode('meeting')}
+              disabled={isRecording}
+              title="Record meeting call silently (requires Chrome/Edge/Firefox on desktop)"
+            >
+              <Cpu style={{ width: '13px', height: '13px' }} />
+              Meeting Call
+            </button>
+          </div>
+
           <button 
             className="btn btn-secondary btn-record"
             onClick={startRecording}
             disabled={isUploading || isRecording}
-            style={{ marginRight: '10px' }}
           >
             <Mic className="icon-medium text-purple" />
             Record
@@ -792,22 +890,26 @@ export default function App() {
               <div className="recording-pulse-ring"></div>
             </div>
             
-            <h2>Recording Live Meeting...</h2>
-            <div className="recording-timer">{formatRecordingTime(recordingTime)}</div>
-            
-            {/* Waveform Visualizer */}
-            <div className="recording-waveform">
-              <span className="wave-bar bar-1"></span>
-              <span className="wave-bar bar-2"></span>
-              <span className="wave-bar bar-3"></span>
-              <span className="wave-bar bar-4"></span>
-              <span className="wave-bar bar-5"></span>
-              <span className="wave-bar bar-6"></span>
-              <span className="wave-bar bar-7"></span>
-              <span className="wave-bar bar-8"></span>
-            </div>
-            
-            <p className="recording-note">Speak clearly. We will capture and transcribe your meeting in the background.</p>
+             <h2>{recordingMode === 'meeting' ? 'Recording Meeting Call...' : 'Recording Microphone...'}</h2>
+             <div className="recording-timer">{formatRecordingTime(recordingTime)}</div>
+             
+             {/* Waveform Visualizer */}
+             <div className="recording-waveform">
+               <span className="wave-bar bar-1"></span>
+               <span className="wave-bar bar-2"></span>
+               <span className="wave-bar bar-3"></span>
+               <span className="wave-bar bar-4"></span>
+               <span className="wave-bar bar-5"></span>
+               <span className="wave-bar bar-6"></span>
+               <span className="wave-bar bar-7"></span>
+               <span className="wave-bar bar-8"></span>
+             </div>
+             
+             <p className="recording-note">
+               {recordingMode === 'meeting'
+                 ? "💡 Tip: Ensure you checked 'Share system audio' in the screen selection window to record both sides."
+                 : "Speak clearly. We will capture and transcribe your microphone audio in the background."}
+             </p>
             
             <div className="recording-actions">
               <button className="btn btn-danger" onClick={stopRecording}>
