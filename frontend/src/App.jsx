@@ -3,7 +3,7 @@ import {
   UploadCloud, FileText, PieChart, BookOpen, Download, 
   Play, Pause, Plus, Minus, Check, CheckCircle, 
   ExternalLink, AlertTriangle, FileSpreadsheet, Sparkles, 
-  RefreshCw, Music, Copy, Trash2, Mic, Cpu, Bot, ListChecks
+  RefreshCw, Music, Copy, Trash2, Mic, Cpu, Bot, Edit3, ListChecks
 } from 'lucide-react';
 
 // Parser to convert MM:SS, HH:MM:SS or ranges into raw seconds for seeking
@@ -218,6 +218,8 @@ export default function App() {
   const [selectedSpeakerFilter, setSelectedSpeakerFilter] = useState(null);
   const [isStatsCollapsed, setIsStatsCollapsed] = useState(true);
   const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(false);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renamingName, setRenamingName] = useState('');
 
   // File rename modal state
   const [pendingFile, setPendingFile] = useState(null);
@@ -699,6 +701,52 @@ export default function App() {
     }
   };
 
+  const handleInlineRenameSave = (transcriptId) => {
+    if (!renamingName.trim()) return;
+    
+    fetch(`${API_BASE}/api/transcripts/${transcriptId}/rename`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ new_filename: renamingName.trim() })
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Rename failed");
+        return res.json();
+      })
+      .then(() => {
+        // Update local state transcripts list
+        setTranscripts(prev => prev.map(t => {
+          if (t.id === transcriptId) {
+            let cleanName = renamingName.trim();
+            // preserve original extension if not typed
+            if (!cleanName.includes('.')) {
+              const origExt = t.filename.split('.').pop() || 'wav';
+              cleanName = `${cleanName}.${origExt}`;
+            }
+            return { ...t, filename: cleanName };
+          }
+          return t;
+        }));
+        // If current active selected item was renamed, update selectedTranscript object
+        if (selectedId === transcriptId) {
+          setSelectedTranscript(prev => {
+            if (!prev) return prev;
+            let cleanName = renamingName.trim();
+            if (!cleanName.includes('.')) {
+              const origExt = prev.filename.split('.').pop() || 'wav';
+              cleanName = `${cleanName}.${origExt}`;
+            }
+            return { ...prev, filename: cleanName };
+          });
+        }
+        setRenamingId(null);
+      })
+      .catch(err => {
+        console.error("Error renaming transcript:", err);
+        alert("Failed to rename file. Please try again.");
+      });
+  };
+
   // LLM Insight Generation (Pain Points & Feature Backlog)
   const runRAGAnalysis = async () => {
     if (!selectedId) return;
@@ -938,11 +986,6 @@ export default function App() {
         <div className="header-actions">
           {selectedTranscript && (
             <>
-              <div className="active-doc-chip">
-                <FileText className="icon-small text-indigo" />
-                <span className="doc-name truncate">{selectedTranscript.filename}</span>
-                <span className="doc-duration">({selectedTranscript.duration}s)</span>
-              </div>
               <a 
                 href={audioUrl || '#'}
                 download={selectedTranscript.filename}
@@ -1123,14 +1166,84 @@ export default function App() {
                   onClick={() => setSelectedId(t.id)}
                 >
                   <div className="card-top">
-                    <span className="filename text-ellipsis" title={t.filename}>{t.filename}</span>
-                    <button 
-                      className="delete-card-btn"
-                      onClick={(e) => handleDeleteTranscript(t.id, e)}
-                      title="Delete Transcript"
-                    >
-                      <Trash2 className="icon-tiny" />
-                    </button>
+                    {renamingId === t.id ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
+                        <input 
+                          type="text"
+                          className="rename-inline-input"
+                          value={renamingName}
+                          onChange={(e) => setRenamingName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleInlineRenameSave(t.id);
+                            if (e.key === 'Escape') setRenamingId(null);
+                          }}
+                          autoFocus
+                          style={{
+                            flex: 1,
+                            padding: '2px 6px',
+                            fontSize: '11.5px',
+                            borderRadius: '4px',
+                            border: '1px solid var(--color-primary)',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            color: '#000000',
+                            outline: 'none',
+                            fontWeight: '600'
+                          }}
+                        />
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleInlineRenameSave(t.id); }}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--color-purple)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                          title="Save new filename"
+                        >
+                          <Check className="icon-tiny" />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setRenamingId(null); }}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px', fontSize: '14px', display: 'flex', alignItems: 'center' }}
+                          title="Cancel rename"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="filename-container" style={{ display: 'flex', alignItems: 'center', gap: '6px', maxWidth: '75%', minWidth: 0 }}>
+                          {selectedId === t.id && <Sparkles className="icon-tiny text-pink animate-pulse" />}
+                          <span className="filename text-ellipsis" title={t.filename} style={{ fontWeight: selectedId === t.id ? '700' : '500' }}>
+                            {t.filename}
+                          </span>
+                        </div>
+                        <div className="card-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <button 
+                            className="rename-card-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRenamingId(t.id);
+                              setRenamingName(t.filename);
+                            }}
+                            title="Rename Clip"
+                            style={{
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--text-muted)',
+                              cursor: 'pointer',
+                              padding: '2px',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <Edit3 className="icon-tiny" />
+                          </button>
+                          <button 
+                            className="delete-card-btn"
+                            onClick={(e) => handleDeleteTranscript(t.id, e)}
+                            title="Delete Transcript"
+                          >
+                            <Trash2 className="icon-tiny" />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="card-bottom">
                     <span className="time-badge">{t.duration}s</span>

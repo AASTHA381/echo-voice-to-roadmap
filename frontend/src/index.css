@@ -343,8 +343,12 @@ body {
   border-color: rgba(15, 23, 42, 0.05);
 }
 .transcript-item-card.active {
-  background: var(--color-primary-glow);
-  border-color: rgba(79, 70, 229, 0.25);
+  background: rgba(79, 70, 229, 0.12) !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 12px rgba(79, 70, 229, 0.15), inset 0 0 4px rgba(79, 70, 229, 0.08) !important;
+}
+.transcript-item-card.active .filename {
+  color: var(--color-primary) !important;
 }
 .transcript-item-card .card-top {
   display: flex;

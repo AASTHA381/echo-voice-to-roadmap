@@ -272,6 +272,36 @@ def delete_transcript(transcript_id: str):
             
     return {"status": "success", "message": f"Deleted transcript {transcript_id}"}
 
+class RenameRequest(BaseModel):
+    new_filename: str
+
+@app.post("/api/transcripts/{transcript_id}/rename")
+def rename_transcript(transcript_id: str, request: RenameRequest):
+    """
+    Renames the user-facing display filename of an existing transcript.
+    """
+    registry = load_registry()
+    found = False
+    for item in registry:
+        if item["id"] == transcript_id:
+            new_name = request.new_filename.strip()
+            if not new_name:
+                raise HTTPException(status_code=400, detail="New filename cannot be empty")
+            # preserve original extension if not typed
+            if '.' not in new_name:
+                orig_ext = item["filename"].split('.')[-1] if '.' in item["filename"] else 'wav'
+                new_name = f"{new_name}.{orig_ext}"
+            item["filename"] = new_name
+            found = True
+            break
+            
+    if not found:
+        raise HTTPException(status_code=404, detail="Transcript not found")
+        
+    save_registry(registry)
+    return {"status": "success", "message": "Transcript renamed successfully"}
+
+
 @app.post("/api/analyze/{transcript_id}")
 def analyze_transcript(transcript_id: str):
     """
