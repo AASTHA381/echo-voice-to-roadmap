@@ -116,7 +116,8 @@ def health_check():
     return {
         "status": "healthy",
         "groq_api_configured": has_key,
-        "mode": "Live Production" if has_key else "Interactive Demo/Fallback"
+        "mode": "Live Production" if has_key else "Interactive Demo/Fallback",
+        "diagnostic_version": "v1.0.2-rename-endpoint-check"
     }
 
 @app.post("/api/upload")
