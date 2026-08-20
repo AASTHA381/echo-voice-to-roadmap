@@ -2254,5 +2254,11 @@ body {
   }
 }
 
+.chat-floating-trigger:hover {
+  transform: scale(1.08) rotate(5deg) !important;
+  background: var(--color-purple) !important;
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4) !important;
+}
+
 
 

@@ -267,7 +267,7 @@ export default function App() {
           setSelectedSpeakerFilter(null);
           setIsPlaying(false);
           setCurrentTime(0);
-          setIsChatSidebarOpen(false);
+          setIsChatSidebarOpen(!isMobileDevice);
           setActiveTab('transcript');
         })
         .catch(err => console.error("Error fetching transcript:", err));
@@ -964,27 +964,6 @@ export default function App() {
                 <Download className="icon-small text-emerald" />
                 Download Audio
               </a>
-              <button 
-                className={`btn btn-secondary btn-chat-toggle ${isChatSidebarOpen ? 'active' : ''}`}
-                onClick={() => setIsChatSidebarOpen(!isChatSidebarOpen)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  marginRight: '6px',
-                  padding: '8px 12px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  border: isChatSidebarOpen ? '1px solid var(--color-primary)' : '1px solid var(--border-glass)',
-                  background: isChatSidebarOpen ? 'rgba(79, 70, 229, 0.08)' : 'transparent',
-                  color: isChatSidebarOpen ? 'var(--color-primary)' : 'var(--text-main)',
-                  cursor: 'pointer'
-                }}
-                title="Toggle AI Meeting Copilot Chat Sidebar"
-              >
-                <Cpu className="icon-small text-purple" />
-                AI Chat
-              </button>
             </>
           )}
 
@@ -1846,6 +1825,34 @@ export default function App() {
             </div>
           </aside>
         )}
+      {/* Floating Chat Trigger Button — only visible when a transcript is active and chat sidebar is closed */}
+      {selectedTranscript && !isChatSidebarOpen && (
+        <button 
+          className="chat-floating-trigger animate-bounce-slow"
+          onClick={() => setIsChatSidebarOpen(true)}
+          title="Open AI Meeting Copilot"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            background: 'var(--color-primary)',
+            color: '#ffffff',
+            border: 'none',
+            boxShadow: '0 4px 16px rgba(79, 70, 229, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 99,
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <Cpu className="icon-medium" />
+        </button>
+      )}
       </main>
     </div>
   );
