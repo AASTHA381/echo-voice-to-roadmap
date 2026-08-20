@@ -166,7 +166,11 @@ const renderMarkdown = (mdText) => {
 };
 
 export default function App() {
-  const API_BASE = import.meta.env.VITE_API_URL || 'https://echo-voice-to-roadmap-pgtn.onrender.com';
+  const API_BASE = import.meta.env.VITE_API_URL || (
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:8000'
+      : 'https://echo-voice-to-roadmap-pgtn.onrender.com'
+  );
 
   // Navigation & View Tabs
   const [activeTab, setActiveTab] = useState('transcript'); // transcript | insights | backlog | prd
@@ -729,7 +733,7 @@ export default function App() {
         }));
         // If current active selected item was renamed, update selectedTranscript object
         if (selectedId === transcriptId) {
-          setSelectedTranscript(prev => {
+          setActiveTranscript(prev => {
             if (!prev) return prev;
             let cleanName = renamingName.trim();
             if (!cleanName.includes('.')) {
