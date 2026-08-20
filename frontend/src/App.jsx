@@ -41,8 +41,10 @@ const renderMarkdown = (mdText) => {
   let inTable = false;
 
   const parseInlineMarkdown = (text) => {
+    // Replace [text](url) with clickable links
+    let html = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="chat-link">$1</a>');
     // Replace **bold** with <strong>bold</strong>
-    let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     // Replace *italic* with <em>italic</em>
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
     return html;
@@ -1902,9 +1904,9 @@ export default function App() {
                   <div key={idx} className={`chat-message-row ${msg.role}`}>
                     <div className="chat-bubble">
                       <div className="sender-lbl">{msg.role === 'user' ? 'You' : 'Echo Copilot'}</div>
-                      <div className="message-content" dangerouslySetInnerHTML={{
-                        __html: msg.content.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                      }} />
+                      <div className="message-content">
+                        {renderMarkdown(msg.content || '')}
+                      </div>
                     </div>
                   </div>
                 ))
