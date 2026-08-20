@@ -1828,27 +1828,9 @@ export default function App() {
       {/* Floating Chat Trigger Button — only visible when a transcript is active and chat sidebar is closed */}
       {selectedTranscript && !isChatSidebarOpen && (
         <button 
-          className="chat-floating-trigger animate-bounce-slow"
+          className="chat-floating-trigger"
           onClick={() => setIsChatSidebarOpen(true)}
           title="Open AI Meeting Copilot"
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            background: 'var(--color-primary)',
-            color: '#ffffff',
-            border: 'none',
-            boxShadow: '0 4px 16px rgba(79, 70, 229, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            zIndex: 99,
-            transition: 'all 0.2s ease'
-          }}
         >
           <Bot className="icon-medium" />
         </button>
