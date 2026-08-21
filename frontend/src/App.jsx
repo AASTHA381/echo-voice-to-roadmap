@@ -1775,36 +1775,6 @@ export default function App() {
                       }
                     </div>
 
-                    {/* Audio Player — lives inside transcript container, above action dock */}
-                    <div className="player-dock glass">
-                      <button className="btn-circle btn-play-pause" onClick={playPauseAudio}>
-                        {isPlaying ? <Pause className="icon-large" /> : <Play className="icon-large" />}
-                      </button>
-                      <div className="timeline-scrubber-wrapper">
-                        <span className="time-lbl">
-                          {Math.floor(currentTime / 60)}:
-                          {String(Math.floor(currentTime % 60)).padStart(2, '0')}
-                        </span>
-                        <input 
-                          type="range" 
-                          min={0}
-                          max={selectedTranscript.duration}
-                          value={currentTime}
-                          onChange={(e) => seekTo(parseFloat(e.target.value))}
-                          className="scrubber-bar"
-                        />
-                        <span className="time-lbl">
-                          {Math.floor(selectedTranscript.duration / 60)}:
-                          {String(Math.floor(selectedTranscript.duration % 60)).padStart(2, '0')}
-                        </span>
-                      </div>
-                      <audio 
-                        ref={audioRef}
-                        src={audioUrl || ""}
-                        onTimeUpdate={handleAudioTimeUpdate}
-                        style={{ display: 'none' }}
-                      />
-                    </div>
                   </div>
                 )}
 
@@ -2299,6 +2269,37 @@ export default function App() {
                   </button>
                 </div>
               )}
+
+              {/* Audio Player — lives persistently in content pane bottom */}
+              <div className="player-dock glass">
+                <button className="btn-circle btn-play-pause" onClick={playPauseAudio}>
+                  {isPlaying ? <Pause className="icon-large" /> : <Play className="icon-large" />}
+                </button>
+                <div className="timeline-scrubber-wrapper">
+                  <span className="time-lbl">
+                    {Math.floor(currentTime / 60)}:
+                    {String(Math.floor(currentTime % 60)).padStart(2, '0')}
+                  </span>
+                  <input 
+                    type="range" 
+                    min={0}
+                    max={selectedTranscript.duration}
+                    value={currentTime}
+                    onChange={(e) => seekTo(parseFloat(e.target.value))}
+                    className="scrubber-bar"
+                  />
+                  <span className="time-lbl">
+                    {Math.floor(selectedTranscript.duration / 60)}:
+                    {String(Math.floor(selectedTranscript.duration % 60)).padStart(2, '0')}
+                  </span>
+                </div>
+                <audio 
+                  ref={audioRef}
+                  src={audioUrl || ""}
+                  onTimeUpdate={handleAudioTimeUpdate}
+                  style={{ display: 'none' }}
+                />
+              </div>
             </>
           ) : (
             <div className="empty-state glass">
