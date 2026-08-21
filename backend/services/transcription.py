@@ -9,7 +9,7 @@ class TranscriptionService:
         if settings.GROQ_API_KEY:
             self.client = Groq(api_key=settings.GROQ_API_KEY)
 
-    def transcribe_audio(self, file_path: str, prompt: str = None) -> Dict[str, Any]:
+    def transcribe_audio(self, file_path: str) -> Dict[str, Any]:
         """
         Transcribes audio using Groq Whisper API and returns the full text along with timestamped segments.
         """
@@ -23,15 +23,11 @@ class TranscriptionService:
         
         with open(file_path, "rb") as file:
             # We use verbose_json to get segment level timestamps
-            kwargs = {
-                "file": (filename, file.read()),
-                "model": "whisper-large-v3",
-                "response_format": "verbose_json"
-            }
-            if prompt:
-                kwargs["prompt"] = prompt
-                
-            response = self.client.audio.transcriptions.create(**kwargs)
+            response = self.client.audio.transcriptions.create(
+                file=(filename, file.read()),
+                model="whisper-large-v3",
+                response_format="verbose_json"
+            )
         
         # Parse output from verbose_json response
         # The response is typically a dict-like object containing segments and text
