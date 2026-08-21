@@ -43,6 +43,18 @@ const renderMarkdown = (mdText) => {
   const parseInlineMarkdown = (text) => {
     // Replace [text](url) with clickable links
     let html = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="chat-link">$1</a>');
+    
+    // Replace [MM:SS] or [HH:MM:SS] with seekable span
+    html = html.replace(/\[(\d{1,2}:\d{2}(?::\d{2})?s?)\]/g, (match, p1) => {
+      const secs = parseTimestampToSeconds(p1);
+      return `<span class="chat-timestamp-seek" data-seconds="${secs}">[${p1}]</span>`;
+    });
+    // Replace (MM:SS) or (HH:MM:SS) with seekable span
+    html = html.replace(/\((\d{1,2}:\d{2}(?::\d{2})?s?)\)/g, (match, p1) => {
+      const secs = parseTimestampToSeconds(p1);
+      return `<span class="chat-timestamp-seek" data-seconds="${secs}">(${p1})</span>`;
+    });
+
     // Replace **bold** with <strong>bold</strong>
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     // Replace *italic* with <em>italic</em>
@@ -256,6 +268,30 @@ export default function App() {
       setSidebarCollapsed(isMobileDevice);
     }
   }, [isChatSidebarOpen]);
+
+  // Global click delegate to seek audio on clicking any chat/summary timestamp
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      const target = e.target.closest('.chat-timestamp-seek');
+      if (target) {
+        const seconds = parseFloat(target.getAttribute('data-seconds'));
+        if (!isNaN(seconds)) {
+          // Find if there is a matching segment for this time to set active segment
+          let matchingSegId = null;
+          if (selectedTranscript && selectedTranscript.segments) {
+            const match = selectedTranscript.segments.find(
+              seg => seconds >= seg.start && seconds <= seg.end
+            );
+            if (match) matchingSegId = match.id;
+          }
+          seekTo(seconds, matchingSegId);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick);
+    return () => document.removeEventListener('click', handleGlobalClick);
+  }, [selectedTranscript, isPlaying]);
 
   // Fetch API Health & Loaded Transcripts
   useEffect(() => {
@@ -1492,7 +1528,13 @@ export default function App() {
                               >
                                 {seg.speaker}
                               </span>
-                              <span className="segment-timestamp">
+                              <span 
+                                className="segment-timestamp"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  seekTo(seg.start, seg.id);
+                                }}
+                              >
                                 {Math.floor(seg.start / 60)}:
                                 {String(Math.floor(seg.start % 60)).padStart(2, '0')}
                               </span>

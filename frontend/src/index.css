@@ -2415,5 +2415,29 @@ body {
   overflow-wrap: break-word !important;
 }
 
+/* Chat bubble seekable timestamp token styling */
+.chat-timestamp-seek {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  display: inline-block;
+  padding: 0 4px;
+  background: rgba(79, 70, 229, 0.05);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+.chat-timestamp-seek:hover {
+  background: rgba(79, 70, 229, 0.15);
+  color: var(--color-purple);
+}
+.chat-message-row.user .chat-timestamp-seek {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+.chat-message-row.user .chat-timestamp-seek:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 
 
