@@ -6,9 +6,8 @@ import io
 from datetime import datetime
 from typing import List, Dict, Any
 from fastapi.responses import StreamingResponse
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from groq import Groq
 
@@ -19,8 +18,64 @@ from backend.services.analyzer import analyzer_service
 
 app = FastAPI(title="Echo - Voice to Roadmap AI Copilot API")
 
-# Mount uploads folder so the audio player can stream the recordings
-app.mount("/api/audio", StaticFiles(directory=settings.UPLOAD_DIR), name="audio")
+# Custom audio streaming route supporting HTTP 206 Partial Content (Range Requests) for browser seek compatibility
+import re
+
+@app.get("/api/audio/{filename}")
+def serve_audio_range(filename: str, range: str = Header(None)):
+    file_path = os.path.join(settings.UPLOAD_DIR, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Audio file not found")
+        
+    file_size = os.path.getsize(file_path)
+    
+    # Handle Range request
+    if range:
+        match = re.search(r'bytes=(\d+)-(\d*)', range)
+        if match:
+            start = int(match.group(1))
+            end = match.group(2)
+            end = int(end) if end else file_size - 1
+            
+            if start >= file_size:
+                raise HTTPException(status_code=416, detail="Range not satisfiable")
+                
+            chunk_size = end - start + 1
+            
+            def file_iterator():
+                with open(file_path, 'rb') as f:
+                    f.seek(start)
+                    bytes_left = chunk_size
+                    while bytes_left > 0:
+                        chunk = f.read(min(8192, bytes_left))
+                        if not chunk:
+                            break
+                        bytes_left -= len(chunk)
+                        yield chunk
+
+            headers = {
+                'Content-Range': f'bytes {start}-{end}/{file_size}',
+                'Accept-Ranges': 'bytes',
+                'Content-Length': str(chunk_size),
+                'Content-Type': 'audio/mpeg' if filename.endswith('.mp3') else 'audio/wav' if filename.endswith('.wav') else 'audio/m4a'
+            }
+            return StreamingResponse(file_iterator(), status_code=206, headers=headers)
+            
+    # Fallback for full file streaming
+    def full_file_iterator():
+        with open(file_path, 'rb') as f:
+            while True:
+                chunk = f.read(8192)
+                if not chunk:
+                    break
+                yield chunk
+                
+    headers = {
+        'Accept-Ranges': 'bytes',
+        'Content-Length': str(file_size),
+        'Content-Type': 'audio/mpeg' if filename.endswith('.mp3') else 'audio/wav' if filename.endswith('.wav') else 'audio/m4a'
+    }
+    return StreamingResponse(full_file_iterator(), status_code=200, headers=headers)
 
 # Configure CORS so our React frontend can connect securely
 app.add_middleware(
