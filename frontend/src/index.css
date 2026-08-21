@@ -2203,7 +2203,6 @@ body {
   font-weight: 700;
 }
 
-/* AI Chat Right Sidebar styling */
 .chat-sidebar {
   position: fixed;
   top: 72px; /* aligns below the header */
@@ -2216,11 +2215,21 @@ body {
   z-index: 100;
   display: flex;
   flex-direction: column;
-  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
 }
 .chat-sidebar.open {
   right: 0;
+}
+
+@media (min-width: 769px) {
+  .chat-sidebar {
+    width: 600px;
+    right: -620px;
+  }
+  .chat-sidebar.open {
+    right: 0;
+  }
 }
 .chat-sidebar-header {
   padding: 16px 20px;
@@ -2255,7 +2264,7 @@ body {
 /* Adjust the content-pane right margin when sidebar is open on desktop */
 @media (min-width: 769px) {
   .app-main-layout:has(.chat-sidebar.open) .content-pane {
-    margin-right: 380px;
+    margin-right: 600px;
     transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .content-pane {
