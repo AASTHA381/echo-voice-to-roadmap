@@ -248,6 +248,15 @@ export default function App() {
   const [serverWaking, setServerWaking] = useState(false); // shows 'server warming' hint during slow calls
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // collapse by default on mobile, toggleable
 
+  // Auto-collapse left sidebar when chatbot is opened, and expand when closed
+  useEffect(() => {
+    if (isChatSidebarOpen) {
+      setSidebarCollapsed(true);
+    } else {
+      setSidebarCollapsed(isMobileDevice);
+    }
+  }, [isChatSidebarOpen]);
+
   // Fetch API Health & Loaded Transcripts
   useEffect(() => {
     fetch(`${API_BASE}/api/health`)
