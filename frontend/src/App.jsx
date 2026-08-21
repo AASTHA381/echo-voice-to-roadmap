@@ -53,7 +53,7 @@ const renderMarkdown = (mdText) => {
   const flushList = (key) => {
     if (listItems.length > 0) {
       elements.push(
-        <ul key={`list-${key}`} className="prd-ul" style={{margin: '8px 0 12px 20px'}}>
+        <ul key={`list-${key}`} className="prd-ul">
           {listItems.map((item, idx) => (
             <li key={idx} className="prd-li" dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(item) }} />
           ))}
@@ -141,6 +141,10 @@ const renderMarkdown = (mdText) => {
       listItems.push(trimmed.slice(2));
       continue;
     } else if (inList) {
+      if (!trimmed) {
+        // Keep list open on empty line
+        continue;
+      }
       flushList(i);
     }
 
