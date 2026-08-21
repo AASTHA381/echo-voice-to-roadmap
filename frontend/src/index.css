@@ -1,26 +1,26 @@
-/* Core Reset & Ultra-Premium Obsidian Dark-Slate Variables */
+/* Core Reset & Premium Warm-Stone Light Theme */
 :root {
-  --bg-primary: #0a0d16; /* Deep Obsidian Slate */
-  --bg-secondary: #0f1524; /* Rich Slate 950 */
-  --bg-card: #151b2d; /* Slate 900 Card */
-  --bg-glass: rgba(15, 21, 36, 0.75); /* Dark Glass */
-  --border-glass: rgba(255, 255, 255, 0.08); /* Glow-white glass border */
-  
-  --color-primary: #6366f1; /* Vibrant Indigo 500 */
-  --color-primary-glow: rgba(99, 102, 241, 0.15);
-  --color-purple: #a78bfa; /* Light Violet 400 */
-  --color-pink: #f472b6; /* Light Pink 400 */
-  --color-amber: #fbbf24; /* Amber 400 */
-  --color-emerald: #34d399; /* Emerald 400 */
-  --color-rose: #f87171; /* Rose 400 */
-  
-  --text-main: #f8fafc; /* Slate 50 */
-  --text-muted: #94a3b8; /* Slate 400 */
-  --text-dark: #64748b; /* Slate 500 */
-  
+  --bg-primary: #FAFAFB;   /* Warm off-white */
+  --bg-secondary: #F3F3F6; /* Cool stone 100 */
+  --bg-card: #FFFFFF;      /* Pure white cards */
+  --bg-glass: rgba(255, 255, 255, 0.88); /* Light frosted glass */
+  --border-glass: rgba(0, 0, 0, 0.07);   /* Subtle dark border */
+
+  --color-primary: #7C3AED;              /* Violet 600 — premium, not blue */
+  --color-primary-glow: rgba(124, 58, 237, 0.10);
+  --color-purple: #9333EA;               /* Purple 600 */
+  --color-pink: #DB2777;                 /* Pink 600 */
+  --color-amber: #D97706;                /* Amber 600 */
+  --color-emerald: #059669;              /* Emerald 600 */
+  --color-rose: #E11D48;                 /* Rose 600 */
+
+  --text-main: #1C1917;    /* Stone 900 — warm near-black */
+  --text-muted: #57534E;   /* Stone 600 — warm gray */
+  --text-dark: #A8A29E;    /* Stone 400 */
+
   --font-display: 'Plus Jakarta Sans', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  
+
   --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --radius-lg: 16px;
   --radius-md: 10px;
@@ -42,54 +42,44 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar customization */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.01);
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.24);
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.22); }
 
-/* Background ambient glow orbs */
+/* Subtle ambient glow orbs */
 .glow-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(120px);
+  filter: blur(140px);
   z-index: -1;
   pointer-events: none;
-  opacity: 0.22;
+  opacity: 0.09;
 }
 .main-orb {
-  top: 5%;
-  left: 15%;
-  width: 400px;
-  height: 400px;
+  top: -5%;
+  left: 10%;
+  width: 500px;
+  height: 500px;
   background: var(--color-primary);
 }
 .secondary-orb {
-  bottom: 5%;
-  right: 10%;
-  width: 450px;
-  height: 450px;
+  bottom: 0%;
+  right: 5%;
+  width: 500px;
+  height: 500px;
   background: var(--color-purple);
 }
 
-/* Glassmorphism card styling */
+/* Glassmorphism card — light frosted */
 .glass {
   background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.25), 0 2px 8px -1px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 20px -4px rgba(0,0,0,0.06);
 }
 
 /* App layout wrapper */
@@ -441,12 +431,12 @@ body {
 }
 .tab-btn:hover:not(:disabled) {
   color: var(--text-main);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.04);
 }
 .tab-btn.active {
   color: var(--color-primary);
   background: var(--bg-card);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 .indicator-dot {
   width: 6px;
@@ -494,20 +484,20 @@ body {
   border: 1px solid transparent;
   cursor: pointer;
   transition: var(--transition-smooth);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(0, 0, 0, 0.015);
 }
 .transcript-segment-row:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--border-glass);
+  background: rgba(124, 58, 237, 0.04);
+  border-color: rgba(124, 58, 237, 0.12);
 }
 .transcript-segment-row.playing-active {
-  background: rgba(99, 102, 241, 0.08);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(124, 58, 237, 0.06);
+  border-color: rgba(124, 58, 237, 0.25);
 }
 .transcript-segment-row.rag-highlighted {
-  border-color: rgba(244, 114, 182, 0.4);
-  background: rgba(244, 114, 182, 0.08);
-  box-shadow: 0 0 12px rgba(244, 114, 182, 0.15);
+  border-color: rgba(219, 39, 119, 0.35);
+  background: rgba(219, 39, 119, 0.04);
+  box-shadow: 0 0 10px rgba(219, 39, 119, 0.08);
 }
 .segment-metadata {
   display: flex;
@@ -554,11 +544,11 @@ body {
   align-items: center;
   padding: 12px 20px;
   gap: 16px;
-  background: rgba(15, 21, 36, 0.85);
+  background: rgba(255, 255, 255, 0.96);
   border-top: 1px solid var(--border-glass);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   /* No position:absolute — flows naturally in the flex column */
 }
 .btn-circle {
@@ -646,12 +636,12 @@ body {
   gap: 14px;
 }
 .insight-card {
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: var(--radius-md);
   padding: 16px;
   transition: var(--transition-smooth);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   animation: cardEnter 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 @keyframes cardEnter {
@@ -659,8 +649,9 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .insight-card:hover {
-  background: rgba(255, 255, 255, 0.03);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgba(124, 58, 237, 0.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+  border-color: rgba(124, 58, 237, 0.15);
 }
 .insight-card .card-header {
   display: flex;
@@ -816,8 +807,8 @@ body {
   overflow: auto;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-glass);
-  background: var(--bg-glass);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: var(--bg-card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 .backlog-table {
   width: 100%;
@@ -826,7 +817,7 @@ body {
   font-size: 13.5px;
 }
 .backlog-table th {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.02);
   padding: 12px 16px;
   font-weight: 700;
   color: var(--text-muted);
@@ -835,14 +826,14 @@ body {
 }
 .backlog-table td {
   padding: 14px 16px;
-  border-bottom: 1px solid var(--border-glass);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   vertical-align: middle;
 }
 .backlog-table tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(124, 58, 237, 0.02);
 }
 .selected-row {
-  background: rgba(99, 102, 241, 0.08) !important;
+  background: rgba(124, 58, 237, 0.04) !important;
 }
 .table-feat-title {
   font-weight: 700;
@@ -950,7 +941,7 @@ body {
 .prd-rendered {
   flex: 1;
   min-height: 0;
-  background: var(--bg-glass);
+  background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   padding: 24px 28px;
@@ -1122,13 +1113,13 @@ body {
   width: 100%;
   box-sizing: border-box;
   padding: 11px 14px;
-  border: 1.5px solid rgba(99, 102, 241, 0.3);
+  border: 1.5px solid rgba(124, 58, 237, 0.2);
   border-radius: var(--radius-md);
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 500;
   color: var(--text-main);
-  background: var(--bg-secondary);
+  background: var(--bg-card);
   outline: none;
   margin: 12px 0 16px;
   transition: border-color 0.2s;
@@ -1180,12 +1171,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(0, 0, 0, 0.02);
   border: 1px solid var(--border-glass);
   padding: 16px 20px;
   border-radius: var(--radius-lg);
   flex: 1.4;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
 }
 .flow-step {
   display: flex;
@@ -1195,7 +1186,7 @@ body {
   border: 1px solid var(--border-glass);
   padding: 14px 16px;
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   text-align: center;
   min-width: 130px;
   flex: 1;
@@ -1293,7 +1284,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 .quadrant-badge {
   font-size: 8.5px;
@@ -1399,7 +1390,7 @@ body {
   gap: 16px;
   background: var(--bg-card);
   border: 1px solid var(--border-glass);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 .loading-card h2 {
   font-family: var(--font-display);
@@ -2171,7 +2162,7 @@ body {
 .chat-input-dock {
   padding: 14px 20px;
   border-top: 1px solid var(--border-glass);
-  background: rgba(15, 21, 36, 0.6);
+  background: rgba(255, 255, 255, 0.6);
   display: flex;
   gap: 12px;
 }
@@ -2224,7 +2215,7 @@ body {
   right: -400px;
   width: 380px;
   height: calc(100vh - 72px);
-  background: rgba(10, 13, 22, 0.97);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-left: 1px solid var(--border-glass);
@@ -2232,7 +2223,7 @@ body {
   display: flex;
   flex-direction: column;
   transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
-  box-shadow: -4px 0 40px rgba(0, 0, 0, 0.4);
+  box-shadow: -4px 0 30px rgba(0, 0, 0, 0.08);
 }
 .chat-sidebar.open {
   right: 0;
@@ -2253,7 +2244,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.02);
   backdrop-filter: blur(12px);
 }
 .chat-sidebar-header h3 {
