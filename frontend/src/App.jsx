@@ -1578,7 +1578,7 @@ export default function App() {
                                   <div 
                                     key={idx} 
                                     className="citation-bubble"
-                                    onClick={() => jumpToCitation(cit.segment_id, parseFloat(cit.timestamp))}
+                                    onClick={() => jumpToCitation(cit.segment_id, cit.timestamp)}
                                   >
                                     <p className="quote">"{cit.quote}"</p>
                                     <div className="cit-meta">
@@ -1641,7 +1641,7 @@ export default function App() {
                                   <div 
                                     key={idx} 
                                     className="citation-bubble"
-                                    onClick={() => jumpToCitation(cit.segment_id, parseFloat(cit.timestamp))}
+                                    onClick={() => jumpToCitation(cit.segment_id, cit.timestamp)}
                                   >
                                     <p className="quote">"{cit.quote}"</p>
                                     <div className="cit-meta">
