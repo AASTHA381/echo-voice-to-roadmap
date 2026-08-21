@@ -1030,6 +1030,8 @@ body {
   color: var(--color-primary);
   border-bottom: 1px solid rgba(79, 70, 229, 0.1);
   font-family: var(--font-display);
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 .prd-table td {
   padding: 12px 14px;
@@ -1037,6 +1039,13 @@ body {
   color: var(--text-main);
   vertical-align: top;
   line-height: 1.5;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+.prd-table th:first-child,
+.prd-table td:first-child {
+  min-width: 110px;
+  width: 25%;
 }
 .prd-table tr:last-child td {
   border-bottom: none;
@@ -2352,6 +2361,18 @@ body {
 .chat-bubble .prd-ul {
   margin: 4px 0 4px 12px !important;
   padding-left: 0;
+}
+
+/* Specific overrides to prevent table columns from squishing inside chat bubbles */
+.chat-bubble .prd-table th:first-child,
+.chat-bubble .prd-table td:first-child {
+  min-width: 90px;
+  width: 30%;
+}
+.chat-bubble td,
+.chat-bubble th {
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
 }
 
 
