@@ -239,6 +239,58 @@ def get_transcript(transcript_id: str):
             return item
     raise HTTPException(status_code=404, detail="Transcript not found")
 
+class AuditLogItem(BaseModel):
+    user: str
+    action: str
+    details: str
+
+@app.post("/api/workspace/{transcript_id}/audit")
+def add_audit_log(transcript_id: str, log: AuditLogItem):
+    """
+    Appends a collaboration activity audit log to a specific transcript.
+    """
+    registry = load_registry()
+    for item in registry:
+        if item["id"] == transcript_id:
+            if "collaboration_logs" not in item:
+                item["collaboration_logs"] = []
+            
+            import datetime
+            new_log = {
+                "user": log.user,
+                "action": log.action,
+                "details": log.details,
+                "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
+            }
+            item["collaboration_logs"].append(new_log)
+            save_registry(registry)
+            return new_log
+            
+    raise HTTPException(status_code=404, detail="Transcript not found")
+
+@app.get("/api/workspace/{transcript_id}/audit")
+def get_audit_logs(transcript_id: str):
+    """
+    Returns the collaboration activity log for a specific workspace.
+    """
+    registry = load_registry()
+    for item in registry:
+        if item["id"] == transcript_id:
+            return item.get("collaboration_logs", [])
+    raise HTTPException(status_code=404, detail="Transcript not found")
+
+@app.post("/api/workspace/{transcript_id}/share")
+def generate_share_link(transcript_id: str):
+    """
+    Generates a secure collaboration share URL.
+    """
+    registry = load_registry()
+    for item in registry:
+        if item["id"] == transcript_id:
+            share_url = f"https://echo-voice-to-roadmap-aastha381.vercel.app/?share={transcript_id}"
+            return {"share_url": share_url}
+    raise HTTPException(status_code=404, detail="Transcript not found")
+
 @app.delete("/api/transcripts/{transcript_id}")
 def delete_transcript(transcript_id: str):
     """

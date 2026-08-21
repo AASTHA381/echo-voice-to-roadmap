@@ -67,7 +67,8 @@ class AnalyzerService:
             "- Do NOT assume or extrapolate features or pain points that have no direct mention or strong implication in the transcript.\n"
             "- For each item, you must include a 'citations' array containing the exact segment_id, timestamp range, and quote from the context.\n"
             "- If the context has insufficient evidence for a topic, do NOT include it. If no relevant items are supported by the text, return empty arrays.\n"
-            "- Do NOT invent quotes. The quotes MUST match the provided Segment Text exactly.\n\n"
+            "- Do NOT invent quotes. The quotes MUST match the provided Segment Text exactly.\n"
+            "- Automatically detect, cluster, and track conversation topics discussed during the meeting, creating a chronological list of topics with 'label', 'start_sec', 'end_sec', 'summary', and 'keywords'.\n\n"
             "You MUST respond ONLY with a valid JSON object matching the following structure:\n"
             "{\n"
             "  \"mode\": \"software\" | \"research\",\n"
@@ -98,6 +99,16 @@ class AnalyzerService:
             "        \"score\": 7.2\n"
             "      },\n"
             "      \"moscow\": \"Must-have\" | \"Should-have\" | \"Could-have\" | \"Won't-have\"\n"
+            "    }\n"
+            "  ],\n"
+            "  \"topics\": [\n"
+            "    {\n"
+            "      \"id\": \"t_1\",\n"
+            "      \"label\": \"Discussion segment title (e.g. Critique of Software Patents)\",\n"
+            "      \"start_sec\": 120.0,\n"
+            "      \"end_sec\": 480.0,\n"
+            "      \"summary\": \"Brief summary of this conversation topic.\",\n"
+            "      \"keywords\": [\"patents\", \"legal\", \"software\"]\n"
             "    }\n"
             "  ],\n"
             "  \"suggested_questions\": [\n"
@@ -177,7 +188,8 @@ class AnalyzerService:
         return {
             "mode": mode,
             "pain_points": verified_pain_points,
-            "features": verified_features
+            "features": verified_features,
+            "topics": insights.get("topics", [])
         }
 
     def generate_prd(self, transcript_id: str, selected_features: List[Dict[str, Any]], selected_pain_points: List[Dict[str, Any]], mode: str = "software") -> str:

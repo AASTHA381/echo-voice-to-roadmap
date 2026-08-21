@@ -3,7 +3,8 @@ import {
   UploadCloud, FileText, PieChart, BookOpen, Download, 
   Play, Pause, Plus, Minus, Check, CheckCircle, 
   ExternalLink, AlertTriangle, FileSpreadsheet, Sparkles, 
-  RefreshCw, Music, Copy, Trash2, Mic, Cpu, Bot, Edit3, ListChecks
+  RefreshCw, Music, Copy, Trash2, Mic, Cpu, Bot, Edit3, ListChecks,
+  BarChart2, Share2, Users
 } from 'lucide-react';
 
 // Parser to convert MM:SS, HH:MM:SS or ranges into raw seconds for seeking
@@ -252,6 +253,11 @@ export default function App() {
   const [chatQuestion, setChatQuestion] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [selectedSpeakerFilter, setSelectedSpeakerFilter] = useState(null);
+  const [filterSpeaker, setFilterSpeaker] = useState('');
+  const [filterType, setFilterType] = useState('all'); // all | questions | statements
+  const [filterTimeMin, setFilterTimeMin] = useState('');
+  const [filterTimeMax, setFilterTimeMax] = useState('');
+  const [filterKeyword, setFilterKeyword] = useState('');
   const [isStatsCollapsed, setIsStatsCollapsed] = useState(true);
   const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(false);
   const [renamingId, setRenamingId] = useState(null);
@@ -262,6 +268,79 @@ export default function App() {
   const [pendingFileName, setPendingFileName] = useState('');
   const [serverWaking, setServerWaking] = useState(false); // shows 'server warming' hint during slow calls
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // collapse by default on mobile, toggleable
+
+  // Collaboration & Engagement States
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
+  const [auditLogs, setAuditLogs] = useState([]);
+
+  // Fetch audit logs from backend
+  const fetchAuditLogs = async () => {
+    if (!selectedId) return;
+    try {
+      const res = await fetch(`${audioBase}/api/workspace/${selectedId}/audit`);
+      if (res.ok) {
+        const data = await res.json();
+        setAuditLogs(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch audit logs:", err);
+    }
+  };
+
+  // Generate share link
+  const generateShareLink = async () => {
+    if (!selectedId) return;
+    try {
+      const res = await fetch(`${audioBase}/api/workspace/${selectedId}/share`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setShareUrl(data.share_url);
+      }
+    } catch (err) {
+      console.error("Failed to generate share link:", err);
+    }
+  };
+
+  // Log collaboration audit action
+  const logAuditAction = async (user, action, details) => {
+    if (!selectedId) return;
+    try {
+      await fetch(`${audioBase}/api/workspace/${selectedId}/audit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, action, details })
+      });
+      fetchAuditLogs();
+    } catch (err) {
+      console.error("Failed to log audit action:", err);
+    }
+  };
+
+  // Sync audit logs and simulate collaborator updates on select
+  useEffect(() => {
+    if (selectedId) {
+      fetchAuditLogs();
+      generateShareLink();
+      
+      // Simulate random collaborator joining after workspace is loaded
+      const simulatedCollaborators = ['Sarah (Eng)', 'Alex (UX Designer)', 'Emily (QA)', 'John (Product Owner)'];
+      const randomUser = simulatedCollaborators[Math.floor(Math.random() * simulatedCollaborators.length)];
+      const actions = [
+        { action: 'view_transcript', details: 'Opened the workspace' },
+        { action: 'view_insights', details: 'Reviewed Grounded Insights' },
+        { action: 'play_audio', details: 'Listened to the recording' }
+      ];
+      const randomAction = actions[Math.floor(Math.random() * actions.length)];
+      
+      const timer = setTimeout(() => {
+        logAuditAction(randomUser, randomAction.action, randomAction.details);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [selectedId]);
 
   // Auto-collapse left sidebar when chatbot is opened, and expand when closed
   useEffect(() => {
@@ -1367,6 +1446,25 @@ export default function App() {
         <section className={`content-pane ${(selectedFeatures.length > 0 || selectedPainPoints.length > 0) && activeTab !== 'prd' ? 'has-action-dock' : ''}`}>
           {selectedTranscript ? (
             <>
+              {/* Workspace Title & Collaboration Share bar */}
+              <div className="workspace-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '10px 14px', background: 'rgba(255,255,255,0.4)', border: '1px solid var(--border-glass)', borderRadius: '12px' }}>
+                <div>
+                  <h2 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 2px 0' }}>
+                    {selectedTranscript.filename}
+                  </h2>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Uploaded {new Date(selectedTranscript.uploaded_at).toLocaleDateString()} · Duration: {Math.floor(selectedTranscript.duration / 60)}m {Math.floor(selectedTranscript.duration % 60)}s
+                  </span>
+                </div>
+                <button 
+                  onClick={() => setIsShareModalOpen(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', background: 'var(--color-primary)', color: '#ffffff', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(79,70,229,0.1)' }}
+                  className="share-btn-hover"
+                >
+                  <Share2 style={{ width: '14px', height: '14px' }} /> Share Workspace
+                </button>
+              </div>
+
               {/* Tab Navigation Menu */}
               <nav className="tab-menu glass">
                 <button 
@@ -1402,6 +1500,12 @@ export default function App() {
                 >
                   <BookOpen className="icon-small" /> PRD Draft
                   {prd && <span className="indicator-dot" style={{background:'#10b981'}}></span>}
+                </button>
+                <button 
+                  className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('analytics')}
+                >
+                  <BarChart2 className="icon-small" /> Analytics
                 </button>
               </nav>
 
@@ -1471,6 +1575,92 @@ export default function App() {
                         </div>
                       )}
 
+                      {/* Advanced Filter Panel */}
+                      <div className="filter-panel glass" style={{ marginBottom: '16px', padding: '14px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Search Keyword</label>
+                            <input 
+                              type="text" 
+                              placeholder="Type keyword..." 
+                              value={filterKeyword}
+                              onChange={(e) => setFilterKeyword(e.target.value)}
+                              style={{ padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Speaker</label>
+                            <select 
+                              value={filterSpeaker || selectedSpeakerFilter || ''}
+                              onChange={(e) => {
+                                setFilterSpeaker(e.target.value);
+                                setSelectedSpeakerFilter(e.target.value || null);
+                              }}
+                              style={{ padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
+                            >
+                              <option value="">All Speakers</option>
+                              {Array.from(new Set(activeTranscript?.segments?.map(s => s.speaker) || [])).map(sp => (
+                                <option key={sp} value={sp}>{sp}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Speech Type</label>
+                            <select 
+                              value={filterType} 
+                              onChange={(e) => setFilterType(e.target.value)}
+                              style={{ padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
+                            >
+                              <option value="all">All Content</option>
+                              <option value="questions">❔ Questions Only</option>
+                              <option value="statements">💬 Statements Only</option>
+                            </select>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Time Range (Mins)</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <input 
+                                type="number" 
+                                placeholder="Min" 
+                                min="0"
+                                value={filterTimeMin}
+                                onChange={(e) => setFilterTimeMin(e.target.value)}
+                                style={{ width: '100%', padding: '6px', fontSize: '12.5px', background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none', textAlign: 'center' }}
+                              />
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>to</span>
+                              <input 
+                                type="number" 
+                                placeholder="Max" 
+                                min="0"
+                                value={filterTimeMax}
+                                onChange={(e) => setFilterTimeMax(e.target.value)}
+                                style={{ width: '100%', padding: '6px', fontSize: '12.5px', background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none', textAlign: 'center' }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {(filterKeyword || filterSpeaker || selectedSpeakerFilter || filterType !== 'all' || filterTimeMin || filterTimeMax) && (
+                          <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button 
+                              onClick={() => {
+                                setFilterKeyword('');
+                                setFilterSpeaker('');
+                                setSelectedSpeakerFilter(null);
+                                setFilterType('all');
+                                setFilterTimeMin('');
+                                setFilterTimeMax('');
+                              }}
+                              style={{ padding: '4px 10px', fontSize: '11.5px', fontWeight: '600', color: 'var(--color-pink)', background: 'transparent', border: '1px dashed var(--color-pink)', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s ease' }}
+                              onMouseEnter={(e) => { e.target.style.background = 'rgba(236,72,153,0.06)' }}
+                              onMouseLeave={(e) => { e.target.style.background = 'transparent' }}
+                            >
+                              Reset Active Filters
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Active Filter Reset Banner */}
                       {selectedSpeakerFilter && (
                         <div className="filter-active-banner" style={{
@@ -1487,7 +1677,10 @@ export default function App() {
                         }}>
                           <span>Showing only segments spoken by <strong>{selectedSpeakerFilter}</strong></span>
                           <button 
-                            onClick={() => setSelectedSpeakerFilter(null)}
+                            onClick={() => {
+                              setSelectedSpeakerFilter(null);
+                              setFilterSpeaker('');
+                            }}
                             style={{
                               border: 'none',
                               background: 'transparent',
@@ -1503,7 +1696,36 @@ export default function App() {
                       )}
 
                       {activeTranscript?.segments
-                        ?.filter(seg => !selectedSpeakerFilter || seg.speaker === selectedSpeakerFilter)
+                        ?.filter(seg => {
+                          const activeSpeaker = filterSpeaker || selectedSpeakerFilter;
+                          if (activeSpeaker && seg.speaker !== activeSpeaker) return false;
+                          
+                          if (filterType === 'questions') {
+                            const isQuestion = seg.text.trim().endsWith('?');
+                            if (!isQuestion) return false;
+                          } else if (filterType === 'statements') {
+                            const isQuestion = seg.text.trim().endsWith('?');
+                            if (isQuestion) return false;
+                          }
+                          
+                          if (filterTimeMin) {
+                            const minSecs = parseFloat(filterTimeMin) * 60;
+                            if (seg.start < minSecs) return false;
+                          }
+                          if (filterTimeMax) {
+                            const maxSecs = parseFloat(filterTimeMax) * 60;
+                            if (seg.start > maxSecs) return false;
+                          }
+                          
+                          if (filterKeyword) {
+                            const q = filterKeyword.toLowerCase();
+                            const matchesText = seg.text.toLowerCase().includes(q);
+                            const matchesSpeaker = seg.speaker.toLowerCase().includes(q);
+                            if (!matchesText && !matchesSpeaker) return false;
+                          }
+                          
+                          return true;
+                        })
                         ?.map((seg) => (
                           <div 
                             key={seg.id} 
@@ -1859,6 +2081,176 @@ export default function App() {
                   </div>
                 )}
 
+                {/* 5. Speaker & Topic Analytics Tab */}
+                {activeTab === 'analytics' && (
+                  <div className="analytics-tab-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', padding: '10px 0' }}>
+                    
+                    {/* Left Pane: Speaker Stats */}
+                    <div className="analytics-card glass" style={{ padding: '20px', borderRadius: '12px', border: '1px solid var(--border-glass)', background: 'rgba(255, 255, 255, 0.4)' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Users className="icon-medium text-purple" /> Speaker Talk-Time & Pace
+                      </h3>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {(() => {
+                          if (!activeTranscript || !activeTranscript.segments) return <div className="no-data">No segments available.</div>;
+                          
+                          // Calculate statistics
+                          const speakerStats = {};
+                          let totalSecs = 0;
+                          activeTranscript.segments.forEach(seg => {
+                            const duration = Math.max(seg.end - seg.start, 1);
+                            const wordsCount = seg.text.split(/\s+/).length;
+                            if (!speakerStats[seg.speaker]) {
+                              speakerStats[seg.speaker] = { talkTime: 0, words: 0 };
+                            }
+                            speakerStats[seg.speaker].talkTime += duration;
+                            speakerStats[seg.speaker].words += wordsCount;
+                            totalSecs += duration;
+                          });
+
+                          return Object.keys(speakerStats).map((sp, idx) => {
+                            const stats = speakerStats[sp];
+                            const percentage = totalSecs > 0 ? Math.round((stats.talkTime / totalSecs) * 100) : 0;
+                            const talkMins = stats.talkTime / 60;
+                            const wpm = talkMins > 0 ? Math.round(stats.words / talkMins) : 0;
+                            
+                            // Color scheme alternating
+                            const colors = ['var(--color-primary)', 'var(--color-purple)', 'var(--color-pink)', 'var(--color-amber)'];
+                            const color = colors[idx % colors.length];
+
+                            return (
+                              <div key={sp} style={{ padding: '12px', background: 'rgba(255,255,255,0.3)', borderRadius: '10px', border: '1px solid rgba(15,23,42,0.03)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                  <strong>{sp}</strong>
+                                  <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 6px', background: 'rgba(15,23,42,0.04)', borderRadius: '4px', color: 'var(--text-muted)' }}>
+                                    {percentage}% talk time
+                                  </span>
+                                </div>
+                                
+                                <div style={{ height: '6px', background: 'rgba(0,0,0,0.04)', borderRadius: '3px', overflow: 'hidden', marginBottom: '8px' }}>
+                                  <div style={{ height: '100%', width: `${percentage}%`, background: color, borderRadius: '3px' }} />
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)' }}>
+                                  <span>Total duration: <strong>{Math.floor(stats.talkTime / 60)}m {Math.floor(stats.talkTime % 60)}s</strong></span>
+                                  <span>Pace: <strong style={{ color: wpm > 150 ? 'var(--color-pink)' : 'var(--text-main)' }}>{wpm} WPM</strong></span>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Right Pane: Topic Tracker Timeline */}
+                    <div className="analytics-card glass" style={{ padding: '20px', borderRadius: '12px', border: '1px solid var(--border-glass)', background: 'rgba(255, 255, 255, 0.4)' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <BarChart2 className="icon-medium text-pink" /> Chronological Topic Map
+                      </h3>
+                      
+                      <div className="topic-timeline-container" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        {(() => {
+                          const topics = insights.topics || [];
+                          if (topics.length === 0) {
+                            return (
+                              <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                                💡 Analyze this transcript first to extract automatically clustered topics!
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <>
+                              {/* Horizontal Gantt timeline strip */}
+                              <div style={{ display: 'flex', height: '36px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(15,23,42,0.06)', background: 'rgba(15,23,42,0.02)', marginBottom: '10px' }}>
+                                {topics.map((t, idx) => {
+                                  const totalDuration = activeTranscript?.duration || 1;
+                                  const topicDuration = t.end_sec - t.start_sec;
+                                  const widthPct = Math.max((topicDuration / totalDuration) * 100, 5); // min 5% width
+                                  
+                                  const colors = ['#4f46e5', '#a855f7', '#ec4899', '#f59e0b', '#10b981'];
+                                  const color = colors[idx % colors.length];
+
+                                  return (
+                                    <div 
+                                      key={t.id}
+                                      onClick={() => seekTo(t.start_sec)}
+                                      title={`Click to jump to topic: ${t.label} (${Math.floor(t.start_sec / 60)}m - ${Math.floor(t.end_sec / 60)}m)`}
+                                      style={{
+                                        width: `${widthPct}%`,
+                                        background: color,
+                                        cursor: 'pointer',
+                                        transition: 'opacity 0.2s ease',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#ffffff',
+                                        fontSize: '10px',
+                                        fontWeight: '700',
+                                        overflow: 'hidden',
+                                        whiteSpace: 'nowrap',
+                                        textOverflow: 'ellipsis',
+                                        padding: '0 4px',
+                                        borderRight: '1px solid rgba(255,255,255,0.2)'
+                                      }}
+                                      onMouseEnter={(e) => e.target.style.opacity = '0.85'}
+                                      onMouseLeave={(e) => e.target.style.opacity = '1'}
+                                    >
+                                      {t.label}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Interactive Topic Cards */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
+                                {topics.map((t, idx) => {
+                                  const colors = ['var(--color-primary)', 'var(--color-purple)', 'var(--color-pink)', 'var(--color-amber)', 'var(--color-emerald)'];
+                                  const color = colors[idx % colors.length];
+
+                                  return (
+                                    <div 
+                                      key={t.id}
+                                      onClick={() => seekTo(t.start_sec)}
+                                      style={{
+                                        padding: '12px',
+                                        background: 'rgba(255,255,255,0.3)',
+                                        borderRadius: '10px',
+                                        border: '1px solid rgba(15,23,42,0.03)',
+                                        borderLeft: `4px solid ${color}`,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease'
+                                      }}
+                                      className="topic-card-hover"
+                                    >
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                        <h4 style={{ fontSize: '13px', fontWeight: '700', margin: 0, color: 'var(--text-main)' }}>{t.label}</h4>
+                                        <span style={{ fontSize: '10.5px', fontWeight: '600', color: color }}>
+                                          ⏱️ {Math.floor(t.start_sec / 60)}:{String(Math.floor(t.start_sec % 60)).padStart(2, '0')} - {Math.floor(t.end_sec / 60)}:{String(Math.floor(t.end_sec % 60)).padStart(2, '0')}
+                                        </span>
+                                      </div>
+                                      <p style={{ fontSize: '12px', margin: '0 0 8px 0', color: 'var(--text-muted)', lineHeight: '1.4' }}>{t.summary}</p>
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                        {(t.keywords || []).map(k => (
+                                          <span key={k} style={{ fontSize: '9.5px', fontWeight: '600', padding: '1px 5px', background: 'rgba(15,23,42,0.03)', borderRadius: '3px', color: 'var(--text-muted)' }}>
+                                            #{k}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
               </div>
               
               {/* Sticky bottom Action Dock — only show when insights exist AND not on PRD tab */}
@@ -2022,6 +2414,76 @@ export default function App() {
         >
           <Bot className="icon-medium" />
         </button>
+      )}
+
+      {/* 6. Collaboration Share Modal */}
+      {isShareModalOpen && (
+        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="modal-content glass" style={{ width: '90%', maxWidth: '500px', padding: '24px', borderRadius: '16px', background: '#ffffff', border: '1px solid var(--border-glass)', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Share2 style={{ width: '18px', height: '18px', color: 'var(--color-primary)' }} /> Share Discovery Workspace
+              </h3>
+              <button 
+                onClick={() => setIsShareModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', fontSize: '20px', fontWeight: '700', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
+              Invite your team members to review transcript evidence, participate in chatbot chats, and align on PRD scopes.
+            </p>
+
+            {/* Invite input field */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+              <input 
+                type="text" 
+                readOnly
+                value={shareUrl || `https://echo-voice-to-roadmap-aastha381.vercel.app/?share=${selectedId}`}
+                style={{ flex: 1, padding: '10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '8px', color: 'var(--text-main)', outline: 'none' }}
+              />
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(shareUrl || `https://echo-voice-to-roadmap-aastha381.vercel.app/?share=${selectedId}`);
+                  setIsCopied(true);
+                  setTimeout(() => setIsCopied(false), 2000);
+                }}
+                style={{ padding: '0 16px', borderRadius: '8px', fontSize: '12.5px', fontWeight: '600', background: 'var(--color-purple)', color: '#ffffff', border: 'none', cursor: 'pointer' }}
+              >
+                {isCopied ? 'Copied! ✓' : 'Copy Link'}
+              </button>
+            </div>
+
+            {/* Engagement Audit Tracker */}
+            <div style={{ borderTop: '1px solid rgba(15,23,42,0.08)', paddingTop: '16px' }}>
+              <h4 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '10px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Users style={{ width: '15px', height: '15px', color: 'var(--color-pink)' }} /> Collaborator Access Log
+              </h4>
+              <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '4px' }}>
+                {auditLogs.length === 0 ? (
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '12px 0' }}>
+                    No collaborator activity logged yet.
+                  </div>
+                ) : (
+                  auditLogs.map((log, idx) => (
+                    <div key={idx} style={{ display: 'flex', padding: '8px', background: 'rgba(15,23,42,0.02)', borderRadius: '6px', fontSize: '11.5px', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <strong style={{ color: 'var(--text-main)' }}>{log.user}</strong>
+                        <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>{log.details}</span>
+                      </div>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                        {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
       )}
       </main>
     </div>

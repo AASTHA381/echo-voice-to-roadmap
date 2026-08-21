@@ -2439,5 +2439,25 @@ body {
   background: rgba(255, 255, 255, 0.25);
 }
 
+/* Premium hover animations for new features */
+.share-btn-hover {
+  transition: transform 0.2s ease, opacity 0.2s ease !important;
+}
+.share-btn-hover:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+.share-btn-hover:active {
+  transform: translateY(0);
+}
+
+.topic-card-hover {
+  transition: transform 0.2s ease, background-color 0.2s ease !important;
+}
+.topic-card-hover:hover {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  transform: translateX(3px);
+}
+
 
 
