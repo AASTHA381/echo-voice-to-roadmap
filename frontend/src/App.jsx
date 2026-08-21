@@ -730,9 +730,11 @@ export default function App() {
         }
 
         const now = new Date();
-        const dateStr = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
-        const timeStr = String(now.getHours()).padStart(2, '0') + "_" + String(now.getMinutes()).padStart(2, '0');
-        const defaultName = recordingMode === 'meeting' ? `Meeting_Call_${dateStr}_${timeStr}` : `Mic_Record_${dateStr}_${timeStr}`;
+        const formattedDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const formattedTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        const defaultName = recordingMode === 'meeting' 
+          ? `Meeting Call (${formattedDate} ${formattedTime})` 
+          : `Voice Recording (${formattedDate} ${formattedTime})`;
         const audioFile = new File([audioBlob], `${defaultName}.${extension}`, { type: actualMimeType });
         
         cleanupRecordingResources();
@@ -1357,8 +1359,8 @@ export default function App() {
                       <>
                         <div className="filename-container" style={{ display: 'flex', alignItems: 'center', gap: '6px', maxWidth: '75%', minWidth: 0 }}>
                           {selectedId === t.id && <Sparkles className="icon-tiny text-pink animate-pulse" />}
-                          <span className="filename text-ellipsis" title={t.filename} style={{ fontWeight: selectedId === t.id ? '700' : '500' }}>
-                            {t.filename}
+                          <span className="filename text-ellipsis" title={t.filename.replace(/\.[^/.]+$/, "")} style={{ fontWeight: selectedId === t.id ? '700' : '500' }}>
+                            {t.filename.replace(/\.[^/.]+$/, "")}
                           </span>
                         </div>
                         <div className="card-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1539,7 +1541,7 @@ export default function App() {
               <div className="workspace-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '10px 14px', background: 'rgba(255,255,255,0.4)', border: '1px solid var(--border-glass)', borderRadius: '12px' }}>
                 <div>
                   <h2 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 2px 0' }}>
-                    {selectedTranscript.filename}
+                    {selectedTranscript.filename.replace(/\.[^/.]+$/, "")}
                   </h2>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                     Uploaded {new Date(selectedTranscript.uploaded_at).toLocaleDateString()} · Duration: {Math.floor(selectedTranscript.duration / 60)}m {Math.floor(selectedTranscript.duration % 60)}s
