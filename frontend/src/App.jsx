@@ -1429,7 +1429,96 @@ export default function App() {
                 </p>
               )}
             </div>
-          )}
+            )}
+
+            {activeTranscript && (
+              <div className="sidebar-filters glass" style={{ marginTop: '16px', padding: '14px', borderRadius: '12px', border: '1px solid var(--border-glass)', background: 'rgba(255, 255, 255, 0.25)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '800', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <FileText style={{ width: '13px', height: '13px' }} /> Transcript Filters
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Search Keyword</label>
+                  <input 
+                    type="text" 
+                    placeholder="Type keyword..." 
+                    value={filterKeyword}
+                    onChange={(e) => setFilterKeyword(e.target.value)}
+                    style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Speaker</label>
+                  <select 
+                    value={filterSpeaker || selectedSpeakerFilter || ''}
+                    onChange={(e) => {
+                      setFilterSpeaker(e.target.value);
+                      setSelectedSpeakerFilter(e.target.value || null);
+                    }}
+                    style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
+                  >
+                    <option value="">All Speakers</option>
+                    {Array.from(new Set(activeTranscript?.segments?.map(s => s.speaker) || [])).map(sp => (
+                      <option key={sp} value={sp}>{sp}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Speech Type</label>
+                  <select 
+                    value={filterType} 
+                    onChange={(e) => setFilterType(e.target.value)}
+                    style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
+                  >
+                    <option value="all">All Content</option>
+                    <option value="questions">❔ Questions Only</option>
+                    <option value="statements">💬 Statements Only</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Time Range (Mins)</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <input 
+                      type="number" 
+                      placeholder="Min" 
+                      min="0"
+                      value={filterTimeMin}
+                      onChange={(e) => setFilterTimeMin(e.target.value)}
+                      style={{ width: '100%', padding: '6px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none', textAlign: 'center' }}
+                    />
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>to</span>
+                    <input 
+                      type="number" 
+                      placeholder="Max" 
+                      min="0"
+                      value={filterTimeMax}
+                      onChange={(e) => setFilterTimeMax(e.target.value)}
+                      style={{ width: '100%', padding: '6px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none', textAlign: 'center' }}
+                    />
+                  </div>
+                </div>
+
+                {(filterKeyword || filterSpeaker || selectedSpeakerFilter || filterType !== 'all' || filterTimeMin || filterTimeMax) && (
+                  <button 
+                    onClick={() => {
+                      setFilterKeyword('');
+                      setFilterSpeaker('');
+                      setSelectedSpeakerFilter(null);
+                      setFilterType('all');
+                      setFilterTimeMin('');
+                      setFilterTimeMax('');
+                    }}
+                    style={{ width: '100%', padding: '6px', marginTop: '4px', fontSize: '11.5px', fontWeight: '600', color: 'var(--color-pink)', background: 'transparent', border: '1px dashed var(--color-pink)', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s ease' }}
+                    className="btn-clear-hover"
+                  >
+                    Reset Active Filters
+                  </button>
+                )}
+              </div>
+            )}
 
           <div className="sidebar-integrations">
             <a 
@@ -1575,91 +1664,7 @@ export default function App() {
                         </div>
                       )}
 
-                      {/* Advanced Filter Panel */}
-                      <div className="filter-panel glass" style={{ marginBottom: '16px', padding: '14px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Search Keyword</label>
-                            <input 
-                              type="text" 
-                              placeholder="Type keyword..." 
-                              value={filterKeyword}
-                              onChange={(e) => setFilterKeyword(e.target.value)}
-                              style={{ padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
-                            />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Speaker</label>
-                            <select 
-                              value={filterSpeaker || selectedSpeakerFilter || ''}
-                              onChange={(e) => {
-                                setFilterSpeaker(e.target.value);
-                                setSelectedSpeakerFilter(e.target.value || null);
-                              }}
-                              style={{ padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
-                            >
-                              <option value="">All Speakers</option>
-                              {Array.from(new Set(activeTranscript?.segments?.map(s => s.speaker) || [])).map(sp => (
-                                <option key={sp} value={sp}>{sp}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Speech Type</label>
-                            <select 
-                              value={filterType} 
-                              onChange={(e) => setFilterType(e.target.value)}
-                              style={{ padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
-                            >
-                              <option value="all">All Content</option>
-                              <option value="questions">❔ Questions Only</option>
-                              <option value="statements">💬 Statements Only</option>
-                            </select>
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Time Range (Mins)</label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <input 
-                                type="number" 
-                                placeholder="Min" 
-                                min="0"
-                                value={filterTimeMin}
-                                onChange={(e) => setFilterTimeMin(e.target.value)}
-                                style={{ width: '100%', padding: '6px', fontSize: '12.5px', background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none', textAlign: 'center' }}
-                              />
-                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>to</span>
-                              <input 
-                                type="number" 
-                                placeholder="Max" 
-                                min="0"
-                                value={filterTimeMax}
-                                onChange={(e) => setFilterTimeMax(e.target.value)}
-                                style={{ width: '100%', padding: '6px', fontSize: '12.5px', background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none', textAlign: 'center' }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {(filterKeyword || filterSpeaker || selectedSpeakerFilter || filterType !== 'all' || filterTimeMin || filterTimeMax) && (
-                          <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
-                            <button 
-                              onClick={() => {
-                                setFilterKeyword('');
-                                setFilterSpeaker('');
-                                setSelectedSpeakerFilter(null);
-                                setFilterType('all');
-                                setFilterTimeMin('');
-                                setFilterTimeMax('');
-                              }}
-                              style={{ padding: '4px 10px', fontSize: '11.5px', fontWeight: '600', color: 'var(--color-pink)', background: 'transparent', border: '1px dashed var(--color-pink)', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s ease' }}
-                              onMouseEnter={(e) => { e.target.style.background = 'rgba(236,72,153,0.06)' }}
-                              onMouseLeave={(e) => { e.target.style.background = 'transparent' }}
-                            >
-                              Reset Active Filters
-                            </button>
-                          </div>
-                        )}
-                      </div>
+
 
                       {/* Active Filter Reset Banner */}
                       {selectedSpeakerFilter && (
