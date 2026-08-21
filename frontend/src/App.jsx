@@ -1538,7 +1538,7 @@ export default function App() {
           {selectedTranscript ? (
             <>
               {/* Workspace Title & Collaboration Share bar */}
-              <div className="workspace-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '10px 14px', background: 'rgba(255,255,255,0.4)', border: '1px solid var(--border-glass)', borderRadius: '12px' }}>
+              <div className="workspace-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)', borderRadius: '12px' }}>
                 <div>
                   <h2 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 2px 0' }}>
                     {selectedTranscript.filename.replace(/\.[^/.]+$/, "")}
