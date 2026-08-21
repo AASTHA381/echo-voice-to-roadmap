@@ -2334,6 +2334,11 @@ body {
   border-radius: var(--radius-sm);
   background: var(--bg-primary);
   border: 1px solid rgba(15, 23, 42, 0.05);
+  overflow-x: auto !important;
+}
+.chat-bubble .prd-table {
+  min-width: 460px !important;
+  table-layout: auto !important;
 }
 .chat-bubble .prd-table th {
   padding: 6px 10px;
