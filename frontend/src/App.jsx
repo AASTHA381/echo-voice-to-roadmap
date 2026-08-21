@@ -41,6 +41,7 @@ const renderMarkdown = (mdText) => {
   let inTable = false;
 
   const parseInlineMarkdown = (text) => {
+    if (!text || typeof text !== 'string') return '';
     // Replace [text](url) with clickable links
     let html = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="chat-link">$1</a>');
     
@@ -211,6 +212,8 @@ export default function App() {
   const [transcripts, setTranscripts] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [activeTranscript, setActiveTranscript] = useState(null);
+
+  const selectedTranscript = transcripts.find(t => t.id === selectedId);
 
   // Interaction States
   const [isUploading, setIsUploading] = useState(false);
@@ -1016,7 +1019,7 @@ export default function App() {
     document.body.removeChild(link);
   };
 
-  const selectedTranscript = transcripts.find(t => t.id === selectedId);
+
 
   return (
     <div className="echo-app dark-theme">
