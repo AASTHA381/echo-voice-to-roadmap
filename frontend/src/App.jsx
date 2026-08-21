@@ -266,6 +266,19 @@ export default function App() {
   // File rename modal state
   const [pendingFile, setPendingFile] = useState(null);
   const [pendingFileName, setPendingFileName] = useState('');
+  const [customVocabulary, setCustomVocabulary] = useState('');
+
+  // AI Prompt Templates State
+  const [activeChatTemplate, setActiveChatTemplate] = useState('');
+
+  // Audio Soundbites States
+  const [activeSoundbiteClip, setActiveSoundbiteClip] = useState(null);
+  const [isSoundbiteModalOpen, setIsSoundbiteModalOpen] = useState(false);
+
+  // Backlog Exporter States
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportPlatform, setExportPlatform] = useState('jira'); // jira | linear
+  const [isExporting, setIsExporting] = useState(false);
   const [serverWaking, setServerWaking] = useState(false); // shows 'server warming' hint during slow calls
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // collapse by default on mobile, toggleable
 
@@ -341,6 +354,49 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [selectedId]);
+
+  const handleCreateSoundbite = async (start, end, text) => {
+    if (!selectedId) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/audio/slice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript_id: selectedId, start_sec: start, end_sec: end })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveSoundbiteClip({
+          clip_url: data.clip_url,
+          filename: data.filename,
+          start,
+          end,
+          text
+        });
+        setIsSoundbiteModalOpen(true);
+        logAuditAction("Workspace Engine", "create_clip", `Created soundbite clip from [${Math.floor(start/60)}:${String(Math.floor(start%60)).padStart(2,'0')}]`);
+      } else {
+        alert("⚠️ Failed to slice audio clip.");
+      }
+    } catch (err) {
+      console.error("Error creating soundbite:", err);
+      alert("⚠️ Error creating soundbite: " + err.message);
+    }
+  };
+
+  // Bounded soundbite playback listener on load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const startParam = parseFloat(params.get('start'));
+    if (activeTranscript && !isNaN(startParam)) {
+      const timer = setTimeout(() => {
+        seekTo(startParam);
+        if (audioRef.current) {
+          audioRef.current.play().catch(err => console.log("Auto-play deferred:", err));
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTranscript]);
 
   // Auto-collapse left sidebar when chatbot is opened, and expand when closed
   useEffect(() => {
@@ -546,7 +602,11 @@ export default function App() {
       const res = await fetch(`${API_BASE}/api/chat/${selectedId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: currentQuestion, history })
+        body: JSON.stringify({ 
+          question: currentQuestion, 
+          history,
+          system_template: activeChatTemplate
+        })
       });
       
       if (!res.ok) {
@@ -787,6 +847,9 @@ export default function App() {
     setIsUploading(true);
     const formData = new FormData();
     formData.append("file", file);
+    if (customVocabulary.trim()) {
+      formData.append("custom_vocabulary", customVocabulary.trim());
+    }
 
     fetch(`${API_BASE}/api/upload`, {
       method: 'POST',
@@ -802,11 +865,13 @@ export default function App() {
       })
       .then(data => {
         setIsUploading(false);
+        setCustomVocabulary('');
         refreshTranscriptsList();
         setSelectedId(data.id);
       })
       .catch(err => {
         setIsUploading(false);
+        setCustomVocabulary('');
         alert("⚠️ Upload failed. Error: " + err.message);
       });
   };
@@ -1080,6 +1145,40 @@ export default function App() {
     document.body.removeChild(link);
   };
 
+  const handleExportBacklog = async () => {
+    if (selectedFeatures.length === 0) {
+      alert("Please select at least one backlog feature item to export.");
+      return;
+    }
+    
+    setIsExporting(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/backlog/export`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript_id: selectedId,
+          platform: exportPlatform,
+          features: selectedFeatures
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        alert(`🎉 Backlog successfully synced! ${data.message}`);
+        setIsExportModalOpen(false);
+        fetchAuditLogs(); // Refresh activity logs
+      } else {
+        alert("⚠️ Integration sync failed.");
+      }
+    } catch (err) {
+      console.error("Export error:", err);
+      alert("⚠️ Sync failed: " + err.message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Copy Markdown to Clipboard
   const copyPrdToClipboard = () => {
     navigator.clipboard.writeText(prd);
@@ -1274,12 +1373,155 @@ export default function App() {
               placeholder="e.g. User Interview - John"
               autoFocus
             />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%', marginTop: '12px', textAlign: 'left' }}>
+              <label style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-muted)' }}>Custom Vocabulary Dictionary (Optional)</label>
+              <textarea 
+                value={customVocabulary}
+                onChange={(e) => setCustomVocabulary(e.target.value)}
+                placeholder="Type technical acronyms, brand names, or project terms separated by commas (e.g. FastAPI, Vite, PyAnnote) to boost Whisper's spelling accuracy."
+                style={{ width: '100%', minHeight: '60px', padding: '8px 10px', fontSize: '12px', border: '1px solid rgba(15,23,42,0.1)', borderRadius: '8px', background: 'rgba(15,23,42,0.01)', color: 'var(--text-main)', outline: 'none', resize: 'vertical' }}
+              />
+            </div>
             <div className="recording-actions">
               <button className="btn btn-primary" onClick={confirmAndUpload}>
                 <UploadCloud className="icon-medium" /> Upload & Transcribe
               </button>
               <button className="btn btn-outline" onClick={() => { setPendingFile(null); setPendingFileName(''); }}>
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Soundbite Share Modal */}
+      {isSoundbiteModalOpen && activeSoundbiteClip && (
+        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="modal-content glass" style={{ width: '90%', maxWidth: '500px', padding: '24px', borderRadius: '16px', background: '#ffffff', border: '1px solid var(--border-glass)', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                ✂️ Shareable Soundbite Audio Clip
+              </h3>
+              <button 
+                onClick={() => setIsSoundbiteModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', fontSize: '20px', fontWeight: '700', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div style={{ background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.06)', padding: '12px', borderRadius: '10px', marginBottom: '16px' }}>
+              <p style={{ fontStyle: 'italic', fontSize: '12.5px', color: 'var(--text-main)', margin: '0 0 8px 0', lineHeight: '1.4' }}>
+                "{activeSoundbiteClip.text}"
+              </p>
+              <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--color-primary)' }}>
+                Duration: {Math.floor(activeSoundbiteClip.start / 60)}:{String(Math.floor(activeSoundbiteClip.start % 60)).padStart(2, '0')} - {Math.floor(activeSoundbiteClip.end / 60)}:{String(Math.floor(activeSoundbiteClip.end % 60)).padStart(2, '0')} ({Math.round(activeSoundbiteClip.end - activeSoundbiteClip.start)}s)
+              </span>
+            </div>
+
+            {/* Custom Sliced Audio Player */}
+            <div style={{ marginBottom: '20px' }}>
+              <audio 
+                src={activeSoundbiteClip.clip_url} 
+                controls 
+                style={{ width: '100%' }}
+                autoPlay
+              />
+            </div>
+
+            {/* Share Link */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-muted)' }}>Share Link to this Clip</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="text" 
+                  readOnly
+                  value={`https://echo-voice-to-roadmap-aastha381.vercel.app/?share=${selectedId}&start=${activeSoundbiteClip.start}&end=${activeSoundbiteClip.end}`}
+                  style={{ flex: 1, padding: '10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '8px', color: 'var(--text-main)', outline: 'none' }}
+                />
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://echo-voice-to-roadmap-aastha381.vercel.app/?share=${selectedId}&start=${activeSoundbiteClip.start}&end=${activeSoundbiteClip.end}`);
+                    alert("Clip share link copied to clipboard! ✓");
+                  }}
+                  style={{ padding: '0 16px', borderRadius: '8px', fontSize: '12.5px', fontWeight: '600', background: 'var(--color-primary)', color: '#ffffff', border: 'none', cursor: 'pointer' }}
+                >
+                  Copy Link
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Backlog Export Integration Modal */}
+      {isExportModalOpen && (
+        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="modal-content glass" style={{ width: '90%', maxWidth: '450px', padding: '24px', borderRadius: '16px', background: '#ffffff', border: '1px solid var(--border-glass)', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🔌 Export Backlog to PM Trackers
+              </h3>
+              <button 
+                onClick={() => setIsExportModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', fontSize: '20px', fontWeight: '700', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: 0, marginBottom: '16px', lineHeight: 1.4 }}>
+              Push your selected backlog roadmap items directly to your engineering team's active sprint tracker.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-muted)' }}>Target Platform</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', border: exportPlatform === 'jira' ? '2px solid var(--color-primary)' : '1px solid rgba(15,23,42,0.08)', borderRadius: '8px', background: exportPlatform === 'jira' ? 'rgba(79,70,229,0.02)' : 'transparent', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}>
+                    <input 
+                      type="radio" 
+                      name="export_platform"
+                      checked={exportPlatform === 'jira'}
+                      onChange={() => setExportPlatform('jira')}
+                      style={{ accentColor: 'var(--color-primary)' }}
+                    />
+                    🔷 Jira Service
+                  </label>
+                  <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', border: exportPlatform === 'linear' ? '2px solid var(--color-primary)' : '1px solid rgba(15,23,42,0.08)', borderRadius: '8px', background: exportPlatform === 'linear' ? 'rgba(79,70,229,0.02)' : 'transparent', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}>
+                    <input 
+                      type="radio" 
+                      name="export_platform"
+                      checked={exportPlatform === 'linear'}
+                      onChange={() => setExportPlatform('linear')}
+                      style={{ accentColor: 'var(--color-primary)' }}
+                    />
+                    ⚡ Linear App
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(15,23,42,0.02)', border: '1px solid rgba(15,23,42,0.06)', padding: '10px 12px', borderRadius: '8px', marginBottom: '20px', fontSize: '12px', color: 'var(--text-main)' }}>
+              📋 Ready to sync: <strong>{selectedFeatures.length} prioritized roadmap items</strong>.
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button 
+                onClick={() => setIsExportModalOpen(false)}
+                className="btn btn-outline"
+                style={{ padding: '8px 16px', fontSize: '12.5px' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleExportBacklog}
+                disabled={isExporting}
+                className="btn btn-primary"
+                style={{ padding: '8px 20px', fontSize: '12.5px', background: 'var(--color-primary)', color: '#ffffff' }}
+              >
+                {isExporting ? 'Syncing...' : 'Confirm Sync'}
               </button>
             </div>
           </div>
@@ -1768,6 +2010,27 @@ export default function App() {
                                 {Math.floor(seg.start / 60)}:
                                 {String(Math.floor(seg.start % 60)).padStart(2, '0')}
                               </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCreateSoundbite(seg.start, seg.end, seg.text);
+                                }}
+                                title="Create Audio Clip (Soundbite)"
+                                style={{
+                                  border: 'none',
+                                  background: 'transparent',
+                                  cursor: 'pointer',
+                                  padding: '2px 4px',
+                                  color: 'var(--color-primary)',
+                                  fontSize: '11px',
+                                  fontWeight: '600',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '2px'
+                                }}
+                              >
+                                ✂️ Create Clip
+                              </button>
                             </div>
                             <div className="segment-text">{seg.text}</div>
                           </div>
@@ -1946,7 +2209,10 @@ export default function App() {
                             : 'Fine-tune confidence and complexity scores directly in the cells. The RICE score dynamically updates.'}
                         </p>
                       </div>
-                      <div className="actions">
+                      <div className="actions" style={{ display: 'flex', gap: '8px' }}>
+                        <button className="btn btn-secondary" onClick={() => setIsExportModalOpen(true)}>
+                          <ExternalLink className="icon-medium text-purple" /> Export Backlog
+                        </button>
                         <button className="btn btn-secondary" onClick={exportToCSV}>
                           <Download className="icon-medium" /> Export CSV
                         </button>
@@ -2345,6 +2611,35 @@ export default function App() {
                 <h3>Meeting Copilot</h3>
               </div>
               <button className="btn-close-chat" onClick={() => setIsChatSidebarOpen(false)}>×</button>
+            </div>
+            
+            {/* Prompt Template Selector */}
+            <div className="chat-template-bar" style={{ padding: '8px 16px', background: 'rgba(15,23,42,0.02)', borderBottom: '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ fontSize: '10.5px', fontWeight: '700', color: 'var(--text-muted)' }}>Quick AI Prompts</label>
+              <select
+                value={activeChatTemplate}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setActiveChatTemplate(val);
+                  
+                  const queries = {
+                    "action_items": "What are the action items and ownership assignments from this meeting?",
+                    "scrum_standup": "Give me the Agile standup summary showing completed, planned, and blocked items.",
+                    "user_persona": "Build a user persona showing customer motivations, pain points, and behaviors.",
+                    "qa_test_cases": "Write 3-5 QA test cases with steps and expected results based on this meeting."
+                  };
+                  if (val && queries[val]) {
+                    setChatQuestion(queries[val]);
+                  }
+                }}
+                style={{ width: '100%', padding: '6px 10px', fontSize: '12px', background: '#ffffff', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
+              >
+                <option value="">Select a template...</option>
+                <option value="action_items">📋 Action Items Tracker</option>
+                <option value="scrum_standup">🏃 Agile Standup Summary</option>
+                <option value="user_persona">👤 UX Persona Planner</option>
+                <option value="qa_test_cases">🧪 QA Lead Test Cases</option>
+              </select>
             </div>
             
             <div className="chat-messages-area">

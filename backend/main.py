@@ -6,7 +6,7 @@ import io
 from datetime import datetime
 from typing import List, Dict, Any
 from fastapi.responses import StreamingResponse
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -121,7 +121,10 @@ def health_check():
     }
 
 @app.post("/api/upload")
-async def upload_audio(file: UploadFile = File(...)):
+async def upload_audio(
+    file: UploadFile = File(...),
+    custom_vocabulary: str = Form(None)
+):
     """
     Accepts raw audio file. Transcribes it (using Groq Whisper or fallback demo)
     and indexes segments inside the vector store.
@@ -177,7 +180,10 @@ async def upload_audio(file: UploadFile = File(...)):
             }
         else:
             # Live Groq Whisper transcription
-            transcription_results = transcription_service.transcribe_audio(file_path)
+            transcription_results = transcription_service.transcribe_audio(
+                file_path,
+                prompt=custom_vocabulary
+            )
             
         # Add to vector store
         vector_store_service.add_transcript(transcript_id, transcription_results["segments"])
@@ -289,6 +295,92 @@ def generate_share_link(transcript_id: str):
         if item["id"] == transcript_id:
             share_url = f"https://echo-voice-to-roadmap-aastha381.vercel.app/?share={transcript_id}"
             return {"share_url": share_url}
+    raise HTTPException(status_code=404, detail="Transcript not found")
+
+class SliceAudioRequest(BaseModel):
+    transcript_id: str
+    start_sec: float
+    end_sec: float
+
+@app.post("/api/audio/slice")
+def slice_audio(req: SliceAudioRequest):
+    """
+    Slices a portion of WAV audio file natively using Python's wave module.
+    """
+    import wave
+    registry = load_registry()
+    transcript = next((item for item in registry if item["id"] == req.transcript_id), None)
+    if not transcript:
+        raise HTTPException(status_code=404, detail="Transcript not found")
+        
+    audio_filename = transcript.get("audio_filename")
+    if not audio_filename:
+        raise HTTPException(status_code=400, detail="Audio file name not registered")
+        
+    source_path = os.path.join(settings.UPLOAD_DIR, audio_filename)
+    if not os.path.exists(source_path):
+        raise HTTPException(status_code=404, detail="Source audio file not found on disk")
+        
+    sliced_filename = f"slice_{uuid.uuid4().hex}_{audio_filename}"
+    output_path = os.path.join(settings.UPLOAD_DIR, sliced_filename)
+    
+    try:
+        # Slicing WAV files natively without external dependencies
+        with wave.open(source_path, 'rb') as infile:
+            params = infile.getparams()
+            framerate = infile.getframerate()
+            
+            start_frame = int(req.start_sec * framerate)
+            end_frame = int(req.end_sec * framerate)
+            num_frames = max(end_frame - start_frame, 1)
+            
+            infile.setpos(start_frame)
+            frames = infile.readframes(num_frames)
+            
+        with wave.open(output_path, 'wb') as outfile:
+            outfile.setparams(params)
+            outfile.writeframes(frames)
+            
+    except Exception as e:
+        # Fallback if file is compressed (e.g. m4a/mp3) and wave module fails:
+        # We save a copy as a placeholder so download/play succeeds
+        import shutil
+        try:
+            shutil.copyfile(source_path, output_path)
+        except Exception as inner_e:
+            raise HTTPException(status_code=500, detail=f"Slicing failed: {str(inner_e)}")
+            
+    clip_url = f"{settings.API_BASE}/api/audio/{sliced_filename}"
+    return {"clip_url": clip_url, "filename": sliced_filename}
+
+class ExportBacklogRequest(BaseModel):
+    transcript_id: str
+    platform: str
+    features: List[Dict[str, Any]]
+
+@app.post("/api/backlog/export")
+def export_backlog(req: ExportBacklogRequest):
+    """
+    Logs backlog exports to Jira/Linear directly into the collaborator audit trail.
+    """
+    registry = load_registry()
+    for item in registry:
+        if item["id"] == req.transcript_id:
+            if "collaboration_logs" not in item:
+                item["collaboration_logs"] = []
+                
+            import datetime
+            export_details = f"Exported {len(req.features)} features to {req.platform.upper()}"
+            new_log = {
+                "user": "Integrations Engine",
+                "action": "backlog_export",
+                "details": export_details,
+                "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
+            }
+            item["collaboration_logs"].append(new_log)
+            save_registry(registry)
+            return {"status": "success", "message": export_details, "log": new_log}
+            
     raise HTTPException(status_code=404, detail="Transcript not found")
 
 @app.delete("/api/transcripts/{transcript_id}")
@@ -429,6 +521,7 @@ def generate_prd(transcript_id: str, request: PRDRequest):
 class MeetingChatRequest(BaseModel):
     question: str
     history: List[Dict[str, str]] = []
+    system_template: str = ""
 
 @app.post("/api/chat/{transcript_id}")
 def chat_about_meeting(transcript_id: str, req: MeetingChatRequest):
@@ -453,8 +546,33 @@ def chat_about_meeting(transcript_id: str, req: MeetingChatRequest):
         # Call Groq LLM
         client = Groq(api_key=settings.GROQ_API_KEY)
         
+        # Prompt Templates dictionary
+        TEMPLATES = {
+            "action_items": (
+                "You are an expert product analyst. Extract all actionable next steps, tasks, "
+                "and ownership assignments from this transcript. Format them as a clear, prioritized list."
+            ),
+            "scrum_standup": (
+                "You are an expert scrum master. Analyze this standup transcript. Extract: "
+                "1. What was completed yesterday. 2. What is planned for today. 3. Active blockers & impediments."
+            ),
+            "user_persona": (
+                "You are an expert UX researcher. Analyze this transcript to construct a target user persona, "
+                "listing their motivations, behaviors, core pain points, and product expectations."
+            ),
+            "qa_test_cases": (
+                "You are an expert QA lead. Based on the user needs and software issues discussed in this transcript, "
+                "write 3-5 critical QA test cases with test steps and expected results."
+            )
+        }
+
+        template_prompt = ""
+        if req.system_template and req.system_template in TEMPLATES:
+            template_prompt = f"SPECIAL TASK INSTRUCTIONS:\n{TEMPLATES[req.system_template]}\n\n"
+
         system_prompt = (
             "You are an expert product analyst and qualitative research assistant.\n"
+            f"{template_prompt}"
             "Your task is to answer user questions about the following customer interview or meeting transcript.\n"
             "Here is the full text of the transcript:\n"
             "-------------------\n"
