@@ -1,84 +1,114 @@
 # Product Requirement Document (PRD)
 
 ## Product Name: Echo - Voice-to-Roadmap AI Copilot
-* **Author**: Lead Product Manager
-* **Status**: Draft (Approved for MVP Development)
+* **Author**: Aastha Saini (Lead PM & Developer)
+* **Status**: Completed / Released (V1.0)
 * **Date**: August 2026
 * **Target Release**: Q3 2026
+* **Live App**: [Vercel Deployment](https://echo-voice-to-roadmap-aastha381.vercel.app/)
 
 ---
 
 ## 1. Executive Summary & Value Proposition
-Product Managers (PMs) spend hours conducting qualitative customer interviews, but translating those raw conversations into actionable product roadmaps is manual, subjective, and time-consuming. 
+Product Managers (PMs) and UX Researchers conduct qualitative user interviews but face significant friction in translating hours of raw conversation into prioritized roadmap features and technical specifications. This synthesis is traditionally manual, prone to subjective bias, and time-consuming.
 
-**Echo** is an AI-powered PM copilot that automates this workflow. It transcribes audio recordings, uses semantic search (RAG) to extract user pain points and suggestions, prioritizes them in a dynamic RICE backlog, and drafts PRDs directly from research evidence. Every recommendation is linked to a **timestamped quote**, ensuring stakeholder trust and removing product assumptions.
+**Echo** is an AI-powered PM copilot that automates this entire lifecycle. Echo transcribes raw audio, automatically classifies the context of the conversation, extracts key pain points and recommendations, prioritizes them using interactive framework spreadsheets (RICE or Research Priority), and drafts full Markdown Product Requirement Documents (PRDs) or Executive Memos. 
 
----
-
-## 2. The Problem Statement
-1. **Insight Synthesis Lag**: Synthesizing 10 hours of user interviews takes 1-2 days of manual tagging and clipping.
-2. **Subjective Prioritization**: Feature roadmaps are often prioritized based on "gut feeling" or the "loudest customer" rather than quantitative frameworks like RICE.
-3. **The Stakeholder Credibility Gap**: When presenting roadmap proposals, stakeholders challenge PMs on the evidence. Linking features to exact user quotes is tedious.
-4. **Drafting Friction**: Translating selected user requests into technical PRD structures takes hours of copywriting.
+Crucially, **every extracted feature or insight is linked to a verified, timestamped quote** from the source audio recording. Clicking a quote citation instantly jumps the player's timeline to the exact second the statement was spoken, guaranteeing stakeholder trust and eliminating roadmap hallucinations.
 
 ---
 
-## 3. User Personas & Target Audience
-* **Persona A: Sarah, the Growth PM**
-  * *Needs*: Needs to run weekly usability tests on checkout conversion and compile feature specs for engineers quickly.
-  * *Pain Points*: Spends nights copying quotes and drafting Jira tickets. Stakeholders ask: *"Are you sure users want this?"*
-* **Persona B: David, the UX Researcher**
-  * *Needs*: Needs to summarize theme-based research from general talk shows, webinars, and expert interviews.
-  * *Pain Points*: Forcing general discussions into software feature ticket formats. Needs general strategy memos, not software specs.
+## 2. Problem Statement & User Personas
+### 2.1. The Problems
+1. **The Synthesis Bottleneck**: Transcribing and manually tagging a 1-hour interview takes 3-4 hours of manual labor.
+2. **Roadmap Subjectivity**: Roadmap prioritization often suffers from the "Loudest Voice" bias rather than being driven by objective, evidence-backed scores.
+3. **The Stakeholder Credibility Gap**: When presenting roadmap choices, PMs are often challenged to prove that *actual* users requested a feature. Linking feature requests to the exact voice recordings manually is tedious.
+4. **Context Collapse**: General research/expert interviews are forced into standard software engineering ticket formats, which doesn't fit qualitative strategic analysis.
+
+### 2.2. Target Audience & Personas
+* **Sarah (The Growth Product Manager)**: Needs to synthesize weekly usability test sessions for the checkout flow and compile clean requirements for developers. She needs a tool that spits out standard software-focused roadmaps and engineering-ready PRDs.
+* **David (The Senior UX Researcher / Strategist)**: Conducts open-ended industry expert interviews or customer discovery calls. He needs to extract themes, challenges, and high-level recommendations, and output a strategic Executive Memo rather than technical specifications.
 
 ---
 
-## 4. Functional Requirements
+## 3. System Architecture & Tech Stack
+To ensure maximum responsiveness and local data privacy:
+* **Frontend**: React (built with Vite), styled using custom Vanilla CSS variables implementing a premium **Warm-Stone Light Theme** with **Amethyst Violet** accents.
+* **Audio Layer**: Native HTML5 `<audio>` player persistently mounted in the DOM to prevent playback state resets during tab switches, combined with custom FastAPI Range-Request streaming to support smooth timeline seeking.
+* **Backend**: FastAPI (Python 3.13) for fast asynchronous processing.
+* **Transcription (ASR)**: Groq SDK hosting Whisper-Large-v3 for near-instant transcription.
+* **Semantic Analysis (RAG)**:
+  * Local vector embeddings calculated via `SentenceTransformers (all-MiniLM-L6-v2)`.
+  * Cosine similarity matching in backend Numpy space.
+  * Context generation processed by Groq Llama-3.3-70B-Versatile.
+* **Factual Verification Guardrail**: A backend security layer that programmatically matches LLM-generated quotes word-for-word against the source transcript database before returning results to the client, preventing hallucinated quotes.
+* **PWA & Chrome Extension Integration**: Manifest v3 integration for recording live Google Meet/Zoom browser tabs, and standard service workers for local PWA desktop installs.
 
-### 4.1. Core Module 1: Live Transcription & Audio Player
-* **REQ-1**: Accept audio files (MP3, WAV, M4A, WEBM, etc.) up to 25MB.
-* **REQ-2**: Transcribe audio using the Groq Whisper-Large-v3 API.
-* **REQ-3**: Auto-segment the transcription with speaker indicators and precise timestamps.
-* **REQ-4**: Integrated audio scrubber bar that syncs time updates with highlighted text segments.
+---
 
-### 4.2. Core Module 2: Context-Aware Classifier
-* **REQ-5**: Detect conversation context: `software` (app feedback) vs. `research` (general topic discussion).
-* **REQ-6**: **Software Mode Layout**: Display "Extracted Pain Points" and "Proposed Features".
-* **REQ-7**: **Research Mode Layout**: Display "Key Challenges & Themes" and "Actionable Recommendations".
+## 4. Detailed Functional Requirements
 
-### 4.3. Core Module 3: Grounded Insights (RAG Citations)
-* **REQ-8**: Run semantic search queries against transcript segments using local vector embeddings.
-* **REQ-9**: Extract pain points/themes and proposed features/recommendations using LLM synthesis.
-* **REQ-10**: Every extracted item must include clickable citations showing the speaker name, timestamp, and raw quote.
-* **REQ-11**: Clicking a citation seeks the audio player to the exact start timestamp and plays the recording.
-* **REQ-12**: Include a Factual Verification Guardrail: verify that all quotes exist in the raw database before rendering, removing LLM hallucinations.
+### 4.1. Core Module 1: Persistent Audio Player & Interactive Transcript
+* **REQ-1**: Accept audio file uploads (MP3, WAV, WEBM, M4A, OGG) up to 25MB.
+* **REQ-2**: Transcribe audio via Groq Whisper-Large-v3 with word-level timestamps and speaker label clustering.
+* **REQ-3**: Provide a persistent bottom player dock that remains active and playing even when the user switches tabs (Transcript, Insights, Backlog, PRD).
+* **REQ-4**: Sync the highlighted transcript segment with the audio player's current playback position in real-time.
+* **REQ-5**: Clicking on any transcript line or timestamp seeks the audio player to that exact second.
 
-### 4.4. Core Module 4: Prioritized Backlog Grid
-* **REQ-13**: Present features/recommendations in an interactive spreadsheet table.
-* **REQ-14**: Support dynamic prioritization scoring:
-  * *Software RICE Score*: $\frac{\text{Reach} \times \text{Impact} \times \text{Confidence}}{\text{Effort}}$
-  * *Research Priority Score*: $\frac{\text{Importance} \times \text{Impact} \times \text{Evidence}}{\text{Difficulty}}$
-* **REQ-15**: Allow inline edits for reach, impact, confidence, effort, and MoSCoW parameters. Recalculate scores instantly.
-* **REQ-16**: Export the selected roadmap backlog as a downloadable CSV file.
+### 4.2. Core Module 2: Context-Aware Dual Layouts
+* **REQ-6**: Automatically classify the uploaded file context:
+  * **Software Feedback Mode**: Tailored for usability testing, SaaS feature feedback, and application testing.
+  * **General Research Mode**: Tailored for market research, interviews, webinars, and open discussions.
+* **REQ-7**: Dynamically adapt the UI:
+  * **Software Mode UI**: Displays "Extracted Pain Points" and "Proposed Features".
+  * **Research Mode UI**: Displays "Key Challenges & Themes" and "Actionable Recommendations".
+
+### 4.3. Core Module 3: Zero-Hallucination Citations (RAG)
+* **REQ-8**: Extract pain points and features/recommendations using LLM synthesis with context-injected transcript segments.
+* **REQ-9**: Every extracted card must render a clickable Citation Badge showing: `Speaker Name · Timestamp · Exact Quote`.
+* **REQ-10**: Clicking the Citation Badge switches the main tab view back to the transcript, scrolls to the referenced text block, highlights it, and triggers the audio player to seek and play.
+* **REQ-11**: Enforce verification check: if the LLM produces a citation quote that cannot be found exactly in the transcript text, filter it out or flag it to avoid hallucination.
+
+### 4.4. Core Module 4: Interactive Prioritization Backlog
+* **REQ-12**: Display all extracted features/recommendations in an editable spreadsheet-style grid.
+* **REQ-13**: Implement formulas for live score calculation:
+  * **Software RICE Score**:
+    $$\text{RICE} = \frac{\text{Reach} \times \text{Impact} \times \text{Confidence}}{\text{Effort}}$$
+  * **Research Priority Score**:
+    $$\text{Priority} = \frac{\text{Importance} \times \text{Impact} \times \text{Evidence}}{\text{Difficulty}}$$
+* **REQ-14**: Cells must support instant double-click/single-click value changes (Reach, Impact, Confidence, Effort, Difficulty, Importance, Evidence) with automatic recalculation of priority scores.
+* **REQ-15**: Support MoSCoW prioritization tagging (Must Have, Should Have, Could Have, Won't Have).
+* **REQ-16**: Provide a "Download CSV" feature to export the prioritized backlog.
 
 ### 4.5. Core Module 5: Strategic Document Generator
-* **REQ-17**: Support checklist scoping: select only specific challenges and recommendations to include in the draft.
-* **REQ-18**: Generate drafts dynamically:
-  * *Software Mode*: Drafts a technical **Product Requirement Document (PRD)**.
-  * *Research Mode*: Drafts a **Research Executive Strategy Brief / Memo**.
-* **REQ-19**: The document must copy citations and raw user quotes directly into the problem statements and user requirements sections.
-* **REQ-20**: Provide copy-to-clipboard and markdown file (`.md`) download actions.
+* **REQ-17**: Allow the user to check/uncheck specific backlog items to include or exclude them from the document scope.
+* **REQ-18**: Render documents based on active mode:
+  * **Software Mode**: Generates a standard Product Requirement Document (PRD) detailing User Stories, Requirements, Metric Specs, and Scope.
+  * **Research Mode**: Generates an Executive Strategy Memo describing themes, key metrics, findings, and strategic suggestions.
+* **REQ-19**: Automatically inline transcript citation quotes inside the document sections for evidence-grounded drafting.
+* **REQ-20**: Export generated documents to:
+  * **Markdown File (.md)**
+  * **PowerPoint Presentation (.pptx)** via Python backend slide template generation.
+  * **Copy to Clipboard**
+
+### 4.6. Core Module 6: AI Chat Copilot
+* **REQ-21**: Integrated chat sidebar with suggested query prompts (e.g., "Summarize the key takeaway", "Identify the biggest user complaint").
+* **REQ-22**: LLM response must maintain conversational context of the entire transcript.
 
 ---
 
-## 5. Non-Functional Requirements
-* **Performance**: API transcription should complete within 15 seconds for a 5-minute clip. RAG analysis should load within 5 seconds.
-* **Security & Privacy**: Audio files and registry transcripts must be processed and cached locally on the user's workspace filesystem. No third-party training on uploaded files.
-* **Scalability**: Support concurrency of multiple background analysis tasks.
+## 5. Non-Functional Requirements (NFRs)
+* **Performance**:
+  * Transcription processing must complete within `< 15 seconds` for standard 5-minute clips.
+  * RAG vector computation and analysis must take `< 5 seconds`.
+* **Security & Local Processing**:
+  * Audio storage and semantic vector indexing must run locally on the backend cache without sharing data with public third-party vector databases.
+* **Reliability**:
+  * Custom Range-Request responses must enable scrub/seek functionality on all major desktop browsers (Chrome, Safari, Firefox, Edge) without triggering audio stalling or resetting.
 
 ---
 
 ## 6. Success Metrics & KPIs
-* **Time-to-Roadmap (Primary Metric)**: Reduce the time spent going from raw audio to a prioritized spreadsheet roadmap from **4 hours** to **under 2 minutes**.
-* **Document Adoption Rate**: Percentage of users who download or copy the generated PRD/brief.
-* **Prioritization Edit Rate**: Percentage of PMs who customize the automated RICE scores (indicating interactive engagement).
+* **Roadmap Efficiency (Primary KPI)**: Reduce the time PMs spend analyzing user interviews and generating prioritized backlogs from an average of **4 hours to under 2 minutes**.
+* **Citation Click-Through Rate**: Measuring user clicks on citation chips to verify transcript sources (ensuring user trust).
+* **Actionable Export Rate**: Percentage of processed interviews that result in a downloaded CSV backlog, Markdown PRD, or PowerPoint slide deck.
