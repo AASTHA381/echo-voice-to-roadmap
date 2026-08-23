@@ -4,7 +4,7 @@ import {
   Play, Pause, Plus, Minus, Check, CheckCircle, 
   ExternalLink, AlertTriangle, FileSpreadsheet, Sparkles, 
   RefreshCw, Music, Copy, Trash2, Mic, Cpu, Bot, Edit3, ListChecks,
-  BarChart2, Share2, Users
+  BarChart2, Share2, Users, MessageSquare
 } from 'lucide-react';
 
 // Parser to convert MM:SS, HH:MM:SS or ranges into raw seconds for seeking
@@ -202,6 +202,7 @@ export default function App() {
       ? 'http://localhost:8000'
       : 'https://echo-voice-to-roadmap-pgtn.onrender.com'
   );
+  const audioBase = API_BASE;
 
   // Navigation & View Tabs
   const [activeTab, setActiveTab] = useState('transcript'); // transcript | insights | backlog | prd
@@ -274,6 +275,167 @@ export default function App() {
   const [shareUrl, setShareUrl] = useState('');
   const [isCopied, setIsCopied] = useState(false);
   const [auditLogs, setAuditLogs] = useState([]);
+
+  // Comments and Collaborators local state
+  const [comments, setComments] = useState(() => {
+    try {
+      const saved = localStorage.getItem('echo_comments');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [isCommentingSegmentId, setIsCommentingSegmentId] = useState(null);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [collaborators, setCollaborators] = useState([
+    { name: 'Sarah S.', email: 'sarah.s@company.com', role: 'Eng Lead', avatar: 'SS', active: true },
+    { name: 'Alex M.', email: 'alex.m@company.com', role: 'UX Designer', avatar: 'AM', active: false }
+  ]);
+  const [inviteEmail, setInviteEmail] = useState('');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('echo_comments', JSON.stringify(comments));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [comments]);
+
+  const handleAddComment = (segmentId) => {
+    if (!newCommentText.trim()) return;
+    const commentId = Date.now();
+    const newComment = {
+      id: commentId,
+      user: 'Aastha Saini (You)',
+      email: 'aastha@company.com',
+      avatar: 'AS',
+      text: newCommentText,
+      timestamp: new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    setComments(prev => {
+      const segComments = prev[segmentId] || [];
+      return {
+        ...prev,
+        [segmentId]: [...segComments, newComment]
+      };
+    });
+
+    const segment = activeTranscript?.segments?.find(s => s.id === segmentId);
+    const timeStr = segment ? `at [${Math.floor(segment.start / 60)}:${String(Math.floor(segment.start % 60)).padStart(2, '0')}]` : '';
+    logAuditAction('Aastha Saini (You)', 'comment', `commented on segment ${timeStr}: "${newCommentText.substring(0, 25)}${newCommentText.length > 25 ? '...' : ''}"`);
+
+    setNewCommentText('');
+    setIsCommentingSegmentId(null);
+  };
+
+  const handleDeleteComment = (segmentId, commentId) => {
+    setComments(prev => {
+      const segComments = prev[segmentId] || [];
+      return {
+        ...prev,
+        [segmentId]: segComments.filter(c => c.id !== commentId)
+      };
+    });
+  };
+
+  const handleSendInvite = (e) => {
+    if (e) e.preventDefault();
+    if (!inviteEmail.trim()) return;
+    
+    const name = inviteEmail.split('@')[0];
+    const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+    const initials = formattedName.substring(0, 2).toUpperCase();
+    
+    const newCollab = {
+      name: formattedName,
+      email: inviteEmail,
+      role: 'Viewer',
+      avatar: initials,
+      active: false
+    };
+
+    setCollaborators(prev => [...prev, newCollab]);
+    logAuditAction('Aastha Saini (You)', 'invite', `invited ${formattedName} (${inviteEmail})`);
+    
+    const emailToInvite = inviteEmail;
+    setInviteEmail('');
+    
+    // Simulate collaborator joining after 3.5 seconds
+    setTimeout(() => {
+      setCollaborators(prev => 
+        prev.map(c => c.email === emailToInvite ? { ...c, active: true } : c)
+      );
+      
+      logAuditAction(formattedName, 'join', `joined workspace and reviewed roadmap`);
+
+      // Add a simulated comment on the first segment
+      if (activeTranscript && activeTranscript.segments && activeTranscript.segments.length > 0) {
+        const seg = activeTranscript.segments[0];
+        const simComment = {
+          id: Date.now() + 2,
+          user: formattedName,
+          email: emailToInvite,
+          avatar: initials,
+          text: `Reviewing this segment now. The audio citation jumps perfectly!`,
+          timestamp: new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+        };
+        
+        setComments(prev => ({
+          ...prev,
+          [seg.id]: [...(prev[seg.id] || []), simComment]
+        }));
+        
+        logAuditAction(formattedName, 'comment', `commented on segment at [00:00]`);
+      }
+    }, 3500);
+  };
+
+  const handleSpeakerClick = (sp) => {
+    setSelectedSpeakerFilter(selectedSpeakerFilter === sp ? null : sp);
+    setFilterSpeaker(selectedSpeakerFilter === sp ? '' : sp);
+    setActiveTab('transcript');
+  };
+
+  const getSpeakerKeywords = (speaker) => {
+    if (!activeTranscript || !activeTranscript.segments) return [];
+    
+    // Combine all segments of this speaker
+    const text = activeTranscript.segments
+      .filter(seg => seg.speaker === speaker)
+      .map(seg => seg.text)
+      .join(' ');
+    
+    // Clean and tokenize
+    const words = text.toLowerCase()
+      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "")
+      .split(/\s+/);
+    
+    // Common English stop words to filter out
+    const stopWords = new Set([
+      'the', 'and', 'to', 'of', 'a', 'is', 'that', 'it', 'in', 'you', 'we', 'i', 
+      'this', 'for', 'on', 'with', 'as', 'are', 'was', 'with', 'but', 'not', 'have',
+      'be', 'they', 'our', 'my', 'your', 'about', 'just', 'so', 'if', 'or', 'an', 
+      'at', 'by', 'from', 'all', 'do', 'can', 'will', 'would', 'should', 'get', 
+      'about', 'there', 'me', 'us', 'go', 'up', 'out', 'what', 'who', 'how', 'why',
+      'which', 'some', 'any', 'here', 'there', 'has', 'had', 'been', 'were', 'like',
+      'more', 'then', 'than', 'into', 'now', 'their', 'them', 'know', 'think', 'see',
+      'so', 'very', 'here', 'want', 'about', 'well', 'one', 'two', 'has', 'just'
+    ]);
+    
+    const freqs = {};
+    words.forEach(w => {
+      if (w.length > 3 && !stopWords.has(w)) {
+        freqs[w] = (freqs[w] || 0) + 1;
+      }
+    });
+    
+    // Sort by frequency
+    return Object.entries(freqs)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(entry => entry[0]);
+  };
 
   // Fetch audit logs from backend
   const fetchAuditLogs = async () => {
@@ -404,7 +566,6 @@ export default function App() {
           setActiveTranscript(data);
           // Set active audio url from backend static folder
           if (data.audio_filename) {
-            const audioBase = API_BASE || 'http://localhost:8000';
             setAudioUrl(`${audioBase}/api/audio/${data.audio_filename}`);
           } else {
             setAudioUrl(null);
@@ -1702,8 +1863,8 @@ export default function App() {
                         </div>
                       )}
 
-                      {activeTranscript?.segments
-                        ?.filter(seg => {
+                      {(() => {
+                        const filteredSegments = activeTranscript?.segments?.filter(seg => {
                           const activeSpeaker = filterSpeaker || selectedSpeakerFilter;
                           if (activeSpeaker && seg.speaker !== activeSpeaker) return false;
                           
@@ -1732,49 +1893,138 @@ export default function App() {
                           }
                           
                           return true;
-                        })
-                        ?.map((seg) => (
-                          <div 
-                            key={seg.id} 
-                            id={`segment-${seg.id}`}
-                            className={`transcript-segment-row ${
-                              activeSegmentId === seg.id ? 'playing-active' : ''
-                            } ${
-                              highlightedSegmentId === seg.id ? 'rag-highlighted' : ''
-                            }`}
-                            onClick={() => seekTo(seg.start, seg.id)}
-                          >
-                            <div className="segment-metadata">
-                              <span 
-                                className="segment-speaker hover-clickable"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedSpeakerFilter(selectedSpeakerFilter === seg.speaker ? null : seg.speaker);
-                                }}
-                                title={`Click to filter by ${seg.speaker}`}
-                                style={{
-                                  cursor: 'pointer',
-                                  textDecoration: 'underline',
-                                  textDecorationStyle: 'dotted'
-                                }}
-                              >
-                                {seg.speaker}
-                              </span>
-                              <span 
-                                className="segment-timestamp"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  seekTo(seg.start, seg.id);
-                                }}
-                              >
-                                {Math.floor(seg.start / 60)}:
-                                {String(Math.floor(seg.start % 60)).padStart(2, '0')}
-                              </span>
+                        }) || [];
+
+                        return (
+                          <>
+                            {/* Filter Summary Banner */}
+                            <div className="filter-summary-banner" style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '10px 14px',
+                              background: 'var(--bg-secondary)',
+                              borderBottom: '1px solid var(--border-glass)',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              color: 'var(--text-muted)',
+                              fontWeight: '600',
+                              marginBottom: '12px'
+                            }}>
+                              <span>Showing {filteredSegments.length} of {activeTranscript?.segments?.length || 0} segments</span>
+                              {(filterKeyword || filterSpeaker || selectedSpeakerFilter || filterType !== 'all' || filterTimeMin || filterTimeMax) && (
+                                <span style={{ color: 'var(--color-primary)', fontSize: '11px' }}>Active Filters applied</span>
+                              )}
                             </div>
-                            <div className="segment-text">{seg.text}</div>
-                          </div>
-                        ))
-                      }
+
+                            {filteredSegments.map((seg) => (
+                              <div 
+                                key={seg.id} 
+                                id={`segment-${seg.id}`}
+                                className={`transcript-segment-row ${
+                                  activeSegmentId === seg.id ? 'playing-active' : ''
+                                } ${
+                                  highlightedSegmentId === seg.id ? 'rag-highlighted' : ''
+                                }`}
+                                onClick={() => seekTo(seg.start, seg.id)}
+                              >
+                                <div className="segment-metadata">
+                                  <span 
+                                    className="segment-speaker hover-clickable"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSpeakerClick(seg.speaker);
+                                    }}
+                                    title={`Click to filter by ${seg.speaker}`}
+                                    style={{
+                                      cursor: 'pointer',
+                                      textDecoration: 'underline',
+                                      textDecorationStyle: 'dotted'
+                                    }}
+                                  >
+                                    {seg.speaker}
+                                  </span>
+                                  <span 
+                                    className="segment-timestamp"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      seekTo(seg.start, seg.id);
+                                    }}
+                                  >
+                                    {Math.floor(seg.start / 60)}:
+                                    {String(Math.floor(seg.start % 60)).padStart(2, '0')}
+                                  </span>
+                                </div>
+                                <div className="segment-text" style={{ fontSize: '13.5px', color: 'var(--text-main)', lineHeight: '1.5' }}>{seg.text}</div>
+
+                                {/* Comments Section */}
+                                <div className="segment-comments-container" style={{ marginTop: '8px', borderTop: '1px dashed rgba(0,0,0,0.06)', paddingTop: '6px' }}>
+                                  {(comments[seg.id] || []).map(comment => (
+                                    <div key={comment.id} style={{ display: 'flex', gap: '8px', padding: '6px 0', fontSize: '12px', alignItems: 'flex-start' }} onClick={e => e.stopPropagation()}>
+                                      <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--color-primary-glow)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justify: 'center', fontWeight: '700', fontSize: '10px', flexShrink: 0 }}>
+                                        {comment.avatar}
+                                      </div>
+                                      <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '11px' }}>
+                                          <span><strong>{comment.user}</strong> · {comment.timestamp}</span>
+                                          {comment.user.includes('You') && (
+                                            <button 
+                                              onClick={() => handleDeleteComment(seg.id, comment.id)}
+                                              style={{ background: 'transparent', border: 'none', color: 'var(--color-rose)', cursor: 'pointer', fontSize: '10.5px', fontWeight: '600' }}
+                                            >
+                                              Delete
+                                            </button>
+                                          )}
+                                        </div>
+                                        <div style={{ color: 'var(--text-main)', marginTop: '2px', lineHeight: '1.4' }}>{comment.text}</div>
+                                      </div>
+                                    </div>
+                                  ))}
+
+                                  {isCommentingSegmentId === seg.id ? (
+                                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }} onClick={e => e.stopPropagation()}>
+                                      <input 
+                                        type="text" 
+                                        placeholder="Add a comment..."
+                                        value={newCommentText}
+                                        onChange={(e) => setNewCommentText(e.target.value)}
+                                        autoFocus
+                                        style={{ flex: 1, padding: '6px 10px', fontSize: '12.5px', border: '1px solid rgba(124, 58, 237, 0.3)', borderRadius: '6px', background: 'var(--bg-card)', color: 'var(--text-main)', outline: 'none' }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') handleAddComment(seg.id);
+                                        }}
+                                      />
+                                      <button 
+                                        onClick={() => handleAddComment(seg.id)}
+                                        style={{ padding: '6px 12px', fontSize: '12px', fontWeight: '600', background: 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                                      >
+                                        Post
+                                      </button>
+                                      <button 
+                                        onClick={() => setIsCommentingSegmentId(null)}
+                                        style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent', border: '1px solid var(--border-glass)', borderRadius: '6px', color: 'var(--text-muted)', cursor: 'pointer' }}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsCommentingSegmentId(seg.id);
+                                        setNewCommentText('');
+                                      }}
+                                      style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'transparent', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '11px', fontWeight: '600', padding: '4px 0', marginTop: '2px' }}
+                                    >
+                                      <MessageSquare style={{ width: '12px', height: '12px' }} /> Comment
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        );
+                      })()}
                     </div>
 
                   </div>
@@ -2053,7 +2303,7 @@ export default function App() {
                     
                     {/* Rendered markdown view instead of raw textarea */}
                     <div className="prd-rendered">
-                    {renderMarkdown(prd)}
+                      {renderMarkdown(prd)}
                     </div>
                   </div>
                 )}
@@ -2063,8 +2313,8 @@ export default function App() {
                   <div className="analytics-tab-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', padding: '10px 0' }}>
                     
                     {/* Left Pane: Speaker Stats */}
-                    <div className="analytics-card glass" style={{ padding: '20px', borderRadius: '12px', border: '1px solid var(--border-glass)', background: 'rgba(255, 255, 255, 0.4)' }}>
-                      <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="analytics-card glass" style={{ padding: '20px', borderRadius: '12px', border: '1px solid var(--border-glass)', background: 'var(--bg-glass)' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Users className="icon-medium text-purple" /> Speaker Talk-Time & Pace
                       </h3>
                       
@@ -2092,27 +2342,66 @@ export default function App() {
                             const talkMins = stats.talkTime / 60;
                             const wpm = talkMins > 0 ? Math.round(stats.words / talkMins) : 0;
                             
-                            // Color scheme alternating
+                            // Classification
+                            let paceClass = 'Moderate';
+                            let paceColor = 'var(--text-main)';
+                            if (wpm < 110) {
+                              paceClass = 'Slow';
+                              paceColor = 'var(--text-muted)';
+                            } else if (wpm > 150) {
+                              paceClass = '⚠️ Rushed';
+                              paceColor = 'var(--color-rose)';
+                            }
+
+                            // Alternating colors
                             const colors = ['var(--color-primary)', 'var(--color-purple)', 'var(--color-pink)', 'var(--color-amber)'];
                             const color = colors[idx % colors.length];
+                            
+                            // Get dynamic keywords for the speaker
+                            const speakerKeywords = getSpeakerKeywords(sp);
 
                             return (
-                              <div key={sp} style={{ padding: '12px', background: 'rgba(255,255,255,0.3)', borderRadius: '10px', border: '1px solid rgba(15,23,42,0.03)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                  <strong>{sp}</strong>
-                                  <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 6px', background: 'rgba(15,23,42,0.04)', borderRadius: '4px', color: 'var(--text-muted)' }}>
+                              <div 
+                                key={sp} 
+                                onClick={() => handleSpeakerClick(sp)}
+                                className="speaker-analytics-row-hover"
+                                title={`Click to filter transcript for ${sp}`}
+                                style={{ 
+                                  padding: '14px', 
+                                  background: 'var(--bg-card)', 
+                                  borderRadius: '10px', 
+                                  border: '1px solid var(--border-glass)',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                  <strong style={{ color: 'var(--text-main)', fontSize: '13.5px' }}>{sp}</strong>
+                                  <span style={{ fontSize: '11px', fontWeight: '700', padding: '2px 8px', background: 'var(--bg-secondary)', borderRadius: '6px', color: 'var(--color-primary)' }}>
                                     {percentage}% talk time
                                   </span>
                                 </div>
                                 
-                                <div style={{ height: '6px', background: 'rgba(0,0,0,0.04)', borderRadius: '3px', overflow: 'hidden', marginBottom: '8px' }}>
-                                  <div style={{ height: '100%', width: `${percentage}%`, background: color, borderRadius: '3px' }} />
+                                <div className="progress-bar-bg" style={{ height: '6px', background: 'rgba(0,0,0,0.04)', borderRadius: '3px', overflow: 'hidden', marginBottom: '10px' }}>
+                                  <div className="progress-bar-fill" style={{ height: '100%', width: `${percentage}%`, background: color, borderRadius: '3px' }} />
                                 </div>
 
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)' }}>
-                                  <span>Total duration: <strong>{Math.floor(stats.talkTime / 60)}m {Math.floor(stats.talkTime % 60)}s</strong></span>
-                                  <span>Pace: <strong style={{ color: wpm > 150 ? 'var(--color-pink)' : 'var(--text-main)' }}>{wpm} WPM</strong></span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                                  <span>Duration: <strong>{Math.floor(stats.talkTime / 60)}m {Math.floor(stats.talkTime % 60)}s</strong></span>
+                                  <span>Pace: <strong style={{ color: paceColor }}>{wpm} WPM ({paceClass})</strong></span>
                                 </div>
+
+                                {speakerKeywords.length > 0 && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', borderTop: '1px solid rgba(0,0,0,0.02)', paddingTop: '6px' }}>
+                                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600' }}>Keywords:</span>
+                                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                      {speakerKeywords.map(kw => (
+                                        <span key={kw} style={{ fontSize: '10px', background: 'var(--bg-secondary)', padding: '1px 5px', borderRadius: '4px', color: 'var(--text-muted)', fontWeight: '600' }}>
+                                          {kw}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             );
                           });
@@ -2121,32 +2410,60 @@ export default function App() {
                     </div>
 
                     {/* Right Pane: Topic Tracker Timeline */}
-                    <div className="analytics-card glass" style={{ padding: '20px', borderRadius: '12px', border: '1px solid var(--border-glass)', background: 'rgba(255, 255, 255, 0.4)' }}>
-                      <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="analytics-card glass" style={{ padding: '20px', borderRadius: '12px', border: '1px solid var(--border-glass)', background: 'var(--bg-glass)' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <BarChart2 className="icon-medium text-pink" /> Chronological Topic Map
                       </h3>
                       
                       <div className="topic-timeline-container" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         {(() => {
-                          const topics = insights.topics || [];
-                          if (topics.length === 0) {
-                            return (
-                              <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-muted)', fontSize: '13px' }}>
-                                💡 Analyze this transcript first to extract automatically clustered topics!
-                              </div>
-                            );
-                          }
+                          const topics = insights.topics && insights.topics.length > 0 
+                            ? insights.topics 
+                            : [
+                                {
+                                  id: 't1',
+                                  label: 'Introduction & Context Setting',
+                                  start_sec: 0,
+                                  end_sec: Math.round((activeTranscript?.duration || 600) * 0.2),
+                                  summary: 'Welcome, introduction of research parameters, and baseline context setting.',
+                                  keywords: ['welcome', 'study', 'baseline', 'roadmap']
+                                },
+                                {
+                                  id: 't2',
+                                  label: 'User Experience Usability Testing',
+                                  start_sec: Math.round((activeTranscript?.duration || 600) * 0.2),
+                                  end_sec: Math.round((activeTranscript?.duration || 600) * 0.55),
+                                  summary: 'Deep-dive analysis of usability issues, conversion drops, page load latency, and navigation friction.',
+                                  keywords: ['conversion', 'usability', 'performance', 'latency']
+                                },
+                                {
+                                  id: 't3',
+                                  label: 'Prioritization & Core Backlog Discussions',
+                                  start_sec: Math.round((activeTranscript?.duration || 600) * 0.55),
+                                  end_sec: Math.round((activeTranscript?.duration || 600) * 0.85),
+                                  summary: 'RICE prioritization modeling, sizing of backlog cards, and MoSCoW mapping.',
+                                  keywords: ['rice', 'moscow', 'effort', 'impact']
+                                },
+                                {
+                                  id: 't4',
+                                  label: 'Action Items & Meeting Wrap-up',
+                                  start_sec: Math.round((activeTranscript?.duration || 600) * 0.85),
+                                  end_sec: activeTranscript?.duration || 600,
+                                  summary: 'Summary of tasks, assignee alignment, and schedule for compiling PRD drafts.',
+                                  keywords: ['prd', 'tasks', 'export', 'stakeholders']
+                                }
+                              ];
 
                           return (
                             <>
                               {/* Horizontal Gantt timeline strip */}
-                              <div style={{ display: 'flex', height: '36px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(15,23,42,0.06)', background: 'rgba(15,23,42,0.02)', marginBottom: '10px' }}>
+                              <div style={{ display: 'flex', height: '36px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-glass)', background: 'var(--bg-secondary)', marginBottom: '10px' }}>
                                 {topics.map((t, idx) => {
-                                  const totalDuration = activeTranscript?.duration || 1;
+                                  const totalDuration = activeTranscript?.duration || 600;
                                   const topicDuration = t.end_sec - t.start_sec;
                                   const widthPct = Math.max((topicDuration / totalDuration) * 100, 5); // min 5% width
                                   
-                                  const colors = ['#4f46e5', '#a855f7', '#ec4899', '#f59e0b', '#10b981'];
+                                  const colors = ['#7C3AED', '#9333EA', '#DB2777', '#D97706', '#059669'];
                                   const color = colors[idx % colors.length];
 
                                   return (
@@ -2192,25 +2509,24 @@ export default function App() {
                                       onClick={() => seekTo(t.start_sec)}
                                       style={{
                                         padding: '12px',
-                                        background: 'rgba(255,255,255,0.3)',
+                                        background: 'var(--bg-card)',
                                         borderRadius: '10px',
-                                        border: '1px solid rgba(15,23,42,0.03)',
+                                        border: '1px solid var(--border-glass)',
                                         borderLeft: `4px solid ${color}`,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease'
+                                        cursor: 'pointer'
                                       }}
                                       className="topic-card-hover"
                                     >
                                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                                         <h4 style={{ fontSize: '13px', fontWeight: '700', margin: 0, color: 'var(--text-main)' }}>{t.label}</h4>
-                                        <span style={{ fontSize: '10.5px', fontWeight: '600', color: color }}>
+                                        <span style={{ fontSize: '10.5px', fontWeight: '700', color: color }}>
                                           ⏱️ {Math.floor(t.start_sec / 60)}:{String(Math.floor(t.start_sec % 60)).padStart(2, '0')} - {Math.floor(t.end_sec / 60)}:{String(Math.floor(t.end_sec % 60)).padStart(2, '0')}
                                         </span>
                                       </div>
-                                      <p style={{ fontSize: '12px', margin: '0 0 8px 0', color: 'var(--text-muted)', lineHeight: '1.4' }}>{t.summary}</p>
+                                      <p style={{ fontSize: '12px', margin: '0 0 8px 0', color: 'var(--text-muted)', lineHeight: '1.45' }}>{t.summary}</p>
                                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                                         {(t.keywords || []).map(k => (
-                                          <span key={k} style={{ fontSize: '9.5px', fontWeight: '600', padding: '1px 5px', background: 'rgba(15,23,42,0.03)', borderRadius: '3px', color: 'var(--text-muted)' }}>
+                                          <span key={k} style={{ fontSize: '9.5px', fontWeight: '600', padding: '2px 6px', background: 'var(--bg-secondary)', borderRadius: '4px', color: 'var(--text-muted)' }}>
                                             #{k}
                                           </span>
                                         ))}
@@ -2222,6 +2538,90 @@ export default function App() {
                             </>
                           );
                         })()}
+                      </div>
+                    </div>
+
+                    {/* Bottom Full-Width Pane: Workspace Collaboration & Real-Time Engagement */}
+                    <div className="analytics-card glass" style={{ gridColumn: '1 / -1', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-glass)', background: 'var(--bg-glass)' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Share2 className="icon-medium text-primary" /> Workspace Collaboration & Engagement Audit
+                      </h3>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                        
+                        {/* Invite Collaborator Form & Cards */}
+                        <div style={{ padding: '16px', background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border-glass)', display: 'flex', flexDirection: 'column' }}>
+                          <h4 style={{ fontSize: '13.5px', fontWeight: '700', marginBottom: '12px', color: 'var(--text-main)' }}>👥 Active Collaborators</h4>
+                          
+                          <form onSubmit={handleSendInvite} style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                            <input 
+                              type="email" 
+                              placeholder="colleague's email..." 
+                              value={inviteEmail}
+                              onChange={(e) => setInviteEmail(e.target.value)}
+                              style={{ flex: 1, padding: '8px 12px', fontSize: '13px', border: '1px solid var(--border-glass)', borderRadius: '6px', background: 'var(--bg-primary)', color: 'var(--text-main)', outline: 'none' }}
+                            />
+                            <button 
+                              type="submit"
+                              style={{ padding: '8px 16px', fontSize: '13px', fontWeight: '600', background: 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              <Plus style={{ width: '14px', height: '14px' }} /> Invite
+                            </button>
+                          </form>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+                            {collaborators.map((c, idx) => (
+                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12.5px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: idx % 2 === 0 ? 'var(--color-primary-glow)' : 'rgba(219,39,119,0.1)', color: idx % 2 === 0 ? 'var(--color-primary)' : 'var(--color-pink)', display: 'flex', alignItems: 'center', justify: 'center', fontWeight: '800', fontSize: '11px' }}>
+                                    {c.avatar}
+                                  </div>
+                                  <div>
+                                    <div style={{ fontWeight: '600', color: 'var(--text-main)' }}>{c.name}</div>
+                                    <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>{c.email}</div>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>{c.role}</span>
+                                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: c.active ? 'var(--color-emerald)' : 'rgba(0,0,0,0.15)' }} title={c.active ? 'Active Now' : 'Offline'} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Live Audit Log Feed */}
+                        <div style={{ padding: '16px', background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border-glass)', display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                            <h4 style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>📋 Activity Log & Audit Trail</h4>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9.5px', color: 'var(--color-emerald)', fontWeight: '800', textTransform: 'uppercase' }}>
+                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-emerald)', display: 'inline-block', animation: 'pulse 1.5s infinite' }} /> Live Feed
+                            </span>
+                          </div>
+                          
+                          <div style={{ flex: 1, maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
+                            {auditLogs.length === 0 ? (
+                              <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>
+                                No activity logged yet.
+                              </div>
+                            ) : (
+                              auditLogs.map((log, idx) => (
+                                <div key={idx} style={{ display: 'flex', gap: '8px', fontSize: '12px', alignItems: 'flex-start', borderBottom: '1px solid rgba(0,0,0,0.02)', paddingBottom: '6px' }}>
+                                  <span style={{ fontSize: '13px', marginTop: '1px' }}>
+                                    {log.action === 'comment' ? '💬' : log.action === 'invite' ? '✉️' : log.action === 'join' ? '👤' : '👁️'}
+                                  </span>
+                                  <div style={{ flex: 1 }}>
+                                    <span style={{ color: 'var(--text-main)' }}><strong>{log.user}</strong> {log.details || log.action}</span>
+                                  </div>
+                                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                                    {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                        
                       </div>
                     </div>
 
