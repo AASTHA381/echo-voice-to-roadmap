@@ -23,3 +23,8 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 backend/index/*
 !backend/index/.gitkeep
+.vercel
+
+# Exclude casebook resources and large assets
+*.pdf
+*.jpg

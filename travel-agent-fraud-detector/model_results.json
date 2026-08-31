@@ -1,0 +1,30 @@
+{
+  "n_samples": 20000,
+  "fraud_base_rate_pct": 2.26,
+  "threshold": 0.2,
+  "auc": 0.934,
+  "precision": 0.406,
+  "recall": 0.622,
+  "f1": 0.491,
+  "confusion_matrix": [
+    [
+      3828,
+      82
+    ],
+    [
+      34,
+      56
+    ]
+  ],
+  "feature_importances": {
+    "card_blacklist_hit": 0.6840999722480774,
+    "shared_device_flag": 0.14560000598430634,
+    "ip_card_mismatch": 0.03830000013113022,
+    "bookings_last_hour": 0.025299999862909317,
+    "trust_score": 0.02239999920129776,
+    "booking_hour": 0.0215000007301569,
+    "lead_time_hours": 0.021299999207258224,
+    "text_anomaly_score": 0.021299999207258224,
+    "agent_account_age_days": 0.0203000009059906
+  }
+}

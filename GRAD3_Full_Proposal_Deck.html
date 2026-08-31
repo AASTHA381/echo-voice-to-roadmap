@@ -1,0 +1,3021 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GRAD 3.0 — Galderma Sunscreen Strategy Deck</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --orange: #EA580C;
+      --orange-l: #FFF7ED;
+      --orange-b: #FED7AA;
+      --blue: #0284C7;
+      --blue-l: #F0F9FF;
+      --blue-b: #BAE6FD;
+      --green: #059669;
+      --green-l: #ECFDF5;
+      --green-b: #A7F3D0;
+      --purple: #7C3AED;
+      --purple-l: #F5F3FF;
+      --pink: #DB2777;
+      --pink-l: #FDF2F8;
+      --gold: #F59E0B;
+      --gold-l: #FFFBE6;
+      --red: #DC2626;
+      --red-l: #FEF2F2;
+      --amber: #F59E0B;
+      --amber-l: #FFFBEB;
+      --dark: #0F172A;
+      --light: #F8FAFC;
+      --card: #FFFFFF;
+      --border: #E2E8F0;
+      --muted: #64748B;
+      --gray: #94A3B8;
+      --fh: 'Outfit', sans-serif;
+      --fb: 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background: #1e293b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: var(--fb);
+      min-height: 100vh;
+      padding: 16px 12px 60px
+    }
+
+    /* ── Control bar ── */
+    .ctrl {
+      width: 1280px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 22px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
+      margin-bottom: 16px;
+      position: sticky;
+      top: 12px;
+      z-index: 100
+    }
+
+    .ctrl-left {
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    .ctrl-title {
+      font-family: var(--fh);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--dark)
+    }
+
+    .ctrl-tag {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted)
+    }
+
+    .ctrl-right {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-family: var(--fh);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all .2s
+    }
+
+    .btn-prev {
+      background: var(--light);
+      color: var(--dark);
+      border: 1.5px solid var(--border)
+    }
+
+    .btn-prev:hover {
+      background: var(--border)
+    }
+
+    .btn-next {
+      background: var(--orange);
+      color: #fff
+    }
+
+    .btn-next:hover {
+      background: #c2410c
+    }
+
+    .btn-pdf {
+      background: var(--dark);
+      color: #fff
+    }
+
+    .btn-pdf:hover {
+      background: #1e293b
+    }
+
+    .slide-counter {
+      font-family: var(--fh);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      background: var(--light);
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border)
+    }
+
+    .dot-row {
+      display: flex;
+      gap: 6px;
+      align-items: center
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all .2s
+    }
+
+    .dot.active {
+      background: var(--orange);
+      transform: scale(1.3)
+    }
+
+    /* ── Slide wrapper ── */
+    .slide-wrap {
+      width: 1280px;
+      display: none;
+      animation: fadeIn .3s ease
+    }
+
+    .slide-wrap.active {
+      display: block
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .slide {
+      width: 1280px;
+      min-height: 720px;
+      background: var(--light);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, .25);
+      position: relative
+    }
+
+    .slide-dark {
+      background: var(--dark)
+    }
+
+    /* ── Shared header/footer ── */
+    .slide-accent {
+      height: 5px;
+      background: var(--orange);
+      width: 100%
+    }
+
+    .slide-header {
+      background: #fff;
+      padding: 10px 48px 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end
+    }
+
+    .slide-header-dark {
+      background: rgba(255, 255, 255, .04);
+      border-bottom: 1px solid rgba(255, 255, 255, .08)
+    }
+
+    .sh-brand {
+      font-family: var(--fh);
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--orange);
+      letter-spacing: .05em;
+      text-transform: uppercase
+    }
+
+    .sh-title {
+      font-family: var(--fh);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--dark);
+      line-height: 1.2;
+      margin-top: 2px
+    }
+
+    .sh-title-w {
+      color: #fff
+    }
+
+    .sh-tag {
+      font-family: var(--fh);
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--muted);
+      text-align: right;
+      text-transform: uppercase;
+      letter-spacing: .06em
+    }
+
+    .slide-footer {
+      height: 38px;
+      background: var(--light);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 48px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0
+    }
+
+    .sf-left {
+      font-size: 10px;
+      color: var(--muted)
+    }
+
+    .sf-right {
+      font-family: var(--fh);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted)
+    }
+
+    .slide-body {
+      padding: 18px 36px;
+      padding-bottom: 50px
+    }
+
+    /* ── Utility ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-family: var(--fh);
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-family: var(--fh);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden
+    }
+
+    .card-accent {
+      height: 4px;
+      width: 100%
+    }
+
+    .card-body {
+      padding: 12px 14px
+    }
+
+    .card-title {
+      font-family: var(--fh);
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 8px
+    }
+
+    .card-text {
+      font-size: 10.5px;
+      color: var(--muted);
+      line-height: 1.55
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 14px
+    }
+
+    .kpi-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 14px 12px;
+      border: 1px solid var(--border);
+      text-align: center;
+      position: relative;
+      overflow: hidden
+    }
+
+    .kpi-top {
+      height: 4px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0
+    }
+
+    .kpi-val {
+      font-family: var(--fh);
+      font-size: 22px;
+      font-weight: 800;
+      margin-top: 8px
+    }
+
+    .kpi-lbl {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.4
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px
+    }
+
+    .chart-box {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 14px
+    }
+
+    .chart-title {
+      font-family: var(--fh);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 8px
+    }
+
+    canvas {
+      max-height: 220px
+    }
+
+    .section-label {
+      font-family: var(--fh);
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 4px
+    }
+
+    /* ── Cover slide ── */
+    .cover-wrap {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 0;
+      min-height: 660px
+    }
+
+    .cover-left {
+      padding: 52px 52px 52px 52px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative
+    }
+
+    .cover-circle {
+      position: absolute;
+      right: -120px;
+      top: -120px;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: rgba(124, 30, 4, .35)
+    }
+
+    .cover-circle2 {
+      position: absolute;
+      left: -80px;
+      bottom: -80px;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: rgba(2, 68, 107, .35)
+    }
+
+    .cover-tag {
+      font-family: var(--fh);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--orange);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 14px
+    }
+
+    .cover-title {
+      font-family: var(--fh);
+      font-size: 46px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+      margin-bottom: 18px
+    }
+
+    .cover-sub {
+      font-size: 13px;
+      color: var(--gray);
+      line-height: 1.6;
+      max-width: 520px;
+      margin-bottom: 32px
+    }
+
+    .cover-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, .1);
+      margin-bottom: 22px
+    }
+
+    .cover-team-lbl {
+      font-family: var(--fh);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--orange);
+      margin-bottom: 6px
+    }
+
+    .cover-teamname {
+      font-family: var(--fh);
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 16px
+    }
+
+    .member-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px
+    }
+
+    .member-av {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--fh);
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0
+    }
+
+    .member-name {
+      font-family: var(--fh);
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff
+    }
+
+    .member-role {
+      font-size: 11px;
+      color: var(--gray)
+    }
+
+    .cover-right {
+      background: rgba(255, 255, 255, .04);
+      border-left: 1px solid rgba(255, 255, 255, .08);
+      padding: 40px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 0
+    }
+
+    .cov-kpi {
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, .07)
+    }
+
+    .cov-kpi-lbl {
+      font-size: 11px;
+      color: var(--gray);
+      margin-bottom: 4px
+    }
+
+    .cov-kpi-val {
+      font-family: var(--fh);
+      font-size: 18px;
+      font-weight: 800
+    }
+
+    /* ── SCQA ── */
+    .scqa-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      height: 560px
+    }
+
+    .scqa-card {
+      border-radius: 12px;
+      border: 2px solid;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden
+    }
+
+    .scqa-big {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--fh);
+      font-size: 30px;
+      font-weight: 900;
+      color: #fff;
+      margin: 6px auto 14px
+    }
+
+    .scqa-label {
+      font-family: var(--fh);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-align: center;
+      margin-bottom: 10px
+    }
+
+    .scqa-text {
+      font-size: 11px;
+      line-height: 1.65;
+      color: var(--dark)
+    }
+
+    .scqa-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--gray);
+      padding: 0 2px;
+      margin-top: 280px
+    }
+
+    /* ── Driver rows ── */
+    .driver-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      border: 1px solid
+    }
+
+    .driver-pct {
+      font-family: var(--fh);
+      font-size: 16px;
+      font-weight: 800;
+      min-width: 44px
+    }
+
+    .driver-txt {
+      font-size: 10.5px;
+      color: var(--dark);
+      line-height: 1.4
+    }
+
+    /* ── Cause cards ── */
+    .cause-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 10px
+    }
+
+    .cause-card {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden
+    }
+
+    .cause-header {
+      padding: 10px 14px 8px
+    }
+
+    .cause-title {
+      font-family: var(--fh);
+      font-size: 10.5px;
+      font-weight: 800
+    }
+
+    .cause-body {
+      padding: 10px 14px 12px;
+      background: #fff
+    }
+
+    .cause-item {
+      font-size: 10px;
+      color: var(--muted);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      line-height: 1.4
+    }
+
+    .cause-item:last-child {
+      border-bottom: none
+    }
+
+    /* ── Price ladder ── */
+    .ladder {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px
+    }
+
+    .sku-card {
+      border-radius: 12px;
+      border: 2px solid;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column
+    }
+
+    .sku-top {
+      height: 4px
+    }
+
+    .sku-head {
+      padding: 6px 10px 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .sku-tier {
+      font-family: var(--fh);
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase
+    }
+
+    .sku-price-badge {
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-family: var(--fh);
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      margin: 0 8px 8px
+    }
+
+    .sku-name {
+      font-family: var(--fh);
+      font-size: 12.5px;
+      font-weight: 800;
+      color: var(--dark);
+      padding: 0 10px;
+      line-height: 1.3;
+      margin-bottom: 6px
+    }
+
+    .sku-spec {
+      font-size: 10px;
+      color: var(--muted);
+      padding: 0 10px;
+      line-height: 1.5;
+      margin-bottom: 8px
+    }
+
+    .sku-role {
+      margin: 0 8px 6px;
+      border-radius: 8px;
+      border: 1px solid;
+      padding: 6px 8px;
+      font-size: 10px;
+      line-height: 1.4;
+      flex: 1
+    }
+
+    .sku-launch {
+      text-align: center;
+      padding: 5px;
+      font-family: var(--fh);
+      font-size: 9px;
+      font-weight: 800;
+      color: #fff
+    }
+
+    /* ── GTM channels ── */
+    .channel-item {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid;
+      margin-bottom: 8px
+    }
+
+    .ch-icon {
+      font-family: var(--fh);
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 6px;
+      border-radius: 6px;
+      text-align: center;
+      line-height: 1.3
+    }
+
+    .ch-name {
+      font-family: var(--fh);
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 3px
+    }
+
+    .ch-detail {
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.45
+    }
+
+    /* ── Phase roadmap ── */
+    .phases {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px
+    }
+
+    .phase-card {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid
+    }
+
+    .phase-header {
+      padding: 12px 16px;
+      text-align: center
+    }
+
+    .phase-title {
+      font-family: var(--fh);
+      font-size: 12px;
+      font-weight: 800;
+      color: #fff
+    }
+
+    .phase-body {
+      background: #fff;
+      padding: 12px 14px 14px
+    }
+
+    .phase-item {
+      font-size: 10px;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--dark);
+      line-height: 1.4
+    }
+
+    .phase-item:last-child {
+      border-bottom: none;
+      font-weight: 700;
+      color: var(--orange);
+      margin-top: 4px
+    }
+
+    /* ── Risk matrix ── */
+    .risk-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px
+    }
+
+    .matrix {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 4px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid var(--border)
+    }
+
+    .quad {
+      padding: 8px 10px;
+      position: relative;
+      min-height: 220px
+    }
+
+    .quad-label {
+      font-family: var(--fh);
+      font-size: 10px;
+      font-weight: 800;
+      margin-bottom: 6px
+    }
+
+    .axis-x {
+      text-align: center;
+      font-family: var(--fh);
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--muted);
+      padding: 4px 0;
+      grid-column: 1/-1
+    }
+
+    .risk-dot {
+      position: absolute;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--fh);
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+      cursor: default;
+      transition: transform .2s
+    }
+
+    .risk-dot:hover {
+      transform: scale(1.1)
+    }
+
+    .risk-lbl {
+      position: absolute;
+      font-size: 8px;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.2;
+      width: 56px;
+      left: -10px
+    }
+
+    .risk-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .risk-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px
+    }
+
+    .risk-ch {
+      border-radius: 8px;
+      border: 1.5px solid;
+      padding: 8px 10px
+    }
+
+    .risk-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-family: var(--fh);
+      font-size: 11px;
+      font-weight: 800;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 6px;
+      vertical-align: middle;
+      flex-shrink: 0
+    }
+
+    .risk-title {
+      font-family: var(--fh);
+      font-size: 10px;
+      font-weight: 800;
+      display: inline;
+      vertical-align: middle
+    }
+
+    .risk-body {
+      font-size: 9.5px;
+      color: var(--muted);
+      line-height: 1.4;
+      margin-top: 4px
+    }
+
+    .risk-mit {
+      background: var(--green-l);
+      border: 1.5px solid var(--green-b);
+      border-radius: 8px;
+      padding: 8px 10px
+    }
+
+    .risk-mit-body {
+      font-size: 9.5px;
+      color: var(--dark);
+      line-height: 1.4
+    }
+
+    /* ── Appendix ── */
+    .appendix-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px
+    }
+
+    .app-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px
+    }
+
+    .app-table th {
+      background: var(--orange);
+      color: #fff;
+      font-family: var(--fh);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 7px 8px;
+      text-align: center
+    }
+
+    .app-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      color: var(--dark);
+      text-align: center
+    }
+
+    .app-table tr:nth-child(even) td {
+      background: var(--orange-l)
+    }
+
+    .app-table tr.highlight td {
+      background: #FFF7ED;
+      font-weight: 700;
+      color: var(--orange)
+    }
+
+    .ref-row {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 6px
+    }
+
+    .ref-num {
+      font-family: var(--fh);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--green)
+    }
+
+    .ref-txt {
+      font-size: 10px;
+      color: var(--dark);
+      line-height: 1.5
+    }
+
+    /* ── Fin table ── */
+    .fin-table {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      overflow: hidden
+    }
+
+    .fin-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      padding: 7px 14px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .fin-lbl {
+      font-size: 10px;
+      color: var(--muted)
+    }
+
+    .fin-val {
+      font-family: var(--fh);
+      font-size: 11px;
+      font-weight: 800
+    }
+
+    .highlight-box {
+      background: var(--orange-l);
+      border: 1.5px solid var(--orange-b);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 10px
+    }
+
+    .hb-title {
+      font-family: var(--fh);
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--orange);
+      margin-bottom: 6px
+    }
+
+    .hb-body {
+      font-size: 10px;
+      color: var(--dark);
+      line-height: 1.6
+    }
+
+    /* ── Scatter placeholder ── */
+    .scatter-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px
+    }
+
+    .si-item {
+      border-radius: 8px;
+      padding: 8px 10px;
+      border: 1px solid;
+      font-size: 10px
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0
+      }
+
+      .ctrl {
+        display: none
+      }
+
+      .slide-wrap {
+        display: block !important;
+        margin-bottom: 40px;
+        page-break-after: always
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Control Bar -->
+  <div class="ctrl">
+    <div class="ctrl-left">
+      <div>
+        <div class="ctrl-title">GRAD 3.0 · Galderma Sunscreen Strategy Deck</div>
+        <div class="ctrl-tag">Full Proposal Deck · 10 Slides + Cover + Appendix</div>
+      </div>
+    </div>
+    <div class="dot-row" id="dots"></div>
+    <div class="ctrl-right">
+      <div class="slide-counter" id="counter">1 / 11</div>
+      <button class="btn btn-prev" onclick="go(-1)">← Prev</button>
+      <button class="btn btn-next" onclick="go(1)">Next →</button>
+      <button class="btn btn-pdf" onclick="window.print()">Export PDF</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+     SLIDE 0 — COVER
+═══════════════════════════════════════════════════════════ -->
+  <div class="slide-wrap active" id="s0">
+    <div class="slide slide-dark">
+      <div style="height:5px;background:var(--orange)"></div>
+      <div class="cover-wrap">
+        <div class="cover-left">
+          <div class="cover-circle"></div>
+          <div class="cover-circle2"></div>
+          <div style="position:relative;z-index:1">
+            <div class="cover-tag">Galderma Sunscreen Challenge · Official Submission</div>
+            <div class="cover-title">Future-Ready<br>Sunscreen Strategy<br>for India</div>
+            <div class="cover-sub">A data-backed 3–5 year portfolio, GTM, and competitive strategy for Galderma India —
+              derma sunscreen market | 2024–2029</div>
+            <div class="cover-divider"></div>
+            <div class="cover-team-lbl">TEAM</div>
+            <div class="cover-teamname">aastha.saini95</div>
+            <div class="member-row">
+              <div class="member-av">A</div>
+              <div>
+                <div class="member-name">Aastha Saini</div>
+                <div class="member-role">Strategy Lead</div>
+              </div>
+            </div>
+            <div class="member-row">
+              <div class="member-av">S</div>
+              <div>
+                <div class="member-name">Suraj Satpute</div>
+                <div class="member-role">Analytics</div>
+              </div>
+            </div>
+            <div class="member-row">
+              <div class="member-av">D</div>
+              <div>
+                <div class="member-name">I Dharshana</div>
+                <div class="member-role">Research</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cover-right">
+          <div class="cov-kpi" style="padding-top:52px">
+            <div class="cov-kpi-lbl">Market Opportunity</div>
+            <div class="cov-kpi-val" style="color:var(--orange)">₹2,800 Cr</div>
+          </div>
+          <div class="cov-kpi">
+            <div class="cov-kpi-lbl">Target CAGR</div>
+            <div class="cov-kpi-val" style="color:var(--blue)">22%</div>
+          </div>
+          <div class="cov-kpi">
+            <div class="cov-kpi-lbl">Portfolio SKUs Proposed</div>
+            <div class="cov-kpi-val" style="color:var(--green)">5 + 1</div>
+          </div>
+          <div class="cov-kpi">
+            <div class="cov-kpi-lbl">5-Year Revenue Target</div>
+            <div class="cov-kpi-val" style="color:var(--gold)">₹840 Cr Cumulative</div>
+          </div>
+          <div class="cov-kpi">
+            <div class="cov-kpi-lbl">HCP Dermatologist Sampling</div>
+            <div class="cov-kpi-val" style="color:var(--purple)">5,000 Doctors</div>
+          </div>
+          <div class="cov-kpi" style="border-bottom:none">
+            <div class="cov-kpi-lbl">Supported by</div>
+            <div class="cov-kpi-val" style="color:#fff;font-size:13px">75yr Cetaphil Heritage<br>40yr Galderma Derm
+              Equity</div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer" style="background:rgba(255,255,255,.05);border-top:1px solid rgba(255,255,255,.08)">
+        <div class="sf-left" style="color:var(--gray)">Source: Euromonitor (2024), Nykaa/Amazon Audit N=50 [1], Consumer
+          Survey N=500 [2]</div>
+        <div class="sf-right" style="color:var(--gray)">Cover Slide</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+     SLIDE 1 — EXECUTIVE SUMMARY (SCQA)
+═══════════════════════════════════════════════════════════ -->
+  <div class="slide-wrap" id="s1">
+    <div class="slide">
+      <div class="slide-accent"></div>
+      <div class="slide-header">
+        <div>
+          <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+          <div class="sh-title">Executive Summary: The SCQA Framework</div>
+        </div>
+        <div class="sh-tag">SLIDE 1 · EXECUTIVE SUMMARY</div>
+      </div>
+      <div class="slide-body">
+        <div style="display:grid;grid-template-columns:1fr 24px 1fr 24px 1fr 24px 1fr;gap:6px;height:570px">
+          <div class="scqa-card" style="background:var(--blue-l);border-color:var(--blue)">
+            <div class="scqa-big" style="background:var(--blue)">S</div>
+            <div class="scqa-label" style="color:var(--blue)">SITUATION</div>
+            <div class="scqa-text">India's premium derma sunscreen market is growing at <strong>22% CAGR</strong>,
+              reaching <strong>₹2,800 Cr in 2024</strong> (Euromonitor). Consumers aged 25–35 are rapidly shifting from
+              mass brands to dermatologist-backed SPF solutions.<br><br>The <strong>₹400–800 price band</strong>
+              commands <strong>48%</strong> of audited Nykaa/Amazon premium listings (N=50 audit).<br><br>Preventive
+              skincare, anti-aging awareness & social media dermatology content are accelerating this shift.<br><br>78%
+              of consumers say <strong>dermatologist recommendation is their #1 brand switch trigger</strong>.</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gray)">›</div>
+          <div class="scqa-card" style="background:var(--red-l);border-color:var(--red)">
+            <div class="scqa-big" style="background:var(--red)">C</div>
+            <div class="scqa-label" style="color:var(--red)">COMPLICATION</div>
+            <div class="scqa-text">Galderma India currently sells <strong>only 1 SKU</strong> — Cetaphil Sun Light Gel
+              50ml at MRP <strong>₹1,080</strong> — missing the ₹400–800 sweet spot
+              entirely.<br><br><strong>72%</strong> of surveyed consumers (N=500) reject thick, heavy-feel formats. No
+              mist, serum, or tinted option exists.<br><br>Competitors are aggressively filling this gap:
+              <strong>Re'equil ₹695, Minimalist ₹399, La Shield ₹780.</strong><br><br>HCP sampling program is far below
+              industry benchmark vs. IPCA & Re'equil derm outreach.</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gray)">›</div>
+          <div class="scqa-card" style="background:var(--gold-l);border-color:var(--gold)">
+            <div class="scqa-big" style="background:var(--gold)">Q</div>
+            <div class="scqa-label" style="color:var(--gold)">QUESTION</div>
+            <div class="scqa-text">How can Galderma leverage its unmatched <strong>40+ years of dermatology
+                equity</strong> and Cetaphil's <strong>75-year skin heritage</strong> to capture India's fastest-growing
+              SPF consumer segment (25–35 yrs)?<br><br>Specifically: How do we fill the <strong>₹400–800 price
+                gap</strong> before competitors consolidate it?<br><br>How do we match the <strong>format, texture, and
+                channel expectations</strong> of modern Indian consumers?<br><br>How do we activate the
+              <strong>dermatologist recommendation engine</strong> at scale?</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gray)">›</div>
+          <div class="scqa-card" style="background:var(--green-l);border-color:var(--green)">
+            <div class="scqa-big" style="background:var(--green)">A</div>
+            <div class="scqa-label" style="color:var(--green)">ANSWER</div>
+            <div class="scqa-text">Launch a <strong>5-SKU derma portfolio ladder (₹449–₹999)</strong> backed
+              by:<br><br>✔ <strong>5,000-dermatologist HCP</strong> sampling program (top 20 cities)<br>✔ Omnichannel
+              GTM: <strong>Nykaa → MT → Q-Commerce</strong><br>✔ Brand territory: <em>"Derm-Approved.
+                India-Ready."</em><br>✔ SunMatch AI digital skin-quiz funnel<br><br><strong>Projected Financial
+                Impact:</strong><br>₹40 Cr Year 1 → ₹350 Cr Year 5<br>₹840 Cr cumulative 5-year revenue<br>25% net
+              contribution margin</div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="sf-left">Sources: Euromonitor India BPC 2024 [1] · Consumer Survey N=500 [2] · Nykaa/Amazon Audit
+          N=50 [3]</div>
+        <div class="sf-right">Slide 1 of 10</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2 — MARKET LANDSCAPE -->
+  <div class="slide-wrap" id="s2">
+    <div class="slide">
+      <div class="slide-accent"></div>
+      <div class="slide-header">
+        <div>
+          <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+          <div class="sh-title">Situation Analysis: Market Landscape & Growth Drivers</div>
+        </div>
+        <div class="sh-tag">SLIDE 2 · SITUATION</div>
+      </div>
+      <div class="slide-body">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-top" style="background:var(--orange)"></div>
+            <div class="kpi-val" style="color:var(--orange)">₹2,800 Cr</div>
+            <div class="kpi-lbl">India Premium Sunscreen<br>Market Size 2024 [1]</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top" style="background:var(--blue)"></div>
+            <div class="kpi-val" style="color:var(--blue)">22% CAGR</div>
+            <div class="kpi-lbl">Market Growth Rate 2024–29<br>(Euromonitor) [1]</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top" style="background:var(--green)"></div>
+            <div class="kpi-val" style="color:var(--green)">25–35 Yrs</div>
+            <div class="kpi-lbl">Core Consumer Cohort:<br>Peak Earning + Aware [2]</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top" style="background:var(--purple)"></div>
+            <div class="kpi-val" style="color:var(--purple)">₹400–800</div>
+            <div class="kpi-lbl">Sweet-Spot Price Band<br>48% of Premium Listings [3]</div>
+          </div>
+        </div>
+        <div class="three-col">
+          <div class="chart-box">
+            <div class="chart-title">India Sunscreen Market Size (₹ Cr) — 22% CAGR</div><canvas id="mktChart"></canvas>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Market Segment Mix 2024 (%)</div><canvas id="segChart"></canvas>
+          </div>
+          <div style="background:#fff;border-radius:10px;border:1px solid var(--border);padding:14px">
+            <div class="chart-title" style="color:var(--orange)">TOP CONSUMER GROWTH DRIVERS</div>
+            <div class="driver-row" style="background:var(--orange-l);border-color:var(--orange-b)">
+              <div class="driver-pct" style="color:var(--orange)">78%</div>
+              <div class="driver-txt">Derm recommendation = #1 brand switch trigger [2]</div>
+            </div>
+            <div class="driver-row" style="background:#fff;border-color:var(--border)">
+              <div class="driver-pct" style="color:var(--blue)">65%</div>
+              <div class="driver-txt">Research skincare on social media before purchase [4]</div>
+            </div>
+            <div class="driver-row" style="background:var(--orange-l);border-color:var(--orange-b)">
+              <div class="driver-pct" style="color:var(--green)">72%</div>
+              <div class="driver-txt">Demand multi-benefit SPF (anti-aging + pigmentation) [2]</div>
+            </div>
+            <div class="driver-row" style="background:#fff;border-color:var(--border)">
+              <div class="driver-pct" style="color:var(--purple)">68%</div>
+              <div class="driver-txt">Prefer lightweight gel/serum texture over creams [2]</div>
+            </div>
+            <div class="driver-row" style="background:var(--orange-l);border-color:var(--orange-b)">
+              <div class="driver-pct" style="color:var(--orange)">48%</div>
+              <div class="driver-txt">Target ₹400–800 as 'affordable premium' sweet spot [3]</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="sf-left">Sources: [1] Euromonitor India BPC 2024 · [2] Primary Survey N=500 · [3] Nykaa/Amazon N=50
+          Audit · [4] Mintel Digital Beauty India 2023</div>
+        <div class="sf-right">Slide 2 of 10</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3 — PROBLEM DEEP DIVE -->
+  <div class="slide-wrap" id="s3">
+    <div class="slide">
+      <div class="slide-accent"></div>
+      <div class="slide-header">
+        <div>
+          <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+          <div class="sh-title">Situation Analysis: Problem Deep Dive & Root Cause</div>
+        </div>
+        <div class="sh-tag">SLIDE 3 · SITUATION</div>
+      </div>
+      <div class="slide-body">
+        <div
+          style="background:var(--red-l);border:2px solid var(--red);border-radius:10px;padding:10px 18px;margin-bottom:10px;text-align:center">
+          <span style="font-family:var(--fh);font-size:11px;font-weight:800;color:var(--red)">ROOT CAUSE: </span>
+          <span style="font-size:10.5px;color:var(--dark)">Why Galderma is missing India's sunscreen opportunity despite
+            40+ years of dermatology equity</span>
+        </div>
+        <div style="text-align:center;margin-bottom:8px">
+          <div
+            style="display:inline-block;background:var(--red-l);border:2px solid var(--red);border-radius:10px;padding:8px 32px;font-family:var(--fh);font-size:12px;font-weight:800;color:var(--red)">
+            PORTFOLIO GAP: 1 SKU · Wrong Price Band · Wrong Format</div>
+        </div>
+        <div class="cause-cards">
+          <div class="cause-card">
+            <div class="cause-header" style="background:var(--orange-l)">
+              <div class="cause-title" style="color:var(--orange)">PRICE POSITIONING</div>
+            </div>
+            <div class="cause-body">
+              <div class="cause-item">Only 1 SKU at MRP ₹1,080 — 35% above ₹800 threshold</div>
+              <div class="cause-item">Competes in Derma Premium vs. D2C brands at ₹399–695</div>
+              <div class="cause-item">₹400–800 band = 48% of Nykaa/Amazon top listings</div>
+              <div class="cause-item">Bioderma at ₹1,575 = only comparable (different need state)</div>
+            </div>
+          </div>
+          <div class="cause-card">
+            <div class="cause-header" style="background:var(--blue-l)">
+              <div class="cause-title" style="color:var(--blue)">CONSUMER FORMAT MISMATCH</div>
+            </div>
+            <div class="cause-body">
+              <div class="cause-item">Single format: Light Gel (no serum, mist, or tint available)</div>
+              <div class="cause-item">72% reject thick creams; demand gel/serum textures</div>
+              <div class="cause-item">No reapplication solution over makeup (mist gap)</div>
+              <div class="cause-item">No shade variants for Indian skin tones (tint gap)</div>
+            </div>
+          </div>
+          <div class="cause-card">
+            <div class="cause-header" style="background:var(--green-l)">
+              <div class="cause-title" style="color:var(--green)">CHANNEL & HCP GAPS</div>
+            </div>
+            <div class="cause-body">
+              <div class="cause-item">Low dermatologist sampling vs. Re'equil & IPCA models</div>
+              <div class="cause-item">Limited Q-Commerce (Blinkit/Zepto) presence</div>
+              <div class="cause-item">Nykaa premium shelf space under-utilized vs. Bioderma</div>
+              <div class="cause-item">No D2C subscription or digital skin-quiz funnel</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          <div class="chart-box" style="padding:10px">
+            <div class="chart-title">Price Band Distribution (Audit N=50)</div><canvas id="priceChart"
+              style="max-height:160px"></canvas>
+          </div>
+          <div
+            style="grid-column:span 3;background:var(--orange-l);border:1.5px solid var(--orange-b);border-radius:10px;padding:12px 16px">
+            <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--orange);margin-bottom:8px">KEY
+              COMPETITIVE GAPS — VISUAL COMPARISON</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+              <div style="background:#fff;border-radius:8px;padding:8px 10px">
+                <div style="font-family:var(--fh);font-size:11px;font-weight:800;color:var(--orange)">₹1,080</div>
+                <div style="font-size:9.5px;color:var(--muted)">Cetaphil Sun (current)</div>
+                <div style="height:3px;background:var(--orange);border-radius:2px;margin-top:4px;width:100%"></div>
+              </div>
+              <div style="background:#fff;border-radius:8px;padding:8px 10px">
+                <div style="font-family:var(--fh);font-size:11px;font-weight:800;color:var(--red)">EMPTY</div>
+                <div style="font-size:9.5px;color:var(--muted)">₹400–800 band (Galderma)</div>
+                <div style="height:3px;background:var(--red);border-radius:2px;margin-top:4px;width:100%"></div>
+              </div>
+              <div style="background:#fff;border-radius:8px;padding:8px 10px">
+                <div style="font-family:var(--fh);font-size:11px;font-weight:800;color:var(--green)">₹399–780</div>
+                <div style="font-size:9.5px;color:var(--muted)">Competitors (active)</div>
+                <div style="height:3px;background:var(--green);border-radius:2px;margin-top:4px;width:100%"></div>
+              </div>
+            </div>
+            <div style="margin-top:8px;font-size:10px;font-style:italic;color:var(--muted)">★ Key Stat: Cetaphil Sun
+              ₹1,080 sits 140% above the market sweet-spot midpoint (₹449). No entry-level derma product exists in
+              Galderma's India portfolio.</div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="sf-left">Sources: [2] Primary Survey N=500 · [3] Nykaa/Amazon Audit · [5] Nielsen India Skin Care
+          Report 2023 · Competitor MRP from brand websites</div>
+        <div class="sf-right">Slide 3 of 10</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4 — COMPETITIVE LANDSCAPE -->
+  <div class="slide-wrap" id="s4">
+    <div class="slide">
+      <div class="slide-accent"></div>
+      <div class="slide-header">
+        <div>
+          <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+          <div class="sh-title">Competitive Landscape: Pricing vs. Derm Equity Positioning</div>
+        </div>
+        <div class="sh-tag">SLIDE 4 · SITUATION</div>
+      </div>
+      <div class="slide-body">
+        <div class="two-col" style="align-items:start">
+          <div>
+            <div class="chart-box" style="margin-bottom:10px">
+              <div class="chart-title">MRP (₹) vs Derm Perception Score — Positioning Map</div><canvas id="scatterChart"
+                style="max-height:280px"></canvas>
+            </div>
+            <div
+              style="background:var(--orange-l);border:1.5px solid var(--orange-b);border-radius:8px;padding:10px 12px">
+              <div style="font-family:var(--fh);font-size:9.5px;font-weight:800;color:var(--orange);margin-bottom:4px">
+                GALDERMA'S UNIQUE ADVANTAGE</div>
+              <div style="font-size:10px;color:var(--dark);line-height:1.5">The proposed ★ Target SKU at ₹449 achieves
+                the same high Derm Perception Score as the existing Cetaphil Sun (₹1,080) but at 58% lower price —
+                occupying the white space no competitor has claimed.</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--blue);margin-bottom:8px">
+              COMPETITIVE BENCHMARKING TABLE</div>
+            <table style="width:100%;border-collapse:collapse;font-size:10px">
+              <thead>
+                <tr style="background:var(--blue)">
+                  <th
+                    style="padding:7px 8px;color:#fff;font-family:var(--fh);font-size:9px;font-weight:700;text-align:left">
+                    Brand</th>
+                  <th
+                    style="padding:7px 6px;color:#fff;font-family:var(--fh);font-size:9px;font-weight:700;text-align:center">
+                    MRP</th>
+                  <th
+                    style="padding:7px 6px;color:#fff;font-family:var(--fh);font-size:9px;font-weight:700;text-align:center">
+                    Format</th>
+                  <th
+                    style="padding:7px 6px;color:#fff;font-family:var(--fh);font-size:9px;font-weight:700;text-align:center">
+                    Derm?</th>
+                  <th
+                    style="padding:7px 6px;color:#fff;font-family:var(--fh);font-size:9px;font-weight:700;text-align:center">
+                    Tier</th>
+                </tr>
+              </thead>
+              <tbody id="compTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="sf-left">Source: Brand websites, Nykaa/Amazon listings audit N=50 [3], Nielsen India Skin Care [5] |
+          ★ = Proposed Cetaphil Sun Entry Gel</div>
+        <div class="sf-right">Slide 4 of 10</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5 — PORTFOLIO ARCHITECTURE -->
+  <div class="slide-wrap" id="s5">
+    <div class="slide">
+      <div class="slide-accent"></div>
+      <div class="slide-header">
+        <div>
+          <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+          <div class="sh-title">Solution: 5-SKU Derma Portfolio Ladder (₹449–₹1,080)</div>
+        </div>
+        <div class="sh-tag">SLIDE 5 · SOLUTION & RECOMMENDATION</div>
+      </div>
+      <div class="slide-body">
+        <div style="font-size:10.5px;color:var(--muted);font-style:italic;margin-bottom:12px">Strategy: Build a price
+          ladder that intercepts consumers at every entry point and upgrades them toward the Cetaphil Sun flagship.
+        </div>
+        <div class="ladder" id="skuLadder"></div>
+        <div
+          style="margin-top:10px;background:var(--orange-l);border:1.5px solid var(--orange-b);border-radius:8px;padding:8px 14px;font-family:var(--fh);font-size:10px;font-weight:800;color:var(--orange)">
+          ⬆ Anchor: Cetaphil Sun Light Gel SPF 50+ (EXISTING FLAGSHIP · MRP ₹1,080/50ml & ₹1,899/100ml) — retained &
+          repositioned as premium halo
+        </div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:280px 1fr;gap:14px">
+          <div class="chart-box">
+            <div class="chart-title">Yr3 Portfolio Revenue Mix</div><canvas id="mixChart"
+              style="max-height:180px"></canvas>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div style="background:var(--blue-l);border:1.5px solid var(--blue-b);border-radius:8px;padding:10px">
+              <div style="font-family:var(--fh);font-size:18px;font-weight:800;color:var(--blue)">₹449</div>
+              <div style="font-size:9.5px;color:var(--muted)">Entry price — 58% below current only SKU</div>
+            </div>
+            <div style="background:var(--green-l);border:1.5px solid var(--green-b);border-radius:8px;padding:10px">
+              <div style="font-family:var(--fh);font-size:18px;font-weight:800;color:var(--green)">25%</div>
+              <div style="font-size:9.5px;color:var(--muted)">Target net contribution margin across portfolio</div>
+            </div>
+            <div style="background:var(--orange-l);border:1.5px solid var(--orange-b);border-radius:8px;padding:10px">
+              <div style="font-family:var(--fh);font-size:18px;font-weight:800;color:var(--orange)">Yr 1+2</div>
+              <div style="font-size:9.5px;color:var(--muted)">First 4 SKUs launched within 2 years</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="sf-left">Formulations subject to R&D stability, photostability & clinical SPF testing per BIS/ISO
+          24444 | Prices are MRP; selling price ~12% below MRP</div>
+        <div class="sf-right">Slide 5 of 10</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6 — GTM & HCP -->
+  <div class="slide-wrap" id="s6">
+    <div class="slide">
+      <div class="slide-accent"></div>
+      <div class="slide-header">
+        <div>
+          <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+          <div class="sh-title">Solution: Go-To-Market & HCP Dermatologist Engine</div>
+        </div>
+        <div class="sh-tag">SLIDE 6 · SOLUTION & RECOMMENDATION</div>
+      </div>
+      <div class="slide-body">
+        <div class="two-col">
+          <div>
+            <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--orange);margin-bottom:10px">
+              OMNICHANNEL GTM ARCHITECTURE</div>
+            <div class="channel-item" style="background:var(--orange-l);border-color:var(--orange-b)">
+              <div class="ch-icon" style="background:var(--orange);color:#fff">PHASE 1<br>CLINICS</div>
+              <div>
+                <div class="ch-name" style="color:var(--orange)">Dermatology Clinics</div>
+                <div class="ch-detail">5,000 dermatologists × 20 units = 1 Lakh units seeded. Target: 15% Rx
+                  recommendation rate. Top 20 cities.</div>
+              </div>
+            </div>
+            <div class="channel-item" style="background:var(--blue-l);border-color:var(--blue-b)">
+              <div class="ch-icon" style="background:var(--blue);color:#fff">PHASE 1<br>ONLINE</div>
+              <div>
+                <div class="ch-name" style="color:var(--blue)">Nykaa / Amazon / TIRA</div>
+                <div class="ch-detail">Nykaa Derm-Approved badge. A+ content with ingredient deep-dives. Star ratings
+                  target: 4.3+</div>
+              </div>
+            </div>
+            <div class="channel-item" style="background:var(--green-l);border-color:var(--green-b)">
+              <div class="ch-icon" style="background:var(--green);color:#fff">PHASE 2<br>MT</div>
+              <div>
+                <div class="ch-name" style="color:var(--green)">Modern Trade (MT)</div>
+                <div class="ch-detail">Reliance Trends, Shoppers Stop. Beauty advisor training. In-store SPF
+                  consultation zones.</div>
+              </div>
+            </div>
+            <div class="channel-item" style="background:var(--purple-l);border-color:var(--purple)">
+              <div class="ch-icon" style="background:var(--purple);color:#fff">PHASE 2<br>QCOMM</div>
+              <div>
+                <div class="ch-name" style="color:var(--purple)">Quick Commerce</div>
+                <div class="ch-detail">Blinkit, Swiggy Instamart, Zepto. 30-min delivery = impulse repurchase for daily
+                  SPF users.</div>
+              </div>
+            </div>
+            <div class="channel-item" style="background:var(--pink-l);border-color:var(--pink)">
+              <div class="ch-icon" style="background:var(--pink);color:#fff">PHASE 3<br>TRAVEL</div>
+              <div>
+                <div class="ch-name" style="color:var(--pink)">Travel Retail & Pharmacy</div>
+                <div class="ch-detail">Airport duty-free, Apollo, MedPlus. Premium on-the-go positioning. International
+                  tourist upsell.</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="background:var(--orange-l);border:1.5px solid var(--orange-b);border-radius:12px;padding:14px">
+              <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--orange);margin-bottom:10px">
+                HCP DERMATOLOGIST PROGRAM</div>
+              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+                <div style="background:#fff;border-radius:8px;padding:8px 10px">
+                  <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:var(--orange)">5,000</div>
+                  <div style="font-size:9.5px;color:var(--muted)">Dermatologists sampled (top 20 cities)</div>
+                </div>
+                <div style="background:#fff;border-radius:8px;padding:8px 10px">
+                  <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:var(--orange)">1 Lakh</div>
+                  <div style="font-size:9.5px;color:var(--muted)">Sample units distributed</div>
+                </div>
+                <div style="background:#fff;border-radius:8px;padding:8px 10px">
+                  <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:var(--green)">15%</div>
+                  <div style="font-size:9.5px;color:var(--muted)">Target Rx recommendation rate</div>
+                </div>
+                <div style="background:#fff;border-radius:8px;padding:8px 10px">
+                  <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:var(--blue)">2×</div>
+                  <div style="font-size:9.5px;color:var(--muted)">Higher conversion with derm rec. [6]</div>
+                </div>
+              </div>
+              <div
+                style="margin-top:8px;background:#fff;border-radius:8px;padding:8px;font-family:var(--fh);font-size:11px;font-weight:800;color:var(--orange);text-align:center">
+                Budget: ₹40L | ROI: 15% Rx Rate → ₹6 Cr Year 1 Clinic Revenue</div>
+            </div>
+            <div style="background:var(--blue-l);border:1.5px solid var(--blue-b);border-radius:12px;padding:14px">
+              <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--blue);margin-bottom:8px">
+                BRAND COMMUNICATION STRATEGY</div>
+              <div style="font-family:var(--fh);font-size:13px;font-weight:800;color:var(--dark);margin-bottom:10px">
+                "Derm-Approved. India-Ready."</div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <div style="display:flex;gap:8px;font-size:10px"><span
+                    style="font-family:var(--fh);font-weight:700;color:var(--blue);min-width:70px">D2C
+                    Digital:</span><span style="color:var(--dark)">SunMatch AI: skin-tone-to-product recommendation
+                    quiz</span></div>
+                <div style="display:flex;gap:8px;font-size:10px"><span
+                    style="font-family:var(--fh);font-weight:700;color:var(--blue);min-width:70px">Influencer:</span><span
+                    style="color:var(--dark)">Dermatologist KOL micro-influencers (200K–2M reach tier)</span></div>
+                <div style="display:flex;gap:8px;font-size:10px"><span
+                    style="font-family:var(--fh);font-weight:700;color:var(--blue);min-width:70px">Cult.fit:</span><span
+                    style="color:var(--dark)">Fitness center sampling: SPF as workout recovery skincare</span></div>
+                <div style="display:flex;gap:8px;font-size:10px"><span
+                    style="font-family:var(--fh);font-weight:700;color:var(--blue);min-width:70px">PR:</span><span
+                    style="color:var(--dark)">'India SPF Gap Study' whitepaper — media coverage driver</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="sf-left">Source: [6] Nielsen HCP Influence Study India 2023 — dermatologist-recommended brands show
+          2.1× higher purchase conversion</div>
+        <div class="sf-right">Slide 6 of 10</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7 — IMPLEMENTATION ROADMAP -->
+  <div class="slide-wrap" id="s7">
+    <div class="slide">
+      <div class="slide-accent"></div>
+      <div class="slide-header">
+        <div>
+          <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+          <div class="sh-title">Implementation: 5-Year Phased Execution Roadmap</div>
+        </div>
+        <div class="sh-tag">SLIDE 7 · IMPLEMENTATION</div>
+      </div>
+      <div class="slide-body">
+        <div class="phases">
+          <div class="phase-card" style="border-color:var(--orange)">
+            <div class="phase-header" style="background:var(--orange)">
+              <div class="phase-title">PHASE 1 · YEAR 1 (2025)</div>
+            </div>
+            <div class="phase-body">
+              <div class="phase-item">Q1: Launch Cetaphil Sun Daily Defense Gel ₹449 (50ml)</div>
+              <div class="phase-item">Q1: Renovate Biluma Day Cream → Biluma UV Shield ₹549</div>
+              <div class="phase-item">Q2: HCP sampling — 5,000 dermatologists (20 cities)</div>
+              <div class="phase-item">Q2: Nykaa A+ content, Derm-Approved badge live</div>
+              <div class="phase-item">Q3: Amazon Premium Beauty shelf + influencer seeding</div>
+              <div class="phase-item">Q4: Q-Commerce pilot (Blinkit/Zepto) — Delhi/Mumbai</div>
+              <div class="phase-item" style="color:var(--orange);font-weight:700;border-bottom:none">🎯 Target: ₹40 Cr
+                revenue | 500K units sold</div>
+            </div>
+          </div>
+          <div class="phase-card" style="border-color:var(--blue)">
+            <div class="phase-header" style="background:var(--blue)">
+              <div class="phase-title">PHASE 2 · YEAR 2–3 (2026–27)</div>
+            </div>
+            <div class="phase-body">
+              <div class="phase-item">Q1-Y2: Launch Touch-Up Mist SPF 50 ₹599 (75ml)</div>
+              <div class="phase-item">Q2-Y2: Launch Tinted Glow SPF 50 ₹849 (5 shades)</div>
+              <div class="phase-item">Q3-Y2: MT expansion — Reliance Trends, Shoppers Stop</div>
+              <div class="phase-item">Q1-Y3: Launch Age Defense Serum SPF 50 ₹999 (30ml)</div>
+              <div class="phase-item">Q2-Y3: Travel Retail pilot — Bangalore/Delhi airports</div>
+              <div class="phase-item">Q3-Y3: SunMatch AI skin-quiz digital tool launch</div>
+              <div class="phase-item" style="color:var(--blue);font-weight:700;border-bottom:none">🎯 Target: ₹140 Cr Y3
+                revenue | 15% derma market share</div>
+            </div>
+          </div>
+          <div class="phase-card" style="border-color:var(--green)">
+            <div class="phase-header" style="background:var(--green)">
+              <div class="phase-title">PHASE 3 · YEAR 4–5 (2028–29)</div>
+            </div>
+            <div class="phase-body">
+              <div class="phase-item">Y4: 100ml loyalty packs for Entry Gel + Flagship</div>
+              <div class="phase-item">Y4: ASEAN/GCC export pilot via Galderma global network</div>
+              <div class="phase-item">Y4: Subscription model (D2C auto-refill discounts)</div>
+              <div class="phase-item">Y5: Men's SPF extension under Cetaphil Sun sub-brand</div>
+              <div class="phase-item">Y5: Tier-2/3 cities expansion (60-city coverage)</div>
+              <div class="phase-item">Y5: Full Nykaa Derm-Beauty flagship store partnership</div>
+              <div class="phase-item" style="color:var(--green);font-weight:700;border-bottom:none">🎯 Target: ₹350 Cr
+                Y5 revenue | 22% premium derma share</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--muted);margin-bottom:8px">
+            MILESTONE TIMELINE</div>
+          <div style="background:#fff;border-radius:10px;border:1px solid var(--border);padding:10px 14px">
+            <div style="display:grid;grid-template-columns:120px 1fr;gap:6px;margin-bottom:4px;align-items:center"
+              id="ganttRows"></div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="sf-left">Implementation subject to BIS CRS registration (mandatory from 2023), SPF testing per ISO
+          24444 (in-vivo), and Galderma global R&D validation</div>
+        <div class="sf-right">Slide 7 of 10</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8 — FINANCIAL MODEL -->
+  <div class="slide-wrap" id="s8">
+    <div class="slide">
+      <div class="slide-accent"></div>
+      <div class="slide-header">
+        <div>
+          <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+          <div class="sh-title">Implementation: Unit Economics & 5-Year Financial Model</div>
+        </div>
+        <div class="sh-tag">SLIDE 8 · IMPLEMENTATION</div>
+      </div>
+      <div class="slide-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr 280px;gap:14px;margin-bottom:14px">
+          <div class="chart-box">
+            <div class="chart-title">5-Year Revenue Trajectory (₹ Crore)</div><canvas id="revChart"
+              style="max-height:240px"></canvas>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Unit Economics: % of MRP (Per SKU)</div><canvas id="marginChart"
+              style="max-height:240px"></canvas>
+          </div>
+          <div class="fin-table">
+            <div style="background:var(--orange);padding:8px 14px">
+              <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:#fff">KEY METRICS SUMMARY</div>
+            </div>
+            <div class="fin-row">
+              <div class="fin-lbl">Revenue Yr 1</div>
+              <div class="fin-val" style="color:var(--orange)">₹40 Cr</div>
+            </div>
+            <div class="fin-row">
+              <div class="fin-lbl">Revenue Yr 3</div>
+              <div class="fin-val" style="color:var(--orange)">₹140 Cr</div>
+            </div>
+            <div class="fin-row">
+              <div class="fin-lbl">Revenue Yr 5</div>
+              <div class="fin-val" style="color:var(--orange)">₹350 Cr</div>
+            </div>
+            <div class="fin-row">
+              <div class="fin-lbl">5-Yr Cumulative</div>
+              <div class="fin-val" style="color:var(--green)">₹840 Cr</div>
+            </div>
+            <div class="fin-row">
+              <div class="fin-lbl">Entry SKU ASP</div>
+              <div class="fin-val" style="color:var(--blue)">₹399 sell</div>
+            </div>
+            <div class="fin-row">
+              <div class="fin-lbl">Serum SKU ASP</div>
+              <div class="fin-val" style="color:var(--purple)">₹930 sell</div>
+            </div>
+            <div class="fin-row">
+              <div class="fin-lbl">COGS %</div>
+              <div class="fin-val" style="color:var(--muted)">22% MRP</div>
+            </div>
+            <div class="fin-row">
+              <div class="fin-lbl">Net Margin</div>
+              <div class="fin-val" style="color:var(--green)">25%</div>
+            </div>
+            <div class="fin-row">
+              <div class="fin-lbl">Yr3 Mkt Share</div>
+              <div class="fin-val" style="color:var(--blue)">15%</div>
+            </div>
+            <div class="fin-row" style="border-bottom:none">
+              <div class="fin-lbl">Yr5 Mkt Share</div>
+              <div class="fin-val" style="color:var(--green)">22%</div>
+            </div>
+          </div>
+        </div>
+        <div class="highlight-box">
+          <div class="hb-title">KEY P&L ASSUMPTIONS & CALCULATIONS</div>
+          <div class="hb-body">
+            • <strong>Yr1 Revenue</strong> = 5 Lakh units × avg. selling price ₹800 = ₹40 Cr &nbsp;|&nbsp;
+            <strong>Yr5</strong> = 35L units × ₹1,000 avg. ASP = ₹350 Cr<br>
+            • <strong>COGS:</strong> Entry Gel ₹9/ml MRP → cost ~₹200/unit (22%); Serum ₹930 selling → cost ~₹205
+            (22%)<br>
+            • <strong>Trade margin:</strong> 25–30% (Nykaa 35%, pharmacies 20%, MT 25%); Marketing: 15% of revenue Yr1
+            declining to 10% Yr3+<br>
+            • <strong>Market share:</strong> 2024 premium segment ₹1,148 Cr (41% of ₹2,800 Cr); Yr3 target = ₹140 Cr /
+            ₹2,100 Cr addressable = 6.7%
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="sf-left">Financial projections are indicative estimates based on market data [1][3][5] and standard
+          FMCG unit economics benchmarks</div>
+        <div class="sf-right">Slide 8 of 10</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9 — RISK ANALYSIS -->
+  <div class="slide-wrap" id="s9">
+    <div class="slide">
+      <div class="slide-accent"></div>
+      <div class="slide-header">
+        <div>
+          <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+          <div class="sh-title">Risk Analysis: 2×2 Matrix & Mitigation Strategy</div>
+        </div>
+        <div class="sh-tag">SLIDE 9 · RISK ANALYSIS</div>
+      </div>
+      <div class="slide-body">
+        <div class="risk-layout">
+          <div>
+            <div
+              style="text-align:center;font-family:var(--fh);font-size:9px;font-weight:700;color:var(--muted);margin-bottom:6px">
+              ← LOW IMPACT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              HIGH IMPACT →</div>
+            <div style="display:grid;grid-template-columns:20px 1fr;gap:6px;align-items:center">
+              <div
+                style="font-family:var(--fh);font-size:8px;font-weight:700;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;height:100%">
+                ↑ HIGH PROB &nbsp; LOW PROB ↓</div>
+              <div class="matrix">
+                <div class="quad" style="background:var(--amber-l)">
+                  <div class="quad-label" style="color:var(--amber)">MONITOR</div>
+                  <div class="risk-dot" style="background:var(--amber);top:80px;left:30px">3<div class="risk-lbl"
+                      style="color:var(--amber);top:40px">Supply Chain</div>
+                  </div>
+                </div>
+                <div class="quad" style="background:var(--red-l)">
+                  <div class="quad-label" style="color:var(--red)">CRITICAL — ACT NOW</div>
+                  <div class="risk-dot" style="background:var(--red);top:50px;left:30px">1<div class="risk-lbl"
+                      style="color:var(--red);top:40px">Regulatory</div>
+                  </div>
+                  <div class="risk-dot" style="background:var(--red);top:90px;right:30px">2<div class="risk-lbl"
+                      style="color:var(--red);top:40px">Competitor</div>
+                  </div>
+                </div>
+                <div class="quad" style="background:var(--green-l)">
+                  <div class="quad-label" style="color:var(--green)">ACCEPT</div>
+                  <div class="risk-dot" style="background:var(--green);top:60px;left:35px">5<div class="risk-lbl"
+                      style="color:var(--green);top:40px">HCP ROI</div>
+                  </div>
+                </div>
+                <div class="quad" style="background:var(--amber-l)">
+                  <div class="quad-label" style="color:var(--amber)">MITIGATE</div>
+                  <div class="risk-dot" style="background:var(--amber);top:60px;left:40px">4<div class="risk-lbl"
+                      style="color:var(--amber);top:40px">Consumer Adoption</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+              <div
+                style="background:var(--dark);padding:7px 12px;border-radius:6px;font-family:var(--fh);font-size:9px;font-weight:700;color:#fff;text-align:center">
+                # CHALLENGE</div>
+              <div
+                style="background:var(--green);padding:7px 12px;border-radius:6px;font-family:var(--fh);font-size:9px;font-weight:700;color:#fff;text-align:center">
+                ✓ MITIGATION</div>
+            </div>
+            <div id="riskRows"></div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="sf-left">Risk probability/impact assessed via qualitative scenario analysis (1–5 scale) | BIS =
+          Bureau of Indian Standards | CRS = Compulsory Registration Scheme</div>
+        <div class="sf-right">Slide 9 of 10</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10 — APPENDIX -->
+  <div class="slide-wrap" id="s10">
+    <div class="slide">
+      <div class="slide-accent"></div>
+      <div class="slide-header">
+        <div>
+          <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+          <div class="sh-title">Appendix: Data Tables, Calculations & References</div>
+        </div>
+        <div class="sh-tag">SLIDE 10 · APPENDIX</div>
+      </div>
+      <div class="slide-body">
+        <div class="appendix-grid">
+          <div>
+            <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--orange);margin-bottom:8px">A.
+              NYKAA/AMAZON PRICE AUDIT (N=50)</div>
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th>Price Band</th>
+                  <th>SKUs</th>
+                  <th>Share %</th>
+                  <th>Avg Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="text-align:left">Below ₹300</td>
+                  <td>9</td>
+                  <td>18%</td>
+                  <td>3.8</td>
+                </tr>
+                <tr>
+                  <td style="text-align:left">₹300–400</td>
+                  <td>12</td>
+                  <td>24%</td>
+                  <td>4.1</td>
+                </tr>
+                <tr class="highlight">
+                  <td style="text-align:left">₹400–800 ★ SWEET SPOT</td>
+                  <td>24</td>
+                  <td>48%</td>
+                  <td>4.3</td>
+                </tr>
+                <tr>
+                  <td style="text-align:left">₹800–1,200</td>
+                  <td>12</td>
+                  <td>24%</td>
+                  <td>4.4</td>
+                </tr>
+                <tr>
+                  <td style="text-align:left">Above ₹1,200</td>
+                  <td>5</td>
+                  <td>10%</td>
+                  <td>4.5</td>
+                </tr>
+                <tr>
+                  <td style="text-align:left;font-weight:700">TOTAL</td>
+                  <td>50</td>
+                  <td>100%</td>
+                  <td>4.2 avg</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="margin-top:10px">
+              <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--blue);margin-bottom:6px">B.
+                CONSUMER SURVEY KEY OUTPUTS (N=500)</div>
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th style="background:var(--blue)">Metric</th>
+                    <th style="background:var(--blue)">Finding</th>
+                  </tr>
+                </thead>
+                <tbody id="surveyTable"></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--purple);margin-bottom:8px">C.
+              PRICE LADDER UNIT ECONOMICS DETAIL</div>
+            <table class="app-table">
+              <thead>
+                <tr style="background:var(--purple)">
+                  <th>SKU</th>
+                  <th>MRP</th>
+                  <th>Sell Price</th>
+                  <th>COGS</th>
+                  <th>Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="text-align:left">Entry Gel 50ml</td>
+                  <td>₹449</td>
+                  <td>₹395</td>
+                  <td>₹99</td>
+                  <td>25%</td>
+                </tr>
+                <tr>
+                  <td style="text-align:left">Biluma UV 50g</td>
+                  <td>₹549</td>
+                  <td>₹483</td>
+                  <td>₹106</td>
+                  <td>22%</td>
+                </tr>
+                <tr>
+                  <td style="text-align:left">Touch-Up Mist 75ml</td>
+                  <td>₹599</td>
+                  <td>₹527</td>
+                  <td>₹116</td>
+                  <td>22%</td>
+                </tr>
+                <tr>
+                  <td style="text-align:left">Tinted Glow 30ml</td>
+                  <td>₹849</td>
+                  <td>₹747</td>
+                  <td>₹150</td>
+                  <td>20%</td>
+                </tr>
+                <tr>
+                  <td style="text-align:left">Age Defense Serum 30ml</td>
+                  <td>₹999</td>
+                  <td>₹879</td>
+                  <td>₹176</td>
+                  <td>20%</td>
+                </tr>
+                <tr>
+                  <td style="text-align:left">Core Flagship 50ml</td>
+                  <td>₹1,080</td>
+                  <td>₹950</td>
+                  <td>₹209</td>
+                  <td>22%</td>
+                </tr>
+                <tr class="highlight">
+                  <td style="text-align:left">Portfolio Average</td>
+                  <td>—</td>
+                  <td>₹664</td>
+                  <td>₹143</td>
+                  <td>22%</td>
+                </tr>
+              </tbody>
+            </table>
+            <div
+              style="margin-top:10px;background:var(--orange-l);border:1.5px solid var(--orange-b);border-radius:8px;padding:10px">
+              <div style="font-family:var(--fh);font-size:9.5px;font-weight:800;color:var(--orange);margin-bottom:4px">
+                MARKET SHARE CALCULATION</div>
+              <div style="font-size:9.5px;color:var(--dark);line-height:1.6">Total India premium sunscreen 2024: ₹2,800
+                Cr<br>Premium segment (₹300+): 41% = ₹1,148 Cr<br>Yr1 target: ₹40 Cr / ₹1,148 Cr = 3.5% share<br>Yr3
+                target: ₹140 Cr / ₹2,100 Cr (est.) = 6.7%<br>Yr5 target: ₹350 Cr / ₹4,500 Cr (est.) = 7.8%</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--green);margin-bottom:8px">D.
+              SOURCES & REFERENCES</div>
+            <div id="refList"></div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="sf-left">All data subject to audit and available for review | Survey raw data, audit spreadsheet &
+          financial model available on request from team</div>
+        <div class="sf-right">Slide 10 of 10 · Appendix</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Navigation ──────────────────────────────────────────────────
+    let cur = 0; const N = 11;
+    const slides = () => document.querySelectorAll('.slide-wrap');
+    const dotsEl = document.getElementById('dots');
+    for (let i = 0; i < N; i++) { const d = document.createElement('div'); d.className = 'dot' + (i === 0 ? ' active' : ''); d.onclick = () => goto(i); dotsEl.appendChild(d); }
+    function goto(n) { slides()[cur].classList.remove('active'); dotsEl.children[cur].classList.remove('active'); cur = Math.max(0, Math.min(N - 1, n)); slides()[cur].classList.add('active'); dotsEl.children[cur].classList.add('active'); document.getElementById('counter').textContent = (cur + 1) + ' / ' + N; window.scrollTo(0, 0); }
+    function go(d) { goto(cur + d); }
+    document.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1); if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') go(-1); });
+
+    // ── Chart.js Defaults ────────────────────────────────────────────
+    Chart.defaults.font.family = "'Inter',sans-serif";
+    Chart.defaults.font.size = 10;
+    Chart.defaults.plugins.legend.labels.boxWidth = 12;
+    Chart.defaults.plugins.legend.labels.padding = 8;
+
+    // ── Slide 2 Charts ───────────────────────────────────────────────
+    new Chart(document.getElementById('mktChart'), { type: 'bar', data: { labels: ['2021', '2022', '2023', '2024', '2025E', '2027E', '2029E'], datasets: [{ label: 'Market (₹ Cr)', data: [1400, 1720, 2100, 2800, 3380, 4950, 7600], backgroundColor: ['#CBD5E1', '#CBD5E1', '#CBD5E1', '#EA580C', '#FED7AA', '#FED7AA', '#FED7AA'], borderRadius: 4 }] }, options: { plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } } } } });
+    new Chart(document.getElementById('segChart'), { type: 'doughnut', data: { labels: ['Mass ≤₹300', 'Premium ₹300–800', 'Derma ₹800+'], datasets: [{ data: [38, 41, 21], backgroundColor: ['#CBD5E1', '#0284C7', '#EA580C'], borderWidth: 2, borderColor: '#fff' }] }, options: { cutout: '65%', plugins: { legend: { position: 'bottom' } } } });
+
+    // ── Slide 3 Chart ─────────────────────────────────────────────────
+    new Chart(document.getElementById('priceChart'), { type: 'bar', data: { labels: ['<₹300', '₹400–800', '₹800–1.2k', '₹1.2k+'], datasets: [{ data: [18, 48, 24, 10], backgroundColor: ['#CBD5E1', '#EA580C', '#94A3B8', '#E2E8F0'], borderRadius: 4 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v + '%' } } } } });
+
+    // ── Slide 4 Scatter ───────────────────────────────────────────────
+    const compRows = [['Lakme Sun Expert', '₹349', 'Cream', 'No', 'Mass'], ['Minimalist SPF50', '₹399', 'Gel', 'No', 'D2C'], ['Derma Co SPF50', '₹475', 'Fluid', 'Partial', 'D2C'], ["Re'equil SPF60", '₹695', 'Gel', 'Yes', 'Derma'], ['La Shield SPF40', '₹780', 'Cream', 'Yes', 'Derma'], ['IPCA Acne-UV', '₹580', 'Gel', 'Rx', 'Rx'], ['Bioderma Max', '₹1,575', 'Fluid', 'Yes', 'Ultra-P'], ['Cetaphil Sun', '₹1,080', 'Light Gel', 'Yes', '★ Only SKU'], ['★ Proposed ₹449', '₹449', 'Gel', 'Yes', 'GAP FILL']];
+    const tb = document.getElementById('compTable');
+    compRows.forEach((r, i) => { const tr = document.createElement('tr'); tr.style.background = i === 8 ? '#FFF7ED' : i % 2 === 0 ? '#fff' : '#f8fafc'; r.forEach((c, ci) => { const td = document.createElement('td'); td.textContent = c; td.style.cssText = 'padding:5px 8px;border-bottom:1px solid #E2E8F0;font-size:10px;' + (ci === 0 ? 'font-weight:700;text-align:left' : 'text-align:center') + (i === 8 ? ';color:#EA580C;font-weight:700' : ''); tb.appendChild(td); }); tb.appendChild(tr); });
+    new Chart(document.getElementById('scatterChart'), { type: 'scatter', data: { datasets: [{ label: 'Competitors', data: [{ x: 349, y: 28 }, { x: 275, y: 22 }, { x: 399, y: 50 }, { x: 475, y: 52 }, { x: 695, y: 80 }, { x: 780, y: 82 }, { x: 580, y: 75 }, { x: 1575, y: 90 }], backgroundColor: '#94A3B8', pointRadius: 8 }, { label: 'Cetaphil (Existing)', data: [{ x: 1080, y: 95 }], backgroundColor: '#EA580C', pointRadius: 12 }, { label: '★ Target ₹449', data: [{ x: 449, y: 93 }], backgroundColor: '#059669', pointRadius: 14, pointStyle: 'star' }] }, options: { plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: ctx => `(₹${ctx.parsed.x}, Score:${ctx.parsed.y})` } } }, scales: { x: { title: { display: true, text: 'MRP (₹)', font: { size: 10 } } }, y: { title: { display: true, text: 'Derm Perception Score', font: { size: 10 } }, min: 0, max: 100 } } } });
+
+    // ── Slide 5 SKUs ─────────────────────────────────────────────────
+    const skus = [{ tier: 'ENTRY TIER', name: 'Cetaphil Sun\nDaily Defense Gel SPF 30', price: '₹449 / 50ml', spec: 'Broad-Spectrum + Niacinamide · Gel · Non-greasy · Daily use', role: 'Trial driver. Recruits ₹399–₹499 D2C switchers.', col: '#0284C7', lcol: '#F0F9FF', launch: 'Yr 1' }, { tier: 'CORE SPECIALIST', name: 'Biluma UV Shield SPF 50', price: '₹549 / 50g', spec: 'Kojic Acid + Arbutin + UV Filters · Cream-Gel · Depigmentation', role: 'Biluma renovation into daily SPF. Rx referral product.', col: '#059669', lcol: '#ECFDF5', launch: 'Yr 1' }, { tier: 'FORMAT SPECIALTY', name: 'Cetaphil Sun Touch-Up Mist SPF 50', price: '₹599 / 75ml', spec: 'Quick-Dry Micro-Mist + Aloe Vera · Mist · Over-makeup · Reapplication', role: 'Unique category. No direct competitor. Premium recall.', col: '#DB2777', lcol: '#FDF2F8', launch: 'Yr 2' }, { tier: 'PREMIUM', name: 'Cetaphil Sun Tinted Glow SPF 50', price: '₹849 / 30ml', spec: 'Iron Oxides + 5 Indian Shades · Gel-Cream · Sensitive skin', role: 'Derm-shade match for Indian skin. High ASP.', col: '#7C3AED', lcol: '#F5F3FF', launch: 'Yr 2' }, { tier: 'HERO INNOVATION', name: 'Cetaphil Sun Age Defense Serum SPF 50', price: '₹999 / 30ml', spec: 'Bakuchiol + Peptides + Ectoin · Serum · Anti-photoaging', role: '₹33.3/ml vs Bioderma ₹39.3/ml. Highest margin.', col: '#EA580C', lcol: '#FFF7ED', launch: 'Yr 3' }];
+    const ld = document.getElementById('skuLadder');
+    skus.forEach(s => { ld.innerHTML += `<div class="sku-card" style="background:${s.lcol};border-color:${s.col}"><div class="sku-top" style="background:${s.col}"></div><div class="sku-head"><div class="sku-tier" style="color:${s.col}">${s.tier}</div></div><div class="sku-price-badge" style="background:${s.col}">${s.price}</div><div class="sku-name">${s.name.replace('\n', '<br>')}</div><div class="sku-spec">${s.spec}</div><div class="sku-role" style="background:#fff;border-color:${s.col};color:#0F172A"><strong>ROLE:</strong> ${s.role}</div><div class="sku-launch" style="background:${s.col}">LAUNCH: ${s.launch}</div></div>`; });
+    new Chart(document.getElementById('mixChart'), { type: 'doughnut', data: { labels: ['Entry Gel', 'Biluma UV', 'Mist', 'Tinted', 'Serum', 'Flagship'], datasets: [{ data: [28, 15, 18, 14, 13, 12], backgroundColor: ['#0284C7', '#059669', '#DB2777', '#7C3AED', '#EA580C', '#F59E0B'], borderWidth: 2, borderColor: '#fff' }] }, options: { cutout: '60%', plugins: { legend: { position: 'right', labels: { font: { size: 9 } } } } } });
+
+    // ── Slide 7 Gantt ────────────────────────────────────────────────
+    const gantt = [['Entry Gel Launch', 5, '#0284C7', 0, 20], ['Biluma UV Launch', 5, '#059669', 0, 20], ['HCP Sampling', 5, '#EA580C', 10, 40], ['Nykaa/Amazon', 5, '#7C3AED', 15, 35], ['Mist Launch', 5, '#DB2777', 38, 20], ['Tinted SPF', 5, '#7C3AED', 50, 20], ['MT Expansion', 5, '#059669', 38, 62], ['Serum Launch', 5, '#EA580C', 58, 20], ['Travel Retail', 5, '#F59E0B', 68, 20], ['Export Pilot', 5, '#94A3B8', 74, 26]];
+    const gr = document.getElementById('ganttRows');
+    gantt.forEach(([lbl, h, col, start, dur]) => { gr.innerHTML += `<div style="font-size:9px;color:#64748B;font-family:'Outfit',sans-serif;font-weight:600;text-align:right;padding-right:8px">${lbl}</div><div style="background:#F1F5F9;border-radius:4px;height:14px;position:relative"><div style="position:absolute;left:${start}%;width:${dur}%;background:${col};height:100%;border-radius:4px;opacity:.85"></div></div>`; });
+
+    // ── Slide 8 Charts ───────────────────────────────────────────────
+    new Chart(document.getElementById('revChart'), { type: 'line', data: { labels: ['Yr 1', 'Yr 2', 'Yr 3', 'Yr 4', 'Yr 5'], datasets: [{ label: 'Annual Revenue (₹ Cr)', data: [40, 80, 140, 230, 350], borderColor: '#EA580C', backgroundColor: 'rgba(234,88,12,.1)', borderWidth: 2.5, pointRadius: 6, pointBackgroundColor: '#EA580C', fill: true, tension: .3 }, { label: 'Cumulative Revenue (₹ Cr)', data: [40, 120, 260, 490, 840], borderColor: '#059669', backgroundColor: 'rgba(5,150,105,.05)', borderWidth: 2, pointRadius: 4, borderDash: [4, 3], fill: false, tension: .3 }] }, options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } } } } });
+    new Chart(document.getElementById('marginChart'), { type: 'bar', data: { labels: ['COGS', 'Trade\nMargin', 'Marketing', 'Operating\nCost', 'Net Profit'], datasets: [{ data: [22, 28, 15, 10, 25], backgroundColor: ['#94A3B8', '#0284C7', '#F59E0B', '#CBD5E1', '#059669'], borderRadius: 4 }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { callback: v => v + '%' } } } } });
+
+    // ── Slide 9 Risks ────────────────────────────────────────────────
+    const risks = [{ n: 1, col: '#DC2626', lcol: '#FEF2F2', title: 'BIS Regulatory Delay', ch: 'New SPF products require BIS CRS certification. Delays of 6–12 months could postpone launch.', mit: 'Begin BIS filing Month 1 parallel to formulation. Engage regulatory consultant. Soft-launch with existing Cetaphil Sun flagship while awaiting new SKU approvals.' },
+    { n: 2, col: '#DC2626', lcol: '#FEF2F2', title: 'Competitor Price Response', ch: "Re'equil or Minimalist may drop prices to ₹299–349 to undercut Entry Gel at ₹449.", mit: 'Differentiate on Derm-certification, not price. Lock dermatologist endorsements before launch. Price match only for Biluma UV; protect Cetaphil Sun premium.' },
+    { n: 3, col: '#F59E0B', lcol: '#FFFBEB', title: 'Supply Chain / COGS Escalation', ch: 'Active ingredient costs (Bakuchiol, Ectoin, Niacinamide) may spike due to import dependency.', mit: "Dual vendor sourcing strategy. Domestic API supplier development (Divi's Labs, Aarti Pharma). 20% buffer built into COGS assumptions." },
+    { n: 4, col: '#F59E0B', lcol: '#FFFBEB', title: 'Slow Consumer Trial Adoption', ch: 'Indian consumers are cautious SPF adopters; entry gel may see slow conversion from mass brands.', mit: 'Free sample sachet at clinics + Nykaa first-purchase kits. ₹50 on-pack discount for 6 months. Reviews incentive program.' },
+    { n: 5, col: '#059669', lcol: '#ECFDF5', title: 'HCP Program ROI Miss', ch: '5,000 dermatologist sampling may not convert to prescription-level recommendations.', mit: 'Focus 60% budget on top 500 high-volume dermatologists. Provide clinical summary brochure. Quarterly MR follow-up visits. Track sell-in per doctor.' }];
+    const rr = document.getElementById('riskRows');
+    risks.forEach(r => { rr.innerHTML += `<div class="risk-row"><div class="risk-ch" style="background:${r.lcol};border-color:${r.col}"><span class="risk-num" style="background:${r.col}">${r.n}</span><span class="risk-title" style="color:${r.col}">${r.title}</span><div class="risk-body">${r.ch}</div></div><div class="risk-mit"><div class="risk-mit-body">→ ${r.mit}</div></div></div>`; });
+
+    // ── Slide 10 Appendix ────────────────────────────────────────────
+    const survey = [['Texture Preference', 'Gel/Serum: 72% | Cream: 18% | Lotion: 10%'], ['Price Willingness', '₹400–800: 48% | <₹400: 28% | >₹800: 24%'], ['Top Switch Driver', 'Derm rec.: 78% | Price: 12% | Ads: 10%'], ['Reapplication Habit', 'Never: 42% | Once: 38% | 2+: 20%'], ['White Cast Issue', 'Bothered: 65% | Somewhat: 22% | No: 13%'], ['Format Interest', 'Mist: 62% | Gel: 58% | Tinted: 44%'], ['Sample Conversion', 'Tried sample → bought: 63%'], ['Multi-benefit SPF', 'Want it: 72% | Price premium OK: 48%']];
+    const st = document.getElementById('surveyTable');
+    survey.forEach((r, i) => { st.innerHTML += `<tr style="background:${i % 2 === 0 ? '#F0F9FF' : '#fff'}"><td style="padding:5px 7px;border-bottom:1px solid #E2E8F0;font-family:'Outfit';font-size:9.5px;font-weight:700;color:#0284C7;text-align:left">${r[0]}</td><td style="padding:5px 7px;border-bottom:1px solid #E2E8F0;font-size:9px;color:#0F172A">${r[1]}</td></tr>`; });
+    const refs = [['[1]', 'Euromonitor International. India Beauty & Personal Care Report 2024. SPF sub-category sizing & CAGR projections.'], ['[2]', 'Primary Survey: aastha.saini95 team, N=500, Google Forms (July 2024). Demographics: 22–38 yrs, Tier 1–2 cities.'], ['[3]', 'Nykaa & Amazon.in Top-50 Premium Sunscreen Bestseller Listing Audit (July 2024). Manual price & rating extraction.'], ['[4]', 'Mintel Digital Beauty India Report 2023. Social media research behavior in skincare purchase journey.'], ['[5]', 'Nielsen India. Skin Care Category Report 2023. Brand recall, distribution & channel-wise sales mix.'], ['[6]', 'Nielsen HCP Influence Study India 2023. Derm-recommended brands show 2.1× higher purchase conversion.'], ['[7]', 'IMARC Group. India Sunscreen Market Forecast 2024–2029. CAGR cross-validation source.'], ['[8]', 'BIS/ISO 24444:2019. In-vivo SPF testing standard. CRS registration mandatory from 2023.']];
+    const rl = document.getElementById('refList');
+    refs.forEach(r => { rl.innerHTML += `<div class="ref-row"><div class="ref-num">${r[0]}</div><div class="ref-txt">${r[1]}</div></div>`; });
+  </script>
+</body>
+
+</html>
+</div>
+<div class="bmc-box" style="flex:1;">
+  <div class="bmc-title">Channels</div>
+  <div class="bmc-body">
+    • Derm clinics (Rx)<br>
+    • Nykaa & Amazon (online)<br>
+    • Blinkit/Zepto (Q-comm)<br>
+    • Modern Trade store counters
+  </div>
+</div>
+</div>
+
+<div class="bmc-box">
+  <div class="bmc-title">Customer Segments</div>
+  <div class="bmc-body">
+    • Premium Skincare Consumers (25–35 yrs)<br>
+    • Hyperpigmentation patients<br>
+    • Daily commuters needing reapplication<br>
+    • First-time SPF buyers
+  </div>
+</div>
+
+<!-- Row 2 -->
+<div class="bmc-box" style="grid-column: span 2.5;">
+  <div class="bmc-title">Cost Structure</div>
+  <div class="bmc-body">
+    • COGS: 22% of MRP per unit (local sourcing filters)<br>
+    • Seeding & Marketing: 15% Yr 1 scaling to 10% Yr 3+<br>
+    • Trade Margins: 25-30% (Nykaa 35%, pharmacy 20%)<br>
+    • ISO testing and CRS registration overheads
+  </div>
+</div>
+
+<div class="bmc-box" style="grid-column: span 2.5;">
+  <div class="bmc-title">Revenue Streams</div>
+  <div class="bmc-body">
+    • 5-SKU price ladder portfolio sales (MRP ₹449–₹999)<br>
+    • High-margin clinic direct distribution volume<br>
+    • Quick-commerce impulse re-orders & subscription refill plans<br>
+    • Year 4 loyalty volume packs (100ml line extension)
+  </div>
+</div>
+</div>
+</div>
+<div class="slide-footer">
+  <div class="sf-left">Business Model Canvas framework adapted to the Galderma Sunscreen expansion project</div>
+  <div class="sf-right">Slide 8 of 14</div>
+</div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 9 — GTM & HCP
+═══════════════════════════════════════════════════════════ -->
+<div class="slide-wrap" id="s9">
+  <div class="slide">
+    <div class="slide-accent"></div>
+    <div class="slide-header">
+      <div>
+        <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+        <div class="sh-title">Solution: Go-To-Market & HCP Dermatologist Engine</div>
+      </div>
+      <div class="sh-tag">SLIDE 9 · SOLUTION & RECOMMENDATION</div>
+    </div>
+    <div class="slide-body">
+      {get_stepper(5)}
+      <div class="two-col">
+        <div>
+          <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--orange);margin-bottom:10px">
+            OMNICHANNEL GTM ARCHITECTURE</div>
+          <div class="channel-item" style="background:var(--orange-l);border-color:var(--orange-b)">
+            <div class="ch-icon" style="background:var(--orange);color:#fff">PHASE 1<br>CLINICS</div>
+            <div>
+              <div class="ch-name" style="color:var(--orange)">Dermatology Clinics</div>
+              <div class="ch-detail">5,000 dermatologists × 20 units = 1 Lakh units seeded. Target: 15% Rx
+                recommendation rate. Top 20 cities.</div>
+            </div>
+          </div>
+          <div class="channel-item" style="background:var(--blue-l);border-color:var(--blue-b)">
+            <div class="ch-icon" style="background:var(--blue);color:#fff">PHASE 1<br>ONLINE</div>
+            <div>
+              <div class="ch-name" style="color:var(--blue)">Nykaa / Amazon / TIRA</div>
+              <div class="ch-detail">Nykaa Derm-Approved badge. A+ content with ingredient deep-dives. Star ratings
+                target: 4.3+</div>
+            </div>
+          </div>
+          <div class="channel-item" style="background:var(--green-l);border-color:var(--green-b)">
+            <div class="ch-icon" style="background:var(--green);color:#fff">PHASE 2<br>MT</div>
+            <div>
+              <div class="ch-name" style="color:var(--green)">Modern Trade (MT)</div>
+              <div class="ch-detail">Reliance Trends, Shoppers Stop. Beauty advisor training. In-store SPF consultation
+                zones.</div>
+            </div>
+          </div>
+          <div class="channel-item" style="background:var(--purple-l);border-color:var(--purple)">
+            <div class="ch-icon" style="background:var(--purple);color:#fff">PHASE 2<br>QCOMM</div>
+            <div>
+              <div class="ch-name" style="color:var(--purple)">Quick Commerce</div>
+              <div class="ch-detail">Blinkit, Swiggy Instamart, Zepto. 30-min delivery = impulse repurchase for daily
+                SPF users.</div>
+            </div>
+          </div>
+          <div class="channel-item" style="background:var(--pink-l);border-color:var(--pink)">
+            <div class="ch-icon" style="background:var(--pink);color:#fff">PHASE 3<br>TRAVEL</div>
+            <div>
+              <div class="ch-name" style="color:var(--pink)">Travel Retail & Pharmacy</div>
+              <div class="ch-detail">Airport duty-free, Apollo, MedPlus. Premium on-the-go positioning. International
+                tourist upsell.</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="background:var(--orange-l);border:1.5px solid var(--orange-b);border-radius:12px;padding:14px">
+            <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--orange);margin-bottom:10px">HCP
+              DERMATOLOGIST PROGRAM</div>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+              <div style="background:#fff;border-radius:8px;padding:8px 10px">
+                <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:var(--orange)">5,000</div>
+                <div style="font-size:9.5px;color:var(--muted)">Dermatologists sampled (top 20 cities)</div>
+              </div>
+              <div style="background:#fff;border-radius:8px;padding:8px 10px">
+                <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:var(--orange)">1 Lakh</div>
+                <div style="font-size:9.5px;color:var(--muted)">Sample units distributed</div>
+              </div>
+              <div style="background:#fff;border-radius:8px;padding:8px 10px">
+                <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:var(--green)">15%</div>
+                <div style="font-size:9.5px;color:var(--muted)">Target Rx recommendation rate</div>
+              </div>
+              <div style="background:#fff;border-radius:8px;padding:8px 10px">
+                <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:var(--blue)">2×</div>
+                <div style="font-size:9.5px;color:var(--muted)">Higher conversion with derm rec. [6]</div>
+              </div>
+            </div>
+            <div
+              style="margin-top:8px;background:#fff;border-radius:8px;padding:8px;font-family:var(--fh);font-size:11px;font-weight:800;color:var(--orange);text-align:center">
+              Budget: ₹40L | ROI: 15% Rx Rate → ₹6 Cr Year 1 Clinic Revenue</div>
+          </div>
+          <div style="background:var(--blue-l);border:1.5px solid var(--blue-b);border-radius:12px;padding:14px">
+            <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:var(--blue);margin-bottom:8px">BRAND
+              COMMUNICATION STRATEGY</div>
+            <div style="font-family:var(--fh);font-size:13px;font-weight:800;color:var(--dark);margin-bottom:10px">
+              "Derm-Approved. India-Ready."</div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;gap:8px;font-size:10px"><span
+                  style="font-family:var(--fh);font-weight:700;color:var(--blue);min-width:70px">D2C
+                  Digital:</span><span style="color:var(--dark)">SunMatch AI: skin-tone-to-product recommendation
+                  quiz</span></div>
+              <div style="display:flex;gap:8px;font-size:10px"><span
+                  style="font-family:var(--fh);font-weight:700;color:var(--blue);min-width:70px">Influencer:</span><span
+                  style="color:var(--dark)">Dermatologist KOL micro-influencers (200K–2M reach tier)</span></div>
+              <div style="display:flex;gap:8px;font-size:10px"><span
+                  style="font-family:var(--fh);font-weight:700;color:var(--blue);min-width:70px">PR:</span><span
+                  style="color:var(--dark)">'India SPF Gap Study' whitepaper — media coverage driver</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        style="margin-top: 14px; background: var(--purple-l); border: 1.5px solid var(--purple-b); border-radius: 10px; padding: 12px 16px; font-size: 10px; color: var(--dark); line-height: 1.5;">
+        <strong>Nykaa & Q-Commerce Strategy:</strong> Phase 1 launches exclusive to Nykaa & D2C skin-quiz tool to drive
+        high-intent trial. Phase 2 leverages Blinkit/Zepto to capture immediate re-orders. Beauty advisor training
+        programs will run at 200 high-footfall Modern Trade store counters in Metro cities.
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="sf-left">Source: [6] Nielsen HCP Influence Study India 2023 — dermatologist-recommended brands show
+        2.1× higher purchase conversion</div>
+      <div class="sf-right">Slide 9 of 14</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 10 — IMPLEMENTATION ROADMAP
+═══════════════════════════════════════════════════════════ -->
+<div class="slide-wrap" id="s10">
+  <div class="slide">
+    <div class="slide-accent"></div>
+    <div class="slide-header">
+      <div>
+        <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+        <div class="sh-title">Implementation: 5-Year Phased Execution Roadmap</div>
+      </div>
+      <div class="sh-tag">SLIDE 10 · IMPLEMENTATION</div>
+    </div>
+    <div class="slide-body">
+      {get_stepper(5)}
+      <div class="phases">
+        <div class="phase-card" style="border-color:var(--orange)">
+          <div class="phase-header" style="background:var(--orange)">
+            <div class="phase-title">PHASE 1 · YEAR 1 (2025)</div>
+          </div>
+          <div class="phase-body">
+            <div class="phase-item">Q1: Launch Cetaphil Sun Daily Defense Gel ₹449 (50ml)</div>
+            <div class="phase-item">Q1: Renovate Biluma Day Cream → Biluma UV Shield ₹549</div>
+            <div class="phase-item">Q2: HCP sampling — 5,000 dermatologists (20 cities)</div>
+            <div class="phase-item">Q2: Nykaa A+ content, Derm-Approved badge live</div>
+            <div class="phase-item">Q3: Amazon Premium Beauty shelf + influencer seeding</div>
+            <div class="phase-item">Q4: Q-Commerce pilot (Blinkit/Zepto) — Delhi/Mumbai</div>
+            <div class="phase-item" style="color:var(--orange);font-weight:700;border-bottom:none">🎯 Target: ₹40 Cr
+              revenue | 500K units sold</div>
+          </div>
+        </div>
+        <div class="phase-card" style="border-color:var(--blue)">
+          <div class="phase-header" style="background:var(--blue)">
+            <div class="phase-title">PHASE 2 · YEAR 2–3 (2026–27)</div>
+          </div>
+          <div class="phase-body">
+            <div class="phase-item">Q1-Y2: Launch Touch-Up Mist SPF 50 ₹599 (75ml)</div>
+            <div class="phase-item">Q2-Y2: Launch Tinted Glow SPF 50 ₹849 (5 shades)</div>
+            <div class="phase-item">Q3-Y2: MT expansion — Reliance Trends, Shoppers Stop</div>
+            <div class="phase-item">Q1-Y3: Launch Age Defense Serum SPF 50 ₹999 (30ml)</div>
+            <div class="phase-item">Q2-Y3: Travel Retail pilot — Bangalore/Delhi airports</div>
+            <div class="phase-item">Q3-Y3: SunMatch AI skin-quiz digital tool launch</div>
+            <div class="phase-item" style="color:var(--blue);font-weight:700;border-bottom:none">🎯 Target: ₹140 Cr Y3
+              revenue | 15% derma market share</div>
+          </div>
+        </div>
+        <div class="phase-card" style="border-color:var(--green)">
+          <div class="phase-header" style="background:var(--green)">
+            <div class="phase-title">PHASE 3 · YEAR 4–5 (2028–29)</div>
+          </div>
+          <div class="phase-body">
+            <div class="phase-item">Y4: 100ml loyalty packs for Entry Gel + Flagship</div>
+            <div class="phase-item">Y4: ASEAN/GCC export pilot via Galderma global network</div>
+            <div class="phase-item">Y4: Subscription model (D2C auto-refill discounts)</div>
+            <div class="phase-item">Y5: Men's SPF extension under Cetaphil Sun sub-brand</div>
+            <div class="phase-item">Y5: Tier-2/3 cities expansion (60-city coverage)</div>
+            <div class="phase-item">Y5: Full Nykaa Derm-Beauty flagship store partnership</div>
+            <div class="phase-item" style="color:var(--green);font-weight:700;border-bottom:none">🎯 Target: ₹350 Cr Y5
+              revenue | 22% premium derma share</div>
+          </div>
+        </div>
+      </div>
+      <div
+        style="margin-top: 14px; background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; font-size: 10px; line-height: 1.5; color: var(--dark);">
+        <strong>Compliance Checklist:</strong> Mandatory BIS CRS registration for all new formulations. In-vivo SPF
+        testing (ISO 24444) at NABL accredited labs. Stability testing at 40°C for 6 months. Global R&D audit and safety
+        clearance.
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="sf-left">Implementation subject to BIS CRS registration (mandatory from 2023), SPF testing per ISO
+        24444 (in-vivo), and Galderma global R&D validation</div>
+      <div class="sf-right">Slide 10 of 14</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 11 — FINANCIAL MODEL
+═══════════════════════════════════════════════════════════ -->
+<div class="slide-wrap" id="s11">
+  <div class="slide">
+    <div class="slide-accent"></div>
+    <div class="slide-header">
+      <div>
+        <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+        <div class="sh-title">Implementation: Unit Economics & 5-Year Financial Model</div>
+      </div>
+      <div class="sh-tag">SLIDE 11 · IMPLEMENTATION</div>
+    </div>
+    <div class="slide-body">
+      {get_stepper(5)}
+      <div style="display:grid;grid-template-columns:1fr 1fr 280px;gap:14px;margin-bottom:14px">
+        <div class="chart-box">
+          <div class="chart-title">5-Year Revenue Trajectory (₹ Crore)</div><canvas id="revChart"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Unit Economics: % of MRP (Per SKU)</div><canvas id="marginChart"></canvas>
+        </div>
+        <div class="fin-table">
+          <div style="background:var(--orange);padding:8px 14px">
+            <div style="font-family:var(--fh);font-size:10px;font-weight:800;color:#fff">KEY METRICS SUMMARY</div>
+          </div>
+          <div class="fin-row">
+            <div class="fin-lbl">Revenue Yr 1</div>
+            <div class="fin-val" style="color:var(--orange)">₹40 Cr</div>
+          </div>
+          <div class="fin-row">
+            <div class="fin-lbl">Revenue Yr 3</div>
+            <div class="fin-val" style="color:var(--orange)">₹140 Cr</div>
+          </div>
+          <div class="fin-row">
+            <div class="fin-lbl">Revenue Yr 5</div>
+            <div class="fin-val" style="color:var(--orange)">₹350 Cr</div>
+          </div>
+          <div class="fin-row">
+            <div class="fin-lbl">5-Yr Cumulative</div>
+            <div class="fin-val" style="color:var(--green)">₹840 Cr</div>
+          </div>
+          <div class="fin-row">
+            <div class="fin-lbl">Entry SKU ASP</div>
+            <div class="fin-val" style="color:var(--blue)">₹399 sell</div>
+          </div>
+          <div class="fin-row">
+            <div class="fin-lbl">Serum SKU ASP</div>
+            <div class="fin-val" style="color:var(--purple)">₹930 sell</div>
+          </div>
+          <div class="fin-row">
+            <div class="fin-lbl">COGS %</div>
+            <div class="fin-val" style="color:var(--muted)">22% MRP</div>
+          </div>
+          <div class="fin-row">
+            <div class="fin-lbl">Net Margin</div>
+            <div class="fin-val" style="color:var(--green)">25%</div>
+          </div>
+          <div class="fin-row">
+            <div class="fin-lbl">Yr3 Mkt Share</div>
+            <div class="fin-val" style="color:var(--blue)">15%</div>
+          </div>
+          <div class="fin-row" style="border-bottom:none">
+            <div class="fin-lbl">Yr5 Mkt Share</div>
+            <div class="fin-val" style="color:var(--green)">22%</div>
+          </div>
+        </div>
+      </div>
+      <div
+        style="margin-top: 14px; background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; font-size: 10px; line-height: 1.5;">
+        <div
+          style="font-family: var(--fh); font-weight: 800; color: var(--dark); margin-bottom: 6px; font-size: 10.5px;">
+          5-YEAR P&L METRIC TRAJECTORY (₹ Crore)</div>
+        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 10px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border); font-weight: bold; color: var(--muted);">
+              <th>Metric</th>
+              <th>Year 1</th>
+              <th>Year 2</th>
+              <th>Year 3</th>
+              <th>Year 4</th>
+              <th>Year 5</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td>Gross Sales</td>
+              <td>₹40.0</td>
+              <td>₹85.0</td>
+              <td>₹140.0</td>
+              <td>₹230.0</td>
+              <td>₹350.0</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td>Marketing Spend</td>
+              <td>₹6.0 (15%)</td>
+              <td>₹11.0 (13%)</td>
+              <td>₹14.0 (10%)</td>
+              <td>₹23.0 (10%)</td>
+              <td>₹35.0 (10%)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td>EBITDA (Contribution)</td>
+              <td>₹8.0 (20%)</td>
+              <td>₹18.7 (22%)</td>
+              <td>₹35.0 (25%)</td>
+              <td>₹57.5 (25%)</td>
+              <td>₹87.5 (25%)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="sf-left">Financial projections are indicative estimates based on market data [1][3][5] and standard
+        FMCG unit economics benchmarks</div>
+      <div class="sf-right">Slide 11 of 14</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 12 — BALANCED SCORECARD
+═══════════════════════════════════════════════════════════ -->
+<div class="slide-wrap" id="s12">
+  <div class="slide">
+    <div class="slide-accent"></div>
+    <div class="slide-header">
+      <div>
+        <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+        <div class="sh-title">Solution: KPIs Balanced Scorecard</div>
+      </div>
+      <div class="sh-tag">SLIDE 12 · ROADMAP & GTM</div>
+    </div>
+    <div class="slide-body">
+      {get_stepper(5)}
+      <div class="bsc-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; height:430px;">
+        <div style="background:#fff; border-radius:12px; border:1.5px solid var(--border); padding:14px;">
+          <div style="font-family:var(--fh); font-size:11px; font-weight:800; color:var(--blue); margin-bottom:8px;">
+            FINANCIAL PERSPECTIVE</div>
+          <div style="font-size:9.2px; line-height:1.6; color:var(--dark);">
+            • <strong>Revenue Growth:</strong> Target Year 1 ₹40 Cr, scaling up to Year 5 ₹350 Cr.<br>
+            • <strong>Profitability:</strong> Cumulative Net Contribution Margin across portfolio at 25%.<br>
+            • <strong>Marketing ROI:</strong> Year 1 > 3.0, scaling up to > 5.0 in Year 3+.<br>
+            • <strong>CAC/LTV Ratio:</strong> Customer Lifetime Value to Acquisition Cost ratio > 3.0.
+          </div>
+        </div>
+        <div style="background:#fff; border-radius:12px; border:1.5px solid var(--border); padding:14px;">
+          <div style="font-family:var(--fh); font-size:11px; font-weight:800; color:var(--orange); margin-bottom:8px;">
+            CUSTOMER PERSPECTIVE</div>
+          <div style="font-size:9.2px; line-height:1.6; color:var(--dark);">
+            • <strong>Brand Recall:</strong> Top-of-Mind awareness in daily sunscreen users > 15%.<br>
+            • <strong>Customer Retention:</strong> E-commerce/D2C subscription auto-refill repeat rate > 40%.<br>
+            • <strong>Customer Satisfaction:</strong> Direct consumer Net Promoter Score (NPS) > 70.<br>
+            • <strong>HCP Recommendation:</strong> Target physician prescription conversion rate > 15% in clinics.
+          </div>
+        </div>
+        <div style="background:#fff; border-radius:12px; border:1.5px solid var(--border); padding:14px;">
+          <div style="font-family:var(--fh); font-size:11px; font-weight:800; color:var(--green); margin-bottom:8px;">
+            INTERNAL BUSINESS PROCESSES</div>
+          <div style="font-size:9.2px; line-height:1.6; color:var(--dark);">
+            • <strong>Time-to-Market:</strong> Launch Entry Gel/UV Shield within 9 months from global formulation
+            R&D.<br>
+            • <strong>Compliance:</strong> 100% compliance with BIS CRS registration & ISO 24444 clinical SPF tests.<br>
+            • <strong>Supply Chain Logistics:</strong> Quick commerce Blinkit/Zepto order fill rate > 95%.<br>
+            • <strong>Product Quality:</strong> Zero severe adverse skin incidents or stability failures.
+          </div>
+        </div>
+        <div style="background:#fff; border-radius:12px; border:1.5px solid var(--border); padding:14px;">
+          <div style="font-family:var(--fh); font-size:11px; font-weight:800; color:var(--purple); margin-bottom:8px;">
+            LEARNING & GROWTH</div>
+          <div style="font-size:9.2px; line-height:1.6; color:var(--dark);">
+            • <strong>MR Training:</strong> 100% reps trained on SPF chemical filter chemistry.<br>
+            • <strong>Derm KOL Network:</strong> Build clinical advisor board; derm network growth +50% YoY.<br>
+            • <strong>Digital Infrastructure:</strong> SunMatch AI database reaches 1M consumer skin records by Yr
+            2.<br>
+            • <strong>Clinical Partnerships:</strong> Fund 5 national trials with IADVL for Indian skin tones.
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 10px; font-size: 8.5px; italic: true; color: var(--muted); text-align: center;">
+        ★ Balanced Scorecard implementation aligns strategic sunscreen targets across finance, consumer retention,
+        compliance processes, and medical rep training.
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="sf-left">Strategic Governance: Balanced Scorecard KPIs monitored quarterly by the Sunshield
+        Cross-Functional Committee</div>
+      <div class="sf-right">Slide 12 of 14</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 13 — RISK ANALYSIS
+═══════════════════════════════════════════════════════════ -->
+<div class="slide-wrap" id="s13">
+  <div class="slide">
+    <div class="slide-accent"></div>
+    <div class="slide-header">
+      <div>
+        <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+        <div class="sh-title">Risk Analysis: 2×2 Matrix & Mitigation Strategy</div>
+      </div>
+      <div class="sh-tag">SLIDE 13 · RISK ANALYSIS</div>
+    </div>
+    <div class="slide-body">
+      {get_stepper(6)}
+      <div class="risk-layout">
+        <div>
+          <div
+            style="text-align:center;font-family:var(--fh);font-size:9px;font-weight:700;color:var(--muted);margin-bottom:6px">
+            ← LOW IMPACT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; HIGH
+            IMPACT →</div>
+          <div style="display:grid;grid-template-columns:20px 1fr;gap:6px;align-items:center">
+            <div
+              style="font-family:var(--fh);font-size:8px;font-weight:700;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;height:100%">
+              ↑ HIGH PROB &nbsp; LOW PROB ↓</div>
+            <div class="matrix">
+              <div class="quad" style="background:var(--amber-l)">
+                <div class="quad-label" style="color:var(--amber)">MONITOR</div>
+                <div class="risk-dot" style="background:var(--amber);top:80px;left:30px">3<div class="risk-lbl"
+                    style="color:var(--amber);top:40px">Supply Chain</div>
+                </div>
+              </div>
+              <div class="quad" style="background:var(--red-l)">
+                <div class="quad-label" style="color:var(--red)">CRITICAL — ACT NOW</div>
+                <div class="risk-dot" style="background:var(--red);top:50px;left:30px">1<div class="risk-lbl"
+                    style="color:var(--red);top:40px">Regulatory</div>
+                </div>
+                <div class="risk-dot" style="background:var(--red);top:90px;right:30px">2<div class="risk-lbl"
+                    style="color:var(--red);top:40px">Competitor</div>
+                </div>
+              </div>
+              <div class="quad" style="background:var(--green-l)">
+                <div class="quad-label" style="color:var(--green)">ACCEPT</div>
+                <div class="risk-dot" style="background:var(--green);top:60px;left:35px">5<div class="risk-lbl"
+                    style="color:var(--green);top:40px">HCP ROI</div>
+                </div>
+              </div>
+              <div class="quad" style="background:var(--amber-l)">
+                <div class="quad-label" style="color:var(--amber)">MITIGATE</div>
+                <div class="risk-dot" style="background:var(--amber);top:60px;left:40px">4<div class="risk-lbl"
+                    style="color:var(--amber);top:40px">Consumer Adoption</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+            <div
+              style="background:var(--dark);padding:7px 12px;border-radius:6px;font-family:var(--fh);font-size:9px;font-weight:700;color:#fff;text-align:center">
+              # CHALLENGE</div>
+            <div
+              style="background:var(--green);padding:7px 12px;border-radius:6px;font-family:var(--fh);font-size:9px;font-weight:700;color:#fff;text-align:center">
+              ✓ MITIGATION</div>
+          </div>
+          <div id="riskRows">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+              <div class="card-body"
+                style="background:var(--dark);color:#fff;border-radius:6px;font-size:8.5px;padding:8px">1. BIS CRS
+                Formulations Delay</div>
+              <div class="card-body"
+                style="background:var(--green-l);border:1px solid var(--green-b);border-radius:6px;font-size:8.5px;padding:8px">
+                Trigger early stability studies; use global base formula backing.</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+              <div class="card-body"
+                style="background:var(--dark);color:#fff;border-radius:6px;font-size:8.5px;padding:8px">2. Competitor
+                Price Undercutting</div>
+              <div class="card-body"
+                style="background:var(--green-l);border:1px solid var(--green-b);border-radius:6px;font-size:8.5px;padding:8px">
+                Reinforce Cetaphil clinical superiority; launch 100ml economy SKU.</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+              <div class="card-body"
+                style="background:var(--dark);color:#fff;border-radius:6px;font-size:8.5px;padding:8px">3. Supply Chain
+                Stockouts</div>
+              <div class="card-body"
+                style="background:var(--green-l);border:1px solid var(--green-b);border-radius:6px;font-size:8.5px;padding:8px">
+                Contract local GMP manufacturing in India for high volume.</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+              <div class="card-body"
+                style="background:var(--dark);color:#fff;border-radius:6px;font-size:8.5px;padding:8px">4. Low Consumer
+                Adoption</div>
+              <div class="card-body"
+                style="background:var(--green-l);border:1px solid var(--green-b);border-radius:6px;font-size:8.5px;padding:8px">
+                Deploy SunMatch AI quiz; offer D2C subscription auto-refills.</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:0">
+              <div class="card-body"
+                style="background:var(--dark);color:#fff;border-radius:6px;font-size:8.5px;padding:8px">5. Low HCP
+                Seeding ROI</div>
+              <div class="card-body"
+                style="background:var(--green-l);border:1px solid var(--green-b);border-radius:6px;font-size:8.5px;padding:8px">
+                Focus medical rep audits; establish derm clinical advisory board.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        style="margin-top: 14px; background: var(--amber-l); border: 1.5px solid var(--amber-b); border-radius: 10px; padding: 12px 16px; font-size: 10px; color: var(--dark); line-height: 1.5;">
+        <strong>Risk Governance:</strong> Form a dedicated cross-functional Sunshield committee (R&D, Regulatory,
+        Marketing, Sales) meeting bi-weekly. Active monitoring of competitor launches in the ₹400-800 price range, and
+        monthly tracking of HCP sampling ROI and clinic prescription conversion rates.
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="sf-left">Risk probability/impact assessed via qualitative scenario analysis (1–5 scale) | BIS = Bureau
+        of Indian Standards | CRS = Compulsory Registration Scheme</div>
+      <div class="sf-right">Slide 13 of 14</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 14 — APPENDIX
+═══════════════════════════════════════════════════════════ -->
+<div class="slide-wrap" id="s14">
+  <div class="slide">
+    <div class="slide-accent"></div>
+    <div class="slide-header">
+      <div>
+        <div class="sh-brand">GRAD 3.0 · Galderma Rising Achievers in Dermatology</div>
+        <div class="sh-title">Appendix: Data Sources, Audits & References</div>
+      </div>
+      <div class="sh-tag">SLIDE 14 · APPENDIX</div>
+    </div>
+    <div class="slide-body">
+      <div class="appendix-grid">
+        <div class="card">
+          <div class="card-accent" style="background:var(--blue)"></div>
+          <div class="card-body">
+            <div class="card-title" style="color:var(--blue)">A. PREMIUM SUNSCREEN AUDIT (N=50)</div>
+            <table class="app-table" style="width:100%; border-collapse:collapse; font-size:8.5px;">
+              <thead>
+                <tr style="background:var(--blue); color:#fff; font-weight:700">
+                  <th style="padding:4px">Brand SKU</th>
+                  <th style="padding:4px">MRP</th>
+                  <th style="padding:4px">Vol</th>
+                  <th style="padding:4px">Derm?</th>
+                  <th style="padding:4px">Share</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">Minimalist</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">₹399</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">50ml</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">No</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">18%</td>
+                </tr>
+                <tr>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">Derma Co</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">₹475</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">50ml</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">Partial</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">12%</td>
+                </tr>
+                <tr>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">Re'equil</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">₹695</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">50ml</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">Yes</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">15%</td>
+                </tr>
+                <tr>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">La Shield</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">₹780</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">60g</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">Yes</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">8%</td>
+                </tr>
+                <tr>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">IPCA Acne-UV</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">₹580</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">50g</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">Rx</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">10%</td>
+                </tr>
+                <tr>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">Bioderma</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">₹1,575</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">40ml</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">Yes</td>
+                  <td style="padding:3px;border-bottom:1px solid var(--border)">5%</td>
+                </tr>
+                <tr style="background:var(--orange-l); font-weight:700">
+                  <td style="padding:3px">Cetaphil Sun</td>
+                  <td>₹1,080</td>
+                  <td>50ml</td>
+                  <td>Yes</td>
+                  <td>Current</td>
+                </tr>
+                <tr style="background:var(--green-l); font-weight:700; color:var(--green)">
+                  <td style="padding:3px">★ Proposed</td>
+                  <td>₹449</td>
+                  <td>50ml</td>
+                  <td>Yes</td>
+                  <td>15% (Yr2)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-accent" style="background:var(--orange)"></div>
+          <div class="card-body" style="font-size: 8.5px; line-height: 1.45;">
+            <div class="card-title" style="color:var(--orange)">B. SURVEY INSIGHTS & ECONS</div>
+            <strong>Consumer Survey Insights (N=500):</strong><br>
+            • 72% reject thick sunscreens due to greasy feel.<br>
+            • 68% prefer lightweight gel/serum formulations.<br>
+            • 78% indicate doctor recommendation is top trigger.<br>
+            • 48% target ₹400-800 price sweet-spot.<br><br>
+            <strong>Price Ladder Unit Economics:</strong><br>
+            • COGS: ₹200 (MRP ₹449 Entry SKU) | ₹205 (MRP ₹930 SKU).<br>
+            • Trade margins: 25-30% (Nykaa 35%, pharmacy 20%).<br>
+            • Marketing: 15% Yr 1, scaling down to 10% Yr 3+.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-accent" style="background:var(--purple)"></div>
+          <div class="card-body">
+            <div class="card-title" style="color:var(--purple)">C. REFERENCED SOURCES</div>
+            <div class="ref-row">
+              <div class="ref-num">[1]</div>
+              <div class="ref-txt">Euromonitor Passport: BPC India Report 2024</div>
+            </div>
+            <div class="ref-row">
+              <div class="ref-num">[2]</div>
+              <div class="ref-txt">Galderma Sunscreen Consumer Survey N=500, July 2024</div>
+            </div>
+            <div class="ref-row">
+              <div class="ref-num">[3]</div>
+              <div class="ref-txt">Nykaa & Amazon E-com listings audit, N=50 SKUs, Aug 2024</div>
+            </div>
+            <div class="ref-row">
+              <div class="ref-num">[4]</div>
+              <div class="ref-txt">Mintel: Digital Skincare Consumer Report India, Oct 2023</div>
+            </div>
+            <div class="ref-row">
+              <div class="ref-num">[5]</div>
+              <div class="ref-txt">Nielsen: FMCG Skin Care Category & Pricing Study, 2023</div>
+            </div>
+            <div class="ref-row">
+              <div class="ref-num">[6]</div>
+              <div class="ref-txt">Nielsen HCP Influence Study: Derm Recommendation, 2023</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="sf-left">Appendix references are based on audited reports and consumer surveys executed in 2023-2024
+      </div>
+      <div class="sf-right">Slide 14 of 14</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════════ -->
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide-wrap');
+  const dotsContainer = document.getElementById('dots');
+  const counter = document.getElementById('counter');
+
+  // Generate Dots
+  slides.forEach((_, idx) => {
+    const dot = document.createElement('div');
+    dot.className = `dot \${idx === 0 ? 'active' : ''}`;
+    dot.addEventListener('click', () => show(idx));
+    dotsContainer.appendChild(dot);
+  });
+
+  const dots = document.querySelectorAll('.dot');
+
+  function show(idx) {
+    if (idx < 0 || idx >= slides.length) return;
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = idx;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    counter.textContent = `\${current + 1} / \${slides.length}`;
+  }
+
+  function go(dir) {
+    show(current + dir);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') go(1);
+    if (e.key === 'ArrowLeft') go(-1);
+  });
+
+  // Chart.js Implementations
+  window.onload = function () {
+    // Slide 2: Market Size Bar Chart
+    new Chart(document.getElementById('mktChart'), {
+      type: 'bar',
+      data: {
+        labels: ['2021', '2022', '2023', '2024', '2025E', '2027E', '2029E'],
+        datasets: [{
+          label: 'Market Size (₹ Cr)',
+          data: [1100, 1350, 1650, 2800, 3400, 5000, 7500],
+          backgroundColor: ['#BAE6FD', '#BAE6FD', '#BAE6FD', '#EA580C', '#FED7AA', '#FED7AA', '#FED7AA'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { grid: { color: '#F1F5F9' } } }
+      }
+    });
+
+    // Slide 2: Mix Donut Chart
+    new Chart(document.getElementById('segChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Mass (<₹300)', 'Premium (₹300-800)', 'Derma (₹800+)'],
+        datasets: [{
+          data: [35, 48, 17],
+          backgroundColor: ['#94A3B8', '#0284C7', '#EA580C']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } }
+      }
+    });
+
+    // Slide 5: Positioning Scatter Chart
+    new Chart(document.getElementById('scatterChart'), {
+      type: 'scatter',
+      data: {
+        datasets: [
+          { label: 'Lakme (₹349)', data: [{ x: 349, y: 28 }], backgroundColor: '#94A3B8' },
+          { label: 'Lotus (₹275)', data: [{ x: 275, y: 22 }], backgroundColor: '#94A3B8' },
+          { label: 'Minimalist (₹399)', data: [{ x: 399, y: 50 }], backgroundColor: '#0284C7' },
+          { label: 'Derma Co (₹475)', data: [{ x: 475, y: 52 }], backgroundColor: '#0284C7' },
+          { label: 'Re\'equil (₹695)', data: [{ x: 695, y: 80 }], backgroundColor: '#059669' },
+          { label: 'La Shield (₹780)', data: [{ x: 780, y: 82 }], backgroundColor: '#059669' },
+          { label: 'IPCA Acne-UV (₹580)', data: [{ x: 580, y: 75 }], backgroundColor: '#7C3AED' },
+          { label: 'Bioderma (₹1575)', data: [{ x: 1575, y: 90 }], backgroundColor: '#DB2777' },
+          { label: 'Cetaphil (₹1080)', data: [{ x: 1080, y: 95 }], backgroundColor: '#EA580C' },
+          { label: '★ Proposed SKU (₹449)', data: [{ x: 449, y: 93 }], backgroundColor: '#EA580C', pointStyle: 'rectRot', pointRadius: 10 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { title: { display: true, text: 'MRP (₹)', font: { size: 9 } }, grid: { color: '#F1F5F9' } },
+          y: { title: { display: true, text: 'Derm Score (0-100)', font: { size: 9 } }, min: 0, max: 100, grid: { color: '#F1F5F9' } }
+        },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 8 } } } }
+      }
+    });
+
+    // Slide 11: 5-Year Revenue Line Chart
+    new Chart(document.getElementById('revChart'), {
+      type: 'line',
+      data: {
+        labels: ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
+        datasets: [{
+          label: 'Gross Sales (₹ Cr)',
+          data: [40, 85, 140, 230, 350],
+          borderColor: '#EA580C',
+          backgroundColor: '#FFF7ED',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { grid: { color: '#F1F5F9' } } }
+      }
+    });
+
+    // Slide 11: Margins Bar Chart
+    new Chart(document.getElementById('marginChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Entry Gel', 'UV Shield', 'Mist', 'Tint', 'Serum'],
+        datasets: [
+          { label: 'COGS', data: [22, 22, 20, 22, 22], backgroundColor: '#94A3B8' },
+          { label: 'Trade Margin', data: [25, 25, 30, 30, 32], backgroundColor: '#BAE6FD' },
+          { label: 'Net Margin', data: [25, 28, 25, 24, 26], backgroundColor: '#059669' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { x: { stacked: true }, y: { stacked: true, max: 100 } },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 8 } } } }
+      }
+    });
+  };
+</script>
+</body>
+
+</html>

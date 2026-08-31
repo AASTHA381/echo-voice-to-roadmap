@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Agent Fraud & Fake Booking Detector - AI Operations Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --primary: #0A369D;
+            --primary-hover: #0D47A1;
+            --accent: #4F46E5;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 24px;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            background: var(--bg-card);
+            padding: 20px 28px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        header h1 {
+            font-size: 24px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-live {
+            background-color: #ECFDF5;
+            color: var(--success);
+            padding: 6px 12px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .badge-live::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* KPI Dashboard Row */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .kpi-card h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .kpi-card .number {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .kpi-card .desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Main Workspace Grid */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 360px 1fr 380px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .panel {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #FAF5F5;
+            background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h2 {
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* Form Styling */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: #FCFDFE;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.15s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(10, 54, 157, 0.1);
+        }
+
+        .preset-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn-preset {
+            padding: 6px 12px;
+            border-radius: 99px;
+            border: 1px solid var(--border-color);
+            background-color: #F1F5F9;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-preset:hover {
+            background-color: var(--primary);
+            color: #FFFFFF;
+            border-color: var(--primary);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--primary);
+            color: #FFFFFF;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Flow pipeline visualizer */
+        .pipeline-wrapper {
+            margin-bottom: 24px;
+            background-color: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+        }
+
+        .pipeline-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 0.05em;
+        }
+
+        .steps-container {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .steps-container::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background-color: #E2E8F0;
+            z-index: 1;
+        }
+
+        .step-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+            width: 25%;
+            text-align: center;
+        }
+
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #FFFFFF;
+            border: 3px solid #E2E8F0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .step-node.active .step-circle {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            color: #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(10, 54, 157, 0.2);
+        }
+
+        .step-node.completed .step-circle {
+            border-color: var(--success);
+            background-color: var(--success);
+            color: #FFFFFF;
+        }
+
+        .step-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* Risk Dashboard Center Output */
+        .output-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 30px 20px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+        }
+
+        .score-circle-wrapper {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            margin-bottom: 20px;
+        }
+
+        .score-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(var(--border-color) 0deg, var(--border-color) 360deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.5s ease-out;
+        }
+
+        .score-circle::after {
+            content: '';
+            position: absolute;
+            width: 136px;
+            height: 136px;
+            border-radius: 50%;
+            background-color: #FFFFFF;
+            z-index: 1;
+        }
+
+        .score-text {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .score-text .val {
+            font-size: 48px;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .score-text .lbl {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .status-badge {
+            padding: 8px 24px;
+            border-radius: 99px;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            margin-bottom: 16px;
+        }
+
+        .status-approved { background-color: #ECFDF5; color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .status-held { background-color: #FFFBEB; color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .status-blocked { background-color: #FEF2F2; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        .rules-list {
+            text-align: left;
+            width: 100%;
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+        }
+
+        .rules-list h4 {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 0.02em;
+        }
+
+        .rule-item {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .rule-item::before {
+            content: '•';
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* Right Panel: Verification Queue */
+        .queue-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .queue-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.15s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .queue-item:last-child {
+            border-bottom: none;
+        }
+
+        .queue-item:hover {
+            background-color: #F8FAFC;
+        }
+
+        .queue-item.active {
+            background-color: #EFF6FF;
+            border-left: 4px solid var(--primary);
+        }
+
+        .queue-item .agent-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .queue-item .meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .queue-item .badge-risk {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 99px;
+            background-color: #FEF3C7;
+            color: #D97706;
+        }
+
+        /* Gemini Co-pilot UI */
+        .copilot-box {
+            background-color: #F0FDF4;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .copilot-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .copilot-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .email-box {
+            background-color: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 11px;
+            color: var(--text-secondary);
+            height: 100px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-bottom: 16px;
+        }
+
+        .action-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-action {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn-approve {
+            background-color: var(--success);
+            color: #FFFFFF;
+            border: none;
+        }
+
+        .btn-approve:hover { background-color: #059669; }
+
+        .btn-decline {
+            background-color: var(--danger);
+            color: #FFFFFF;
+            border: none;
+        }
+
+        .btn-decline:hover { background-color: #DC2626; }
+
+        /* Bottom Section: Graph Database visualizer */
+        .graph-panel {
+            grid-column: 1 / 4;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            margin-top: 24px;
+        }
+
+        .graph-body {
+            padding: 24px;
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+        }
+
+        .graph-visual {
+            flex: 1;
+            max-width: 600px;
+            background-color: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .graph-node {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: #FFFFFF;
+            border: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            z-index: 2;
+            position: absolute;
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+
+        .graph-node.scammer {
+            border-color: var(--danger);
+            background-color: #FEF2F2;
+            color: var(--danger);
+        }
+
+        .graph-node.current {
+            border-color: var(--accent);
+            background-color: #EEF2FF;
+            color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+        }
+
+        .graph-edge {
+            position: absolute;
+            height: 2px;
+            background-color: var(--text-muted);
+            z-index: 1;
+            transform-origin: left center;
+        }
+
+        .graph-edge.danger {
+            background-color: var(--danger);
+            height: 3px;
+        }
+
+        .graph-desc {
+            width: 400px;
+        }
+
+        .graph-desc h3 {
+            font-size: 16px;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .graph-desc p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .graph-legend {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>🛡️ Travel Agent Fraud & Fake Booking Detector</h1>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">NMIMS Opportunity Blueprint Working Model | Light Theme</p>
+        </div>
+        <div class="badge-live">AI Engine Live</div>
+    </header>
+
+    <!-- KPIs dashboard -->
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <h3>Total Scanned</h3>
+            <div class="number" id="kpi-scanned">1,048</div>
+            <div class="desc">Real-time checkout scans completed</div>
+        </div>
+        <div class="kpi-card">
+            <h3>Chargebacks Blocked</h3>
+            <div class="number" id="kpi-chargebacks" style="color: var(--danger);">112</div>
+            <div class="desc">Estimated value: $112,000 saved</div>
+        </div>
+        <div class="kpi-card">
+            <h3>Inventory Spoilage Prevented</h3>
+            <div class="number" id="kpi-inventory" style="color: var(--success);">234 Seats</div>
+            <div class="desc">Replaced with cash-paying bookings</div>
+        </div>
+        <div class="kpi-card">
+            <h3>Avg. Manual Review Time</h3>
+            <div class="number" id="kpi-time">28 seconds</div>
+            <div class="desc">Reduced from 15 mins via GenAI Co-pilot</div>
+        </div>
+    </div>
+
+    <!-- Main App Workspace -->
+    <div class="workspace-grid">
+        
+        <!-- Left Column: Simulator Form -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>1. Booking Simulator</h2>
+            </div>
+            <div class="panel-body">
+                <div class="preset-row">
+                    <button class="btn-preset" onclick="loadPreset('stolen_card')">Stolen Card Presets</button>
+                    <button class="btn-preset" onclick="loadPreset('bulk_bot')">Bulk Booking Bot</button>
+                    <button class="btn-preset" onclick="loadPreset('honest_agent')">Honest Agent Preset</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="agent-name">Agent Name</label>
+                    <input type="text" id="agent-name" class="form-control" value="Aastha Travels">
+                </div>
+
+                <div class="form-group">
+                    <label for="ip-country">Login IP Location</label>
+                    <select id="ip-country" class="form-control">
+                        <option value="India" selected>India</option>
+                        <option value="Russia">Russia</option>
+                        <option value="USA">USA</option>
+                        <option value="Ukraine">Ukraine</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="card-country">Credit Card issuing Bank</label>
+                    <select id="card-country" class="form-control">
+                        <option value="India" selected>India</option>
+                        <option value="Russia">Russia</option>
+                        <option value="USA">USA</option>
+                        <option value="Ukraine">Ukraine</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="flight-lead">Flight Departure lead time</label>
+                    <select id="flight-lead" class="form-control">
+                        <option value="1">1 hour (Last Minute)</option>
+                        <option value="12">12 hours (Same Day)</option>
+                        <option value="48" selected>2 days (Standard)</option>
+                        <option value="336">2 weeks (Advanced)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="velocity">Form typing click velocity</label>
+                    <select id="velocity" class="form-control">
+                        <option value="bot">Superhuman Speed (Instant / Bot)</option>
+                        <option value="human" selected>Human Speed (Normal)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="volume">Bookings in last 10 minutes</label>
+                    <input type="number" id="volume" class="form-control" value="1" min="1" max="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="shared-device">Graph connection (Detective)</label>
+                    <select id="shared-device" class="form-control">
+                        <option value="no" selected>No shared device / New Device</option>
+                        <option value="yes">Device linked to Banned ScamAgent</option>
+                    </select>
+                </div>
+
+                <button class="btn-submit" onclick="runAnalysis()">Run AI Security Scan</button>
+            </div>
+        </div>
+
+        <!-- Middle Column: AI Pipeline & Risk Score -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>2. Real-Time AI Pipeline & Assessment</h2>
+            </div>
+            <div class="panel-body" style="background-color: #FAFBFD;">
+                
+                <!-- Pipeline Animation Flow -->
+                <div class="pipeline-wrapper">
+                    <div class="pipeline-title">AI Pipeline Steps</div>
+                    <div class="steps-container">
+                        <div class="step-node" id="step-gatekeeper">
+                            <div class="step-circle">1</div>
+                            <div class="step-label">Gatekeeper</div>
+                        </div>
+                        <div class="step-node" id="step-assistant">
+                            <div class="step-circle">2</div>
+                            <div class="step-label">Assistant</div>
+                        </div>
+                        <div class="step-node" id="step-detective">
+                            <div class="step-circle">3</div>
+                            <div class="step-label">Detective</div>
+                        </div>
+                        <div class="step-node" id="step-auditor">
+                            <div class="step-circle">4</div>
+                            <div class="step-label">Auditor</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Score display -->
+                <div class="output-box">
+                    <div class="score-circle-wrapper">
+                        <div class="score-circle" id="score-circle">
+                            <div class="score-text">
+                                <span class="val" id="score-val">0</span>
+                                <span class="lbl">Risk Score</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="status-badge status-approved" id="status-badge">Awaiting Scan</div>
+                    
+                    <div class="rules-list">
+                        <h4>AI Risk Indicators Triggered</h4>
+                        <div id="indicators-container">
+                            <p style="font-size: 13px; color: var(--text-muted); text-align: center;">Click "Run AI Security Scan" to test a booking.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Right Column: Verification Queue & Gemini Copilot -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>3. Analyst Queue & GenAI Co-pilot</h2>
+            </div>
+            <div class="panel-body">
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase;">Hold Review Queue</div>
+                <div class="queue-list" id="queue-list">
+                    <!-- Queue items will be generated dynamically -->
+                </div>
+
+                <div class="copilot-box">
+                    <div class="copilot-header">
+                        <span>✨ Google Gemini Co-pilot Analyst Summary</span>
+                    </div>
+                    <p class="copilot-text" id="copilot-summary">Select a transaction in the queue above or run a scan to see the GenAI explanation.</p>
+                </div>
+
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase;">Verification Email Draft</div>
+                <div class="email-box" id="email-draft">No email drafted yet.</div>
+
+                <div class="action-row">
+                    <button class="btn-action btn-approve" onclick="resolveQueueItem('approve')">Release Booking</button>
+                    <button class="btn-action btn-decline" onclick="resolveQueueItem('decline')">Confirm Fraud</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Graph Database Visualizer -->
+        <div class="graph-panel">
+            <div class="panel-header">
+                <h2>Graph Database Link Visualizer (Neo4j "Detective" Module)</h2>
+            </div>
+            <div class="panel-body">
+                <div class="graph-body">
+                    <div class="graph-visual" id="graph-visual-container">
+                        <!-- Simulated nodes and edges will render here -->
+                    </div>
+                    <div class="graph-desc">
+                        <h3>Scam Ring Network Analysis</h3>
+                        <p id="graph-analysis-text">The Graph Database maps hardware IDs, payment cards, phone numbers, and agent IDs. It exposes burners trying to look clean but sharing devices with previously banned entities.</p>
+                        <div class="graph-legend">
+                            <div class="legend-item"><div class="legend-dot" style="background-color: var(--accent);"></div><span>Current Agent</span></div>
+                            <div class="legend-item"><div class="legend-dot" style="background-color: var(--danger);"></div><span>Banned Scammer</span></div>
+                            <div class="legend-item"><div class="legend-dot" style="background-color: var(--text-secondary);"></div><span>Shared Device / Card</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Preset configurations
+        const presets = {
+            stolen_card: {
+                agent: "ScamAgent007",
+                ip: "Russia",
+                card: "USA",
+                lead: "1",
+                velocity: "human",
+                volume: "1",
+                device: "yes"
+            },
+            bulk_bot: {
+                agent: "BotAgent99",
+                ip: "India",
+                card: "India",
+                lead: "48",
+                velocity: "bot",
+                volume: "35",
+                device: "no"
+            },
+            honest_agent: {
+                agent: "Aastha Travels",
+                ip: "India",
+                card: "India",
+                lead: "336",
+                velocity: "human",
+                volume: "1",
+                device: "no"
+            }
+        };
+
+        // Labeled holds database to populate the queue
+        let queueItems = [
+            { id: 1, agent: "ViperTravels", ip: "Ukraine", card: "USA", lead: "1", velocity: "human", volume: "1", device: "yes", score: 85 },
+            { id: 2, agent: "GlobalHolidays", ip: "India", card: "UK", lead: "12", velocity: "human", volume: "3", device: "no", score: 55 },
+            { id: 3, agent: "FastFlightCo", ip: "India", card: "India", lead: "48", velocity: "bot", volume: "12", device: "no", score: 65 }
+        ];
+
+        let activeQueueId = null;
+
+        // Initialize queue and graph
+        window.onload = function() {
+            renderQueue();
+            renderGraph("Aastha Travels", "no");
+        };
+
+        function loadPreset(key) {
+            const data = presets[key];
+            document.getElementById('agent-name').value = data.agent;
+            document.getElementById('ip-country').value = data.ip;
+            document.getElementById('card-country').value = data.card;
+            document.getElementById('flight-lead').value = data.lead;
+            document.getElementById('velocity').value = data.velocity;
+            document.getElementById('volume').value = data.volume;
+            document.getElementById('shared-device').value = data.device;
+            
+            // Clean visualizer
+            document.getElementById('status-badge').className = "status-badge status-approved";
+            document.getElementById('status-badge').innerText = "Awaiting Scan";
+            document.getElementById('score-val').innerText = "0";
+            document.getElementById('score-circle').style.background = `conic-gradient(var(--border-color) 0deg, var(--border-color) 360deg)`;
+            document.getElementById('indicators-container').innerHTML = '<p style="font-size: 13px; color: var(--text-muted); text-align: center;">Preset loaded. Click "Run AI Security Scan" to test.</p>';
+            
+            // Clear active steps
+            document.querySelectorAll('.step-node').forEach(n => {
+                n.classList.remove('active', 'completed');
+            });
+            
+            // Render Graph preview
+            renderGraph(data.agent, data.device);
+        }
+
+        // Simulates the AI pipeline execution
+        function runAnalysis() {
+            const agent = document.getElementById('agent-name').value;
+            const ip = document.getElementById('ip-country').value;
+            const card = document.getElementById('card-country').value;
+            const lead = parseInt(document.getElementById('flight-lead').value);
+            const velocity = document.getElementById('velocity').value;
+            const volume = parseInt(document.getElementById('volume').value);
+            const device = document.getElementById('shared-device').value;
+
+            // Step 1: Animate steps sequentially
+            const steps = ['step-gatekeeper', 'step-assistant', 'step-detective', 'step-auditor'];
+            let currentStepIdx = 0;
+            
+            document.querySelectorAll('.step-node').forEach(n => n.classList.remove('active', 'completed'));
+            
+            function nextStep() {
+                if (currentStepIdx > 0) {
+                    document.getElementById(steps[currentStepIdx-1]).classList.remove('active');
+                    document.getElementById(steps[currentStepIdx-1]).classList.add('completed');
+                }
+                if (currentStepIdx < steps.length) {
+                    document.getElementById(steps[currentStepIdx]).classList.add('active');
+                    currentStepIdx++;
+                    setTimeout(nextStep, 300); // speed up animation for smooth UX
+                } else {
+                    // Final Calculation
+                    calculateFinalScore(agent, ip, card, lead, velocity, volume, device);
+                }
+            }
+            nextStep();
+        }
+
+        function calculateFinalScore(agent, ip, card, lead, velocity, volume, device) {
+            let score = 5; // baseline noise
+            let indicators = [];
+
+            // 1. Gatekeeper logic
+            if (ip !== card) {
+                let add = 30;
+                // Last minute flight triggers massive multiplier
+                if (lead <= 2) {
+                    add = 55;
+                    indicators.push(`🚨 CRITICAL: Location Mismatch (IP: ${ip} vs Card: ${card}) combined with Last-Minute Departure (<2 hrs).`);
+                } else {
+                    indicators.push(`⚠️ Mismatch: Transaction request from ${ip} but paid with a ${card} card.`);
+                }
+                score += add;
+            }
+
+            // 2. Telemetry (Shop Assistant) logic
+            if (velocity === 'bot') {
+                score += 40;
+                indicators.push("🤖 Telemetry Alert: Booking form filled at superhuman speed (less than 400ms).");
+            }
+
+            // 3. Detective logic (Device Graph)
+            if (device === 'yes') {
+                score += 55;
+                indicators.push("⛓️ Graph Match: Shared Device Fingerprint ID matches a banned account (ScamAgent007).");
+            }
+
+            // 4. Volume logic (Bulk Clogging)
+            if (volume > 10) {
+                score += 25;
+                indicators.push(`📦 Bulk Holding: Agent placed ${volume} bookings in the last 10 minutes.`);
+            }
+
+            // Capping score
+            score = Math.min(score, 100);
+            score = Math.max(score, 0);
+
+            // Update UI
+            document.getElementById('score-val').innerText = score;
+            
+            // Color conic gradient
+            let color = 'var(--success)';
+            let status = 'APPROVED';
+            let badgeClass = 'status-badge status-approved';
+            
+            if (score >= 80) {
+                color = 'var(--danger)';
+                status = 'BLOCKED (AUTO)';
+                badgeClass = 'status-badge status-blocked';
+                updateKPIs('blocked', volume);
+            } else if (score >= 30) {
+                color = 'var(--warning)';
+                status = 'TEMPORARY HOLD';
+                badgeClass = 'status-badge status-held';
+                
+                // Add to review queue
+                const newId = queueItems.length + 1;
+                queueItems.unshift({
+                    id: newId,
+                    agent: agent,
+                    ip: ip,
+                    card: card,
+                    lead: lead,
+                    velocity: velocity,
+                    volume: volume,
+                    device: device,
+                    score: score
+                });
+                renderQueue();
+                selectQueueItem(newId);
+            } else {
+                updateKPIs('approved', volume);
+            }
+
+            document.getElementById('score-circle').style.background = `conic-gradient(${color} 0deg, ${color} ${score * 3.6}deg, var(--border-color) ${score * 3.6}deg, var(--border-color) 360deg)`;
+            document.getElementById('status-badge').className = badgeClass;
+            document.getElementById('status-badge').innerText = status;
+
+            // Render Indicators
+            let html = '';
+            if (indicators.length === 0) {
+                html = '<div class="rule-item" style="color: var(--success);">Genuine Booking: No security indicators triggered. Agent trust score at 100%.</div>';
+            } else {
+                indicators.forEach(i => {
+                    html += `<div class="rule-item">${i}</div>`;
+                });
+            }
+            document.getElementById('indicators-container').innerHTML = html;
+
+            renderGraph(agent, device);
+            updateGenAI(agent, ip, card, lead, velocity, volume, device, score);
+        }
+
+        // GenAI Gemini Simulation
+        function updateGenAI(agent, ip, card, lead, velocity, volume, device, score) {
+            let summary = '';
+            let email = '';
+
+            if (score < 30) {
+                summary = `Booking by ${agent} approved instantly. Risk indicators (Score: ${score}/100) are well below the review threshold. No connection, timing, or location anomalies detected.`;
+                email = "Auto-Approve: No verification required.";
+            } else if (score >= 80) {
+                summary = `CRITICAL: Blocked booking by ${agent} immediately. The transaction exhibits high-risk signals including ${ip !== card ? 'a card/IP mismatch, ' : ''}${velocity === 'bot' ? 'automated bot velocity, ' : ''}${device === 'yes' ? 'direct device fingerprint link to a banned scammer, ' : ''}posing an immediate chargeback risk.`;
+                email = "Auto-Blocked: Ticket blocked, credit card flagged in checkout vault.";
+            } else {
+                // Hold reviews
+                summary = `We held this booking because the agent (${agent}) logged in from ${ip} but paid with a card from ${card}. The flight departs in ${lead} hours. Telemetry indicates a ${velocity === 'bot' ? 'automated bot filling speed' : 'normal human agent speed'}. ${device === 'yes' ? 'The hardware is connected to a banned scammer.' : 'No linked hardware device was found.'}`;
+                
+                email = `Subject: URGENT: Booking Hold Notification - Flight Departure ID\n\nDear Partner at ${agent},\n\nOur AI security system has placed a temporary holding status on your booking. This is due to a routine check matching transaction locations (IP: ${ip} vs Card: ${card}).\n\nTo release this ticket, please reply with a copy of your Agency Registration Profile and traveler ID within 24 hours.\n\nThank you,\nPartner Support Team`;
+            }
+
+            document.getElementById('copilot-summary').innerText = summary;
+            document.getElementById('email-draft').innerText = email;
+        }
+
+        // Render queue helper
+        function renderQueue() {
+            const list = document.getElementById('queue-list');
+            list.innerHTML = '';
+            queueItems.forEach(item => {
+                const active = item.id === activeQueueId ? 'active' : '';
+                list.innerHTML += `
+                    <div class="queue-item ${active}" onclick="selectQueueItem(${item.id})">
+                        <div>
+                            <div class="agent-name">${item.agent}</div>
+                            <div class="meta">Lead: ${item.lead}h | IP: ${item.ip}</div>
+                        </div>
+                        <div class="badge-risk">${item.score}/100</div>
+                    </div>
+                `;
+            });
+        }
+
+        function selectQueueItem(id) {
+            activeQueueId = id;
+            renderQueue();
+            const item = queueItems.find(i => i.id === id);
+            if (item) {
+                updateGenAI(item.agent, item.ip, item.card, item.lead, item.velocity, item.volume, item.device, item.score);
+                renderGraph(item.agent, item.device);
+            }
+        }
+
+        function resolveQueueItem(action) {
+            if (!activeQueueId) {
+                alert("Please select an item from the queue first.");
+                return;
+            }
+
+            const item = queueItems.find(i => i.id === activeQueueId);
+            if (action === 'approve') {
+                updateKPIs('approved', item.volume);
+            } else {
+                updateKPIs('blocked', item.volume);
+            }
+
+            // Remove from queue
+            queueItems = queueItems.filter(i => i.id !== activeQueueId);
+            activeQueueId = queueItems.length > 0 ? queueItems[0].id : null;
+            
+            renderQueue();
+            if (activeQueueId) {
+                selectQueueItem(activeQueueId);
+            } else {
+                document.getElementById('copilot-summary').innerText = "Select a transaction in the queue above or run a scan to see the GenAI explanation.";
+                document.getElementById('email-draft').innerText = "No email drafted yet.";
+            }
+        }
+
+        // KPI Update Logic
+        function updateKPIs(status, volume) {
+            const scanned = document.getElementById('kpi-scanned');
+            scanned.innerText = parseInt(scanned.innerText.replace(/,/g, '')) + 1;
+
+            if (status === 'blocked') {
+                const chargebacks = document.getElementById('kpi-chargebacks');
+                chargebacks.innerText = parseInt(chargebacks.innerText) + 1;
+                
+                const inventory = document.getElementById('kpi-inventory');
+                const currentSeats = parseInt(inventory.innerText);
+                inventory.innerText = (currentSeats + volume) + " Seats";
+            }
+        }
+
+        // Graph DB Simulator
+        function renderGraph(agentName, deviceShared) {
+            const container = document.getElementById('graph-visual-container');
+            container.innerHTML = '';
+
+            // Dynamic locations inside the visualizer
+            const coords = {
+                current: { x: 300, y: 90, label: agentName, class: 'current' },
+                device: { x: 180, y: 90, label: "Device ID: XYZ789", class: '' },
+                scammer: { x: 60, y: 90, label: "ScamAgent (BANNED)", class: 'scammer' },
+                card: { x: 300, y: 15, label: "Card BIN", class: '' },
+                ip: { x: 420, y: 90, label: "IP Location", class: '' }
+            };
+
+            // Nodes
+            for (const key in coords) {
+                // If the device is not shared, hide the scammer connection nodes
+                if (deviceShared === 'no' && key === 'scammer') continue;
+                
+                const c = coords[key];
+                container.innerHTML += `
+                    <div class="graph-node ${c.class}" style="left: ${c.x}px; top: ${c.y}px;">
+                        ${c.label}
+                    </div>
+                `;
+            }
+
+            // Edges
+            if (deviceShared === 'yes') {
+                // Draw edge from ScamAgent to Device ID
+                drawEdge(84, 114, 180, 114, true);
+                // Draw edge from Device ID to Current Agent
+                drawEdge(204, 114, 300, 114, true);
+                document.getElementById('graph-analysis-text').innerText = `CRITICAL MATCH DETECTED: The Graph database linked the current agent "${agentName}" to the banned profile "ScamAgent007" through the shared hardware device ID "XYZ789". This confirms a fraud syndicate operation.`;
+            } else {
+                // Regular agent edges
+                drawEdge(300, 114, 420, 114, false); // IP connection
+                drawEdge(324, 39, 324, 90, false); // Card connection
+                document.getElementById('graph-analysis-text').innerText = `No suspicious network loops found. The agent "${agentName}" is booking via standard independent routes, showing normal connections to their local IP address and payment gateway.`;
+            }
+        }
+
+        function drawEdge(x1, y1, x2, y2, isDanger) {
+            const length = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+            const container = document.getElementById('graph-visual-container');
+            const dangerClass = isDanger ? 'danger' : '';
+            container.innerHTML += `
+                <div class="graph-edge ${dangerClass}" style="width: ${length}px; transform: rotate(${angle}deg); left: ${x1}px; top: ${y1}px;"></div>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Booking Risk Console — Travel Agent Fraud Detector</title>
+<style>
+  :root{
+    --bg:#0b1220;
+    --panel:#121b2e;
+    --panel-2:#0f1626;
+    --line:#22314d;
+    --text:#dbe4f5;
+    --muted:#7f90ad;
+    --amber:#f2b544;
+    --red:#e5484d;
+    --green:#3ecf8e;
+    --mono: 'JetBrains Mono','Courier New',monospace;
+    --sans: 'Inter',-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); padding:28px 20px 60px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+  .eyebrow{color:var(--amber); font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;}
+  h1{margin:6px 0 2px; font-size:26px; font-weight:700;}
+  .sub{color:var(--muted); font-size:13.5px; margin-bottom:24px;}
+  .grid{display:grid; grid-template-columns: 1.05fr 0.95fr; gap:18px;}
+  @media(max-width:880px){.grid{grid-template-columns:1fr;}}
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line); border-radius:14px; padding:20px 22px;
+  }
+  .card h2{font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin:0 0 16px; font-weight:600;}
+  .agent{
+    display:grid; grid-template-columns: 26px 1fr auto; gap:10px 12px; align-items:start;
+    padding:12px 0; border-bottom:1px solid var(--line);
+  }
+  .agent:last-child{border-bottom:none;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);margin-top:6px;}
+  .agent label{font-size:13px; font-weight:600; display:block;}
+  .agent .desc{font-size:11.5px; color:var(--muted); margin-top:2px; line-height:1.4;}
+  select, input[type=range]{width:100%;}
+  select{
+    background:#0c1424; color:var(--text); border:1px solid var(--line); border-radius:7px;
+    padding:6px 8px; font-family:var(--sans); font-size:12.5px;
+  }
+  .valpill{
+    font-family:var(--mono); font-size:11px; color:var(--amber); background:#241a0c;
+    border:1px solid #4a3416; border-radius:6px; padding:2px 8px; white-space:nowrap; align-self:center;
+  }
+  input[type=range]{accent-color:var(--amber);}
+  .gauge-wrap{display:flex; flex-direction:column; align-items:center; padding:6px 0 10px;}
+  .score{font-family:var(--mono); font-size:52px; font-weight:700; letter-spacing:-1px;}
+  .decision{
+    margin-top:10px; font-family:var(--mono); font-size:13px; letter-spacing:.08em;
+    padding:6px 16px; border-radius:20px; text-transform:uppercase; font-weight:700;
+  }
+  .bar-track{width:100%; height:10px; background:#0c1424; border-radius:6px; margin-top:16px; overflow:hidden; border:1px solid var(--line);}
+  .bar-fill{height:100%; border-radius:6px; transition:width .25s ease, background .25s ease;}
+  .reasons{margin-top:18px;}
+  .reason-row{
+    display:flex; justify-content:space-between; font-size:12.5px; padding:7px 0;
+    border-bottom:1px dashed var(--line); font-family:var(--mono);
+  }
+  .reason-row:last-child{border-bottom:none;}
+  .reason-row .w{color:var(--amber);}
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px;}
+  .stat{background:#0c1424; border:1px solid var(--line); border-radius:9px; padding:10px 8px; text-align:center;}
+  .stat b{display:block; font-family:var(--mono); font-size:17px; color:var(--green);}
+  .stat span{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;}
+  .fi-row{display:flex; align-items:center; gap:10px; font-size:12px; margin:8px 0;}
+  .fi-label{width:150px; color:var(--muted); font-family:var(--mono); flex-shrink:0;}
+  .fi-bar-track{flex:1; background:#0c1424; border-radius:5px; height:8px; overflow:hidden; border:1px solid var(--line);}
+  .fi-bar{height:100%; background:linear-gradient(90deg,#3ecf8e,#f2b544);}
+  .fi-pct{width:44px; text-align:right; font-family:var(--mono); color:var(--text);}
+  footer{color:var(--muted); font-size:11.5px; margin-top:26px; line-height:1.6;}
+  footer code{color:var(--amber);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">AI FOR MANAGERS · HOSPITALITY &amp; TRAVEL</div>
+  <h1>Booking Risk Console</h1>
+  <div class="sub">Live simulator for the Travel Agent Fraud &amp; Fake Booking Detector — move the controls to see how the Gatekeeper, Shop Assistant, Detective and Auditor agents combine into one risk score.</div>
+
+  <div class="grid">
+    <!-- LEFT: controls -->
+    <div class="card">
+      <h2>Incoming booking — signals</h2>
+
+      <div class="agent">
+        <div class="dot" style="background:#f2b544"></div>
+        <div>
+          <label>Gatekeeper — card on a chargeback blacklist</label>
+          <div class="desc">Card BIN has a history of confirmed chargebacks.</div>
+          <select id="blacklist"><option value="0" selected>No</option><option value="1">Yes</option></select>
+        </div>
+        <div class="valpill" id="blacklist-val">55 pts if Yes</div>
+      </div>
+
+      <div class="agent">
+        <div class="dot" style="background:#f2b544"></div>
+        <div>
+          <label>Gatekeeper — IP country vs. card country</label>
+          <div class="desc">Login location doesn't match the card's issuing country.</div>
+          <select id="mismatch"><option value="0" selected>Match</option><option value="1">Mismatch</option></select>
+        </div>
+        <div class="valpill" id="mismatch-val">weighted by urgency</div>
+      </div>
+
+      <div class="agent">
+        <div class="dot" style="background:#f2b544"></div>
+        <div>
+          <label>Departure lead time</label>
+          <div class="desc">Hours until the flight/room actually departs or checks in.</div>
+          <input type="range" id="leadtime" min="0.5" max="200" value="48" step="0.5">
+        </div>
+        <div class="valpill" id="leadtime-val">48 h</div>
+      </div>
+
+      <div class="agent">
+        <div class="dot" style="background:#3ecf8e"></div>
+        <div>
+          <label>Shop Assistant — bookings in the last hour</label>
+          <div class="desc">Velocity: how many holds this account made in 60 minutes.</div>
+          <input type="range" id="velocity" min="0" max="15" value="1" step="1">
+        </div>
+        <div class="valpill" id="velocity-val">1</div>
+      </div>
+
+      <div class="agent">
+        <div class="dot" style="background:#7aa2ff"></div>
+        <div>
+          <label>Detective — device/card shared with a banned account</label>
+          <div class="desc">Graph link to a previously blocked agent (same device fingerprint, card, or phone).</div>
+          <select id="shared"><option value="0" selected>No link</option><option value="1">Linked</option></select>
+        </div>
+        <div class="valpill" id="shared-val">35 pts if linked</div>
+      </div>
+
+      <div class="agent">
+        <div class="dot" style="background:#e5484d"></div>
+        <div>
+          <label>Auditor — free-text note anomaly</label>
+          <div class="desc">How templated/robotic the booking remarks look (0 = natural, 1 = scripted).</div>
+          <input type="range" id="textscore" min="0" max="1" value="0.15" step="0.05">
+        </div>
+        <div class="valpill" id="textscore-val">0.15</div>
+      </div>
+
+      <div class="agent">
+        <div class="dot" style="background:var(--muted)"></div>
+        <div>
+          <label>Agent trust score</label>
+          <div class="desc">Track record: account age, booking history, past chargebacks (0–100).</div>
+          <input type="range" id="trust" min="0" max="100" value="70" step="1">
+        </div>
+        <div class="valpill" id="trust-val">70 / 100</div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: score + model -->
+    <div>
+      <div class="card">
+        <h2>Real-time risk score</h2>
+        <div class="gauge-wrap">
+          <div class="score" id="scoreNum">0</div>
+          <div class="decision" id="decisionPill">ALLOW</div>
+          <div class="bar-track"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+        </div>
+        <div class="reasons" id="reasons"></div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <h2>XGBoost classifier — held-out test performance</h2>
+        <div class="stats">
+          <div class="stat"><b id="s-auc">0.93</b><span>ROC-AUC</span></div>
+          <div class="stat"><b id="s-prec">0.41</b><span>Precision</span></div>
+          <div class="stat"><b id="s-rec">0.62</b><span>Recall</span></div>
+          <div class="stat"><b id="s-f1">0.49</b><span>F1</span></div>
+        </div>
+        <div style="margin-top:16px;">
+          <div class="fi-row" style="color:var(--muted); font-size:11px;"><div class="fi-label">FEATURE</div><div style="flex:1;">IMPORTANCE</div><div class="fi-pct"></div></div>
+          <div id="fiList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Model trained on <code>20,000</code> synthetic bookings (2.3% base fraud rate) with features matching the six signals above.
+    Threshold set at <code>0.20</code> probability rather than the default 0.5 — in fraud detection a missed chargeback is
+    usually costlier than a false alarm held for manual review, so the model is tuned to favor recall.
+    This console's slider math replicates the roadmap's weighted-scoring logic for teaching/demo purposes;
+    the actual trained model (see <code>fraud_model.py</code>) is a gradient-boosted classifier, not a hand-coded rule engine.
+  </footer>
+</div>
+
+<script>
+const modelResults = {"n_samples": 20000, "fraud_base_rate_pct": 2.26, "threshold": 0.2, "auc": 0.934, "precision": 0.406, "recall": 0.622, "f1": 0.491, "confusion_matrix": [[3828, 82], [34, 56]], "feature_importances": {"card_blacklist_hit": 0.6840999722480774, "shared_device_flag": 0.14560000598430634, "ip_card_mismatch": 0.03830000013113022, "bookings_last_hour": 0.025299999862909317, "trust_score": 0.02239999920129776, "booking_hour": 0.0215000007301569, "lead_time_hours": 0.021299999207258224, "text_anomaly_score": 0.021299999207258224, "agent_account_age_days": 0.0203000009059906}};
+
+document.getElementById('s-auc').textContent = modelResults.auc.toFixed(3);
+document.getElementById('s-prec').textContent = modelResults.precision.toFixed(3);
+document.getElementById('s-rec').textContent = modelResults.recall.toFixed(3);
+document.getElementById('s-f1').textContent = modelResults.f1.toFixed(3);
+
+const fiList = document.getElementById('fiList');
+const fiLabels = {
+  card_blacklist_hit: "Card blacklist hit",
+  shared_device_flag: "Shared device link",
+  ip_card_mismatch: "IP/card mismatch",
+  bookings_last_hour: "Booking velocity",
+  trust_score: "Trust score",
+  booking_hour: "Hour of booking",
+  lead_time_hours: "Lead time",
+  text_anomaly_score: "Text anomaly",
+  agent_account_age_days: "Account age"
+};
+Object.entries(modelResults.feature_importances).forEach(([k,v])=>{
+  const pct = (v*100).toFixed(1);
+  const row = document.createElement('div');
+  row.className='fi-row';
+  row.innerHTML = `<div class="fi-label">${fiLabels[k]||k}</div>
+    <div class="fi-bar-track"><div class="fi-bar" style="width:${pct}%"></div></div>
+    <div class="fi-pct">${pct}%</div>`;
+  fiList.appendChild(row);
+});
+
+const els = {
+  blacklist: document.getElementById('blacklist'),
+  mismatch: document.getElementById('mismatch'),
+  leadtime: document.getElementById('leadtime'),
+  velocity: document.getElementById('velocity'),
+  shared: document.getElementById('shared'),
+  textscore: document.getElementById('textscore'),
+  trust: document.getElementById('trust'),
+};
+
+function compute(){
+  const blacklist = +els.blacklist.value;
+  const mismatch = +els.mismatch.value;
+  const leadtime = +els.leadtime.value;
+  const velocity = +els.velocity.value;
+  const shared = +els.shared.value;
+  const textscore = +els.textscore.value;
+  const trust = +els.trust.value;
+
+  document.getElementById('leadtime-val').textContent = leadtime.toFixed(1)+' h';
+  document.getElementById('velocity-val').textContent = velocity;
+  document.getElementById('textscore-val').textContent = textscore.toFixed(2);
+  document.getElementById('trust-val').textContent = trust+' / 100';
+
+  const imminent = leadtime < 2;
+  const night = false; // reserved for future use
+  const reasons = [];
+  let score = 0;
+
+  if(blacklist){ score += 55; reasons.push(['Card on chargeback blacklist', 55]); }
+  if(mismatch){
+    const w = imminent ? 30 : 8;
+    score += w;
+    reasons.push([`IP/card mismatch (${imminent? 'flight <2h — imminent':'lead time OK'})`, w]);
+  }
+  if(shared){ score += 35; reasons.push(['Device/card linked to a banned account', 35]); }
+  if(velocity >= 5){ score += 25; reasons.push([`High booking velocity (${velocity}/hr)`, 25]); }
+  const textW = Math.round(textscore*20);
+  if(textW>0){ score += textW; reasons.push(['Templated / robotic note language', textW]); }
+  const trustAdj = Math.round((trust/100)*20);
+  score -= trustAdj;
+  if(trustAdj>0){ reasons.push(['Trust score offset', -trustAdj]); }
+
+  score = Math.max(0, Math.min(100, score));
+
+  document.getElementById('scoreNum').textContent = Math.round(score);
+  const bar = document.getElementById('barFill');
+  bar.style.width = score+'%';
+  const pill = document.getElementById('decisionPill');
+
+  let color, label;
+  if(score >= 45){ color='var(--red)'; label='BLOCK'; }
+  else if(score >= 20){ color='var(--amber)'; label='HOLD & REVIEW'; }
+  else{ color='var(--green)'; label='ALLOW'; }
+  bar.style.background = color;
+  pill.style.background = color+'22';
+  pill.style.color = color;
+  pill.style.border = '1px solid '+color;
+  pill.textContent = label;
+  document.getElementById('scoreNum').style.color = color;
+
+  const rEl = document.getElementById('reasons');
+  rEl.innerHTML = reasons.length ? '' : '<div class="reason-row"><span>No risk signals triggered</span></div>';
+  reasons.sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+  reasons.forEach(([label,w])=>{
+    const row = document.createElement('div');
+    row.className='reason-row';
+    row.innerHTML = `<span>${label}</span><span class="w">${w>0?'+':''}${w} pts</span>`;
+    rEl.appendChild(row);
+  });
+}
+
+Object.values(els).forEach(el=>el.addEventListener('input', compute));
+compute();
+</script>
+</body>
+</html>
