@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  UploadCloud, FileText, PieChart, BookOpen, Download,
-  Play, Pause, Plus, Minus, Check, CheckCircle,
-  ExternalLink, AlertTriangle, FileSpreadsheet, Sparkles,
+import { 
+  UploadCloud, FileText, PieChart, BookOpen, Download, 
+  Play, Pause, Plus, Minus, Check, CheckCircle, 
+  ExternalLink, AlertTriangle, FileSpreadsheet, Sparkles, 
   RefreshCw, Music, Copy, Trash2, Mic, Cpu, Bot, Edit3, ListChecks,
   BarChart2, Share2, Users, MessageSquare
 } from 'lucide-react';
@@ -11,10 +11,10 @@ import {
 const parseTimestampToSeconds = (timestampStr) => {
   if (typeof timestampStr === 'number') return timestampStr;
   if (!timestampStr) return 0;
-
+  
   let cleanStr = String(timestampStr).split('-')[0].trim().replace(/s$/, '');
   const parts = cleanStr.split(':');
-
+  
   if (parts.length === 2) {
     const mins = parseFloat(parts[0]) || 0;
     const secs = parseFloat(parts[1]) || 0;
@@ -25,7 +25,7 @@ const parseTimestampToSeconds = (timestampStr) => {
     const secs = parseFloat(parts[2]) || 0;
     return hrs * 3600 + mins * 60 + secs;
   }
-
+  
   return parseFloat(cleanStr) || 0;
 };
 
@@ -45,7 +45,7 @@ const renderMarkdown = (mdText) => {
     if (!text || typeof text !== 'string') return '';
     // Replace [text](url) with clickable links
     let html = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="chat-link">$1</a>');
-
+    
     // Replace [MM:SS] or [HH:MM:SS] with seekable span
     html = html.replace(/\[(\d{1,2}:\d{2}(?::\d{2})?s?)\]/g, (match, p1) => {
       const secs = parseTimestampToSeconds(p1);
@@ -94,7 +94,7 @@ const renderMarkdown = (mdText) => {
       if (tableRows[1] && tableRows[1].replace(/[\s\-|:]/g, '') === '') {
         startIndex = 2;
       }
-
+      
       const bodyRows = tableRows.slice(startIndex).map(row => splitRow(row));
 
       elements.push(
@@ -179,7 +179,7 @@ const renderMarkdown = (mdText) => {
       if (numMatch) {
         const content = numMatch[2];
         elements.push(
-          <p key={i} className="prd-p" style={{ marginLeft: '16px', textIndent: '-16px' }} dangerouslySetInnerHTML={{
+          <p key={i} className="prd-p" style={{marginLeft: '16px', textIndent: '-16px'}} dangerouslySetInnerHTML={{
             __html: `<strong>${numMatch[1]}.</strong> ${parseInlineMarkdown(content)}`
           }} />
         );
@@ -206,7 +206,7 @@ export default function App() {
 
   // Navigation & View Tabs
   const [activeTab, setActiveTab] = useState('transcript'); // transcript | insights | backlog | prd
-
+  
   // API Config / Environment States
   const [isDemoMode, setIsDemoMode] = useState(false);
 
@@ -312,7 +312,7 @@ export default function App() {
       text: newCommentText,
       timestamp: new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
     };
-
+    
     setComments(prev => {
       const segComments = prev[segmentId] || [];
       return {
@@ -342,11 +342,11 @@ export default function App() {
   const handleSendInvite = (e) => {
     if (e) e.preventDefault();
     if (!inviteEmail.trim()) return;
-
+    
     const name = inviteEmail.split('@')[0];
     const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
     const initials = formattedName.substring(0, 2).toUpperCase();
-
+    
     const newCollab = {
       name: formattedName,
       email: inviteEmail,
@@ -357,16 +357,16 @@ export default function App() {
 
     setCollaborators(prev => [...prev, newCollab]);
     logAuditAction('Aastha Saini (You)', 'invite', `invited ${formattedName} (${inviteEmail})`);
-
+    
     const emailToInvite = inviteEmail;
     setInviteEmail('');
-
+    
     // Simulate collaborator joining after 3.5 seconds
     setTimeout(() => {
-      setCollaborators(prev =>
+      setCollaborators(prev => 
         prev.map(c => c.email === emailToInvite ? { ...c, active: true } : c)
       );
-
+      
       logAuditAction(formattedName, 'join', `joined workspace and reviewed roadmap`);
 
       // Add a simulated comment on the first segment
@@ -380,12 +380,12 @@ export default function App() {
           text: `Reviewing this segment now. The audio citation jumps perfectly!`,
           timestamp: new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
         };
-
+        
         setComments(prev => ({
           ...prev,
           [seg.id]: [...(prev[seg.id] || []), simComment]
         }));
-
+        
         logAuditAction(formattedName, 'comment', `commented on segment at [00:00]`);
       }
     }, 3500);
@@ -399,37 +399,37 @@ export default function App() {
 
   const getSpeakerKeywords = (speaker) => {
     if (!activeTranscript || !activeTranscript.segments) return [];
-
+    
     // Combine all segments of this speaker
     const text = activeTranscript.segments
       .filter(seg => seg.speaker === speaker)
       .map(seg => seg.text)
       .join(' ');
-
+    
     // Clean and tokenize
     const words = text.toLowerCase()
       .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "")
       .split(/\s+/);
-
+    
     // Common English stop words to filter out
     const stopWords = new Set([
-      'the', 'and', 'to', 'of', 'a', 'is', 'that', 'it', 'in', 'you', 'we', 'i',
+      'the', 'and', 'to', 'of', 'a', 'is', 'that', 'it', 'in', 'you', 'we', 'i', 
       'this', 'for', 'on', 'with', 'as', 'are', 'was', 'with', 'but', 'not', 'have',
-      'be', 'they', 'our', 'my', 'your', 'about', 'just', 'so', 'if', 'or', 'an',
-      'at', 'by', 'from', 'all', 'do', 'can', 'will', 'would', 'should', 'get',
+      'be', 'they', 'our', 'my', 'your', 'about', 'just', 'so', 'if', 'or', 'an', 
+      'at', 'by', 'from', 'all', 'do', 'can', 'will', 'would', 'should', 'get', 
       'about', 'there', 'me', 'us', 'go', 'up', 'out', 'what', 'who', 'how', 'why',
       'which', 'some', 'any', 'here', 'there', 'has', 'had', 'been', 'were', 'like',
       'more', 'then', 'than', 'into', 'now', 'their', 'them', 'know', 'think', 'see',
       'so', 'very', 'here', 'want', 'about', 'well', 'one', 'two', 'has', 'just'
     ]);
-
+    
     const freqs = {};
     words.forEach(w => {
       if (w.length > 3 && !stopWords.has(w)) {
         freqs[w] = (freqs[w] || 0) + 1;
       }
     });
-
+    
     // Sort by frequency
     return Object.entries(freqs)
       .sort((a, b) => b[1] - a[1])
@@ -485,7 +485,7 @@ export default function App() {
     if (selectedId) {
       fetchAuditLogs();
       generateShareLink();
-
+      
       // Simulate random collaborator joining after workspace is loaded
       const simulatedCollaborators = ['Sarah (Eng)', 'Alex (UX Designer)', 'Emily (QA)', 'John (Product Owner)'];
       const randomUser = simulatedCollaborators[Math.floor(Math.random() * simulatedCollaborators.length)];
@@ -495,11 +495,11 @@ export default function App() {
         { action: 'play_audio', details: 'Listened to the recording' }
       ];
       const randomAction = actions[Math.floor(Math.random() * actions.length)];
-
+      
       const timer = setTimeout(() => {
         logAuditAction(randomUser, randomAction.action, randomAction.details);
       }, 3000);
-
+      
       return () => clearTimeout(timer);
     }
   }, [selectedId]);
@@ -552,7 +552,7 @@ export default function App() {
   // Keep-alive ping every 4 minutes so Render never cold-starts mid-session
   useEffect(() => {
     const keepAlive = setInterval(() => {
-      fetch(`${API_BASE}/api/health`).catch(() => { });
+      fetch(`${API_BASE}/api/health`).catch(() => {});
     }, 4 * 60 * 1000);
     return () => clearInterval(keepAlive);
   }, []);
@@ -646,7 +646,7 @@ export default function App() {
     setActiveTab('transcript');
     seekTo(seconds, segmentId);
     setHighlightedSegmentId(segmentId);
-
+    
     // Smooth scroll to the cited segment card
     setTimeout(() => {
       const element = document.getElementById(`segment-${segmentId}`);
@@ -664,10 +664,10 @@ export default function App() {
   // Calculate speaker statistics dynamically
   const getSpeakerStats = () => {
     if (!activeTranscript || !activeTranscript.segments) return [];
-
+    
     const stats = {};
     let totalDuration = 0;
-
+    
     activeTranscript.segments.forEach(seg => {
       const dur = (seg.end - seg.start) || 0;
       const speaker = seg.speaker || 'Unknown';
@@ -692,29 +692,29 @@ export default function App() {
   // Send message to the transcript-grounded chatbot
   const sendChatMessage = async () => {
     if (!chatQuestion.trim() || !selectedId || isChatLoading) return;
-
+    
     const currentQuestion = chatQuestion;
     setChatQuestion('');
     setIsChatLoading(true);
-
+    
     // Append user message immediately
     const newUserMsg = { role: 'user', content: currentQuestion };
     setChatMessages(prev => [...prev, newUserMsg]);
-
+    
     try {
       const history = chatMessages.map(m => ({ role: m.role, content: m.content }));
-
+      
       const res = await fetch(`${API_BASE}/api/chat/${selectedId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: currentQuestion, history })
       });
-
+      
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.detail || "Chat server returned an error.");
       }
-
+      
       const data = await res.json();
       const newAssistantMsg = { role: 'assistant', content: data.response };
       setChatMessages(prev => [...prev, newAssistantMsg]);
@@ -757,7 +757,7 @@ export default function App() {
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
     if (activeAudioCtxRef.current) {
-      activeAudioCtxRef.current.close().catch(() => { });
+      activeAudioCtxRef.current.close().catch(() => {});
       activeAudioCtxRef.current = null;
     }
   };
@@ -834,7 +834,7 @@ export default function App() {
       }
 
       audioChunksRef.current = [];
-
+      
       // Priority order of MIME types — most compatible first for iOS/Android/Desktop
       const mimeTypes = [
         'audio/webm;codecs=opus',  // Chrome/Firefox desktop
@@ -857,18 +857,18 @@ export default function App() {
 
       // Build options — if no supported MIME found, let browser decide
       const options = selectedMime ? { mimeType: selectedMime } : {};
-
+      
       const recorder = new MediaRecorder(stream, options);
       recorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
-
+      
       recorder.onstop = () => {
         // Detect actual mimeType from the recorder
         const actualMimeType = recorder.mimeType || selectedMime || 'audio/mp4';
-
+        
         // Map mimeType to correct file extension
         let extension = 'mp4'; // safe default
         if (actualMimeType.includes('webm')) {
@@ -893,27 +893,27 @@ export default function App() {
         const now = new Date();
         const formattedDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         const formattedTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        const defaultName = recordingMode === 'meeting'
-          ? `Meeting Call (${formattedDate} ${formattedTime})`
+        const defaultName = recordingMode === 'meeting' 
+          ? `Meeting Call (${formattedDate} ${formattedTime})` 
           : `Voice Recording (${formattedDate} ${formattedTime})`;
         const audioFile = new File([audioBlob], `${defaultName}.${extension}`, { type: actualMimeType });
-
+        
         cleanupRecordingResources();
-
+        
         // Show rename modal before uploading
         setPendingFile(audioFile);
         setPendingFileName(defaultName);
       };
-
+      
       mediaRecorderRef.current = recorder;
       recorder.start(1000); // Capture chunks every 1 second
-
+      
       setIsRecording(true);
       setRecordingTime(0);
       timerIntervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
-
+      
     } catch (err) {
       console.error("Recording error:", err);
       cleanupRecordingResources();
@@ -938,9 +938,9 @@ export default function App() {
       // Disable onstop so we don't trigger upload
       mediaRecorderRef.current.onstop = null;
       mediaRecorderRef.current.stop();
-
+      
       cleanupRecordingResources();
-
+      
       setIsRecording(false);
       clearInterval(timerIntervalRef.current);
     }
@@ -1014,7 +1014,7 @@ export default function App() {
 
   const handleInlineRenameSave = (transcriptId) => {
     if (!renamingName.trim()) return;
-
+    
     fetch(`${API_BASE}/api/transcripts/${transcriptId}/rename`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1175,7 +1175,7 @@ export default function App() {
       if (f.id === featId) {
         const rice = { ...f.rice };
         let newVal = Number(rice[metric]) + amount;
-
+        
         // Boundaries
         if (metric === 'reach') newVal = Math.max(1, Math.min(10, Math.round(newVal)));
         if (metric === 'impact') newVal = Math.max(0.25, Math.min(3.0, Math.round(newVal * 4) / 4));
@@ -1184,14 +1184,14 @@ export default function App() {
 
         rice[metric] = newVal;
         rice.score = Math.round(((rice.reach * rice.impact * rice.confidence) / rice.effort) * 100) / 100;
-
+        
         return { ...f, rice };
       }
       return f;
     });
 
     setInsights({ ...insights, features: updatedFeatures });
-
+    
     // Also sync selectedFeatures list
     const updatedSelected = selectedFeatures.map(f => {
       const match = updatedFeatures.find(uf => uf.id === f.id);
@@ -1212,7 +1212,7 @@ export default function App() {
       return f;
     });
     setInsights({ ...insights, features: updatedFeatures });
-
+    
     const updatedSelected = selectedFeatures.map(f => {
       const match = updatedFeatures.find(uf => uf.id === f.id);
       return match || f;
@@ -1297,7 +1297,7 @@ export default function App() {
         <div className="header-actions">
           {selectedTranscript && (
             <>
-              <a
+              <a 
                 href={audioUrl || '#'}
                 download={selectedTranscript.filename}
                 target="_blank"
@@ -1344,7 +1344,7 @@ export default function App() {
             )}
           </div>
 
-          <button
+          <button 
             className="btn btn-secondary btn-record"
             onClick={startRecording}
             disabled={isUploading || isRecording}
@@ -1355,12 +1355,12 @@ export default function App() {
           <label className="btn btn-primary btn-upload">
             <UploadCloud className="icon-medium" />
             Upload Interview
-            <input
-              type="file"
-              accept="audio/*"
-              onChange={handleFileUpload}
+            <input 
+              type="file" 
+              accept="audio/*" 
+              onChange={handleFileUpload} 
               disabled={isUploading}
-              style={{ display: 'none' }}
+              style={{ display: 'none' }} 
             />
           </label>
         </div>
@@ -1374,28 +1374,28 @@ export default function App() {
               <div className="recording-dot"></div>
               <div className="recording-pulse-ring"></div>
             </div>
-
-            <h2>{recordingMode === 'meeting' ? 'Recording Meeting Call...' : 'Recording Microphone...'}</h2>
-            <div className="recording-timer">{formatRecordingTime(recordingTime)}</div>
-
-            {/* Waveform Visualizer */}
-            <div className="recording-waveform">
-              <span className="wave-bar bar-1"></span>
-              <span className="wave-bar bar-2"></span>
-              <span className="wave-bar bar-3"></span>
-              <span className="wave-bar bar-4"></span>
-              <span className="wave-bar bar-5"></span>
-              <span className="wave-bar bar-6"></span>
-              <span className="wave-bar bar-7"></span>
-              <span className="wave-bar bar-8"></span>
-            </div>
-
-            <p className="recording-note">
-              {recordingMode === 'meeting'
-                ? "💡 Tip: Ensure you checked 'Share system audio' in the screen selection window to record both sides."
-                : "Speak clearly. We will capture and transcribe your microphone audio in the background."}
-            </p>
-
+            
+             <h2>{recordingMode === 'meeting' ? 'Recording Meeting Call...' : 'Recording Microphone...'}</h2>
+             <div className="recording-timer">{formatRecordingTime(recordingTime)}</div>
+             
+             {/* Waveform Visualizer */}
+             <div className="recording-waveform">
+               <span className="wave-bar bar-1"></span>
+               <span className="wave-bar bar-2"></span>
+               <span className="wave-bar bar-3"></span>
+               <span className="wave-bar bar-4"></span>
+               <span className="wave-bar bar-5"></span>
+               <span className="wave-bar bar-6"></span>
+               <span className="wave-bar bar-7"></span>
+               <span className="wave-bar bar-8"></span>
+             </div>
+             
+             <p className="recording-note">
+               {recordingMode === 'meeting'
+                 ? "💡 Tip: Ensure you checked 'Share system audio' in the screen selection window to record both sides."
+                 : "Speak clearly. We will capture and transcribe your microphone audio in the background."}
+             </p>
+            
             <div className="recording-actions">
               <button className="btn btn-danger" onClick={stopRecording}>
                 <CheckCircle className="icon-medium" /> Stop & Transcribe
@@ -1450,14 +1450,14 @@ export default function App() {
       )}
 
       <main className="app-main-layout">
-
+        
         {/* Left Sidebar: Transcript Navigation Shelf */}
         <aside className={`sidebar glass ${sidebarCollapsed ? 'collapsed' : ''}`}>
-          <div className="sidebar-header" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{ cursor: 'pointer' }}>
+          <div className="sidebar-header" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{cursor: 'pointer'}}>
             <h3>Recent Interviews</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
               <span className="count-badge">{transcripts.length}</span>
-              <span className="sidebar-toggle-btn" style={{ fontSize: '11.5px', color: 'var(--color-primary)', fontWeight: '700' }}>
+              <span className="sidebar-toggle-btn" style={{fontSize: '11.5px', color: 'var(--color-primary)', fontWeight: '700'}}>
                 {sidebarCollapsed ? '▼' : '▲'}
               </span>
             </div>
@@ -1471,15 +1471,15 @@ export default function App() {
               </div>
             ) : (
               transcripts.map((t) => (
-                <div
-                  key={t.id}
+                <div 
+                  key={t.id} 
                   className={`transcript-item-card ${selectedId === t.id ? 'active' : ''}`}
                   onClick={() => setSelectedId(t.id)}
                 >
                   <div className="card-top">
                     {renamingId === t.id ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
-                        <input
+                        <input 
                           type="text"
                           className="rename-inline-input"
                           value={renamingName}
@@ -1501,14 +1501,14 @@ export default function App() {
                             fontWeight: '600'
                           }}
                         />
-                        <button
+                        <button 
                           onClick={(e) => { e.stopPropagation(); handleInlineRenameSave(t.id); }}
                           style={{ background: 'transparent', border: 'none', color: 'var(--color-purple)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
                           title="Save new filename"
                         >
                           <Check className="icon-tiny" />
                         </button>
-                        <button
+                        <button 
                           onClick={(e) => { e.stopPropagation(); setRenamingId(null); }}
                           style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px', fontSize: '14px', display: 'flex', alignItems: 'center' }}
                           title="Cancel rename"
@@ -1525,7 +1525,7 @@ export default function App() {
                           </span>
                         </div>
                         <div className="card-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <button
+                          <button 
                             className="rename-card-btn"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1545,7 +1545,7 @@ export default function App() {
                           >
                             <Edit3 className="icon-tiny" />
                           </button>
-                          <button
+                          <button 
                             className="delete-card-btn"
                             onClick={(e) => handleDeleteTranscript(t.id, e)}
                             title="Delete Transcript"
@@ -1559,17 +1559,17 @@ export default function App() {
                   <div className="card-bottom">
                     <span className="time-badge">{t.duration}s</span>
                     <span className="date-badge">
-                      {new Date(t.uploaded_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      {new Date(t.uploaded_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
                     </span>
                   </div>
                 </div>
               ))
             )}
           </div>
-
+          
           {selectedTranscript && (
             <div className="sidebar-footer">
-              <button
+              <button 
                 className="btn btn-secondary w-full"
                 onClick={runRAGAnalysis}
                 disabled={isAnalyzing}
@@ -1587,105 +1587,105 @@ export default function App() {
                 )}
               </button>
               {isAnalyzing && (
-                <p style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center', marginTop: '6px', lineHeight: 1.4 }}>
+                <p style={{fontSize:'11px', color:'#94a3b8', textAlign:'center', marginTop:'6px', lineHeight:1.4}}>
                   ⏳ AI is reading your transcript. Takes 15–30s on first run.
                 </p>
               )}
             </div>
-          )}
+            )}
 
-          {activeTranscript && (
-            <div className="sidebar-filters glass" style={{ marginTop: '16px', padding: '14px', borderRadius: '12px', border: '1px solid var(--border-glass)', background: 'rgba(255, 255, 255, 0.25)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '800', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                <FileText style={{ width: '13px', height: '13px' }} /> Transcript Filters
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Search Keyword</label>
-                <input
-                  type="text"
-                  placeholder="Type keyword..."
-                  value={filterKeyword}
-                  onChange={(e) => setFilterKeyword(e.target.value)}
-                  style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Speaker</label>
-                <select
-                  value={filterSpeaker || selectedSpeakerFilter || ''}
-                  onChange={(e) => {
-                    setFilterSpeaker(e.target.value);
-                    setSelectedSpeakerFilter(e.target.value || null);
-                  }}
-                  style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
-                >
-                  <option value="">All Speakers</option>
-                  {Array.from(new Set(activeTranscript?.segments?.map(s => s.speaker) || [])).map(sp => (
-                    <option key={sp} value={sp}>{sp}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Speech Type</label>
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
-                >
-                  <option value="all">All Content</option>
-                  <option value="questions">❔ Questions Only</option>
-                  <option value="statements">💬 Statements Only</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Time Range (Mins)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    min="0"
-                    value={filterTimeMin}
-                    onChange={(e) => setFilterTimeMin(e.target.value)}
-                    style={{ width: '100%', padding: '6px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none', textAlign: 'center' }}
-                  />
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>to</span>
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    min="0"
-                    value={filterTimeMax}
-                    onChange={(e) => setFilterTimeMax(e.target.value)}
-                    style={{ width: '100%', padding: '6px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none', textAlign: 'center' }}
+            {activeTranscript && (
+              <div className="sidebar-filters glass" style={{ marginTop: '16px', padding: '14px', borderRadius: '12px', border: '1px solid var(--border-glass)', background: 'rgba(255, 255, 255, 0.25)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '800', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <FileText style={{ width: '13px', height: '13px' }} /> Transcript Filters
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Search Keyword</label>
+                  <input 
+                    type="text" 
+                    placeholder="Type keyword..." 
+                    value={filterKeyword}
+                    onChange={(e) => setFilterKeyword(e.target.value)}
+                    style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
                   />
                 </div>
-              </div>
 
-              {(filterKeyword || filterSpeaker || selectedSpeakerFilter || filterType !== 'all' || filterTimeMin || filterTimeMax) && (
-                <button
-                  onClick={() => {
-                    setFilterKeyword('');
-                    setFilterSpeaker('');
-                    setSelectedSpeakerFilter(null);
-                    setFilterType('all');
-                    setFilterTimeMin('');
-                    setFilterTimeMax('');
-                  }}
-                  style={{ width: '100%', padding: '6px', marginTop: '4px', fontSize: '11.5px', fontWeight: '600', color: 'var(--color-pink)', background: 'transparent', border: '1px dashed var(--color-pink)', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s ease' }}
-                  className="btn-clear-hover"
-                >
-                  Reset Active Filters
-                </button>
-              )}
-            </div>
-          )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Speaker</label>
+                  <select 
+                    value={filterSpeaker || selectedSpeakerFilter || ''}
+                    onChange={(e) => {
+                      setFilterSpeaker(e.target.value);
+                      setSelectedSpeakerFilter(e.target.value || null);
+                    }}
+                    style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
+                  >
+                    <option value="">All Speakers</option>
+                    {Array.from(new Set(activeTranscript?.segments?.map(s => s.speaker) || [])).map(sp => (
+                      <option key={sp} value={sp}>{sp}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Speech Type</label>
+                  <select 
+                    value={filterType} 
+                    onChange={(e) => setFilterType(e.target.value)}
+                    style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none' }}
+                  >
+                    <option value="all">All Content</option>
+                    <option value="questions">❔ Questions Only</option>
+                    <option value="statements">💬 Statements Only</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)' }}>Time Range (Mins)</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <input 
+                      type="number" 
+                      placeholder="Min" 
+                      min="0"
+                      value={filterTimeMin}
+                      onChange={(e) => setFilterTimeMin(e.target.value)}
+                      style={{ width: '100%', padding: '6px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none', textAlign: 'center' }}
+                    />
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>to</span>
+                    <input 
+                      type="number" 
+                      placeholder="Max" 
+                      min="0"
+                      value={filterTimeMax}
+                      onChange={(e) => setFilterTimeMax(e.target.value)}
+                      style={{ width: '100%', padding: '6px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '6px', color: 'var(--text-main)', outline: 'none', textAlign: 'center' }}
+                    />
+                  </div>
+                </div>
+
+                {(filterKeyword || filterSpeaker || selectedSpeakerFilter || filterType !== 'all' || filterTimeMin || filterTimeMax) && (
+                  <button 
+                    onClick={() => {
+                      setFilterKeyword('');
+                      setFilterSpeaker('');
+                      setSelectedSpeakerFilter(null);
+                      setFilterType('all');
+                      setFilterTimeMin('');
+                      setFilterTimeMax('');
+                    }}
+                    style={{ width: '100%', padding: '6px', marginTop: '4px', fontSize: '11.5px', fontWeight: '600', color: 'var(--color-pink)', background: 'transparent', border: '1px dashed var(--color-pink)', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s ease' }}
+                    className="btn-clear-hover"
+                  >
+                    Reset Active Filters
+                  </button>
+                )}
+              </div>
+            )}
 
           <div className="sidebar-integrations">
-            <a
-              href={`${API_BASE}/api/extension/download`}
+            <a 
+              href={`${API_BASE}/api/extension/download`} 
               className="btn btn-outline btn-extension w-full"
               download
             >
@@ -1708,7 +1708,7 @@ export default function App() {
                     Uploaded {new Date(selectedTranscript.uploaded_at).toLocaleDateString()} · Duration: {Math.floor(selectedTranscript.duration / 60)}m {Math.floor(selectedTranscript.duration % 60)}s
                   </span>
                 </div>
-                <button
+                <button 
                   onClick={() => setIsShareModalOpen(true)}
                   style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', background: 'var(--color-primary)', color: '#ffffff', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(79,70,229,0.1)' }}
                   className="share-btn-hover"
@@ -1719,13 +1719,13 @@ export default function App() {
 
               {/* Tab Navigation Menu */}
               <nav className="tab-menu glass">
-                <button
+                <button 
                   className={`tab-btn ${activeTab === 'transcript' ? 'active' : ''}`}
                   onClick={() => setActiveTab('transcript')}
                 >
                   <FileText className="icon-small" /> Transcript
                 </button>
-                <button
+                <button 
                   className={`tab-btn ${activeTab === 'insights' ? 'active' : ''}`}
                   disabled={!insights?.pain_points?.length && !insights?.features?.length}
                   onClick={() => setActiveTab('insights')}
@@ -1735,7 +1735,7 @@ export default function App() {
                     <span className="indicator-dot"></span>
                   )}
                 </button>
-                <button
+                <button 
                   className={`tab-btn ${activeTab === 'backlog' ? 'active' : ''}`}
                   disabled={!insights?.pain_points?.length && !insights?.features?.length}
                   onClick={() => setActiveTab('backlog')}
@@ -1745,15 +1745,15 @@ export default function App() {
                     <span className="indicator-dot"></span>
                   )}
                 </button>
-                <button
+                <button 
                   className={`tab-btn ${activeTab === 'prd' ? 'active' : ''}`}
                   disabled={!prd}
                   onClick={() => setActiveTab('prd')}
                 >
                   <BookOpen className="icon-small" /> PRD Draft
-                  {prd && <span className="indicator-dot" style={{ background: '#10b981' }}></span>}
+                  {prd && <span className="indicator-dot" style={{background:'#10b981'}}></span>}
                 </button>
-                <button
+                <button 
                   className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
                   onClick={() => setActiveTab('analytics')}
                 >
@@ -1763,7 +1763,7 @@ export default function App() {
 
               {/* Tab Content Rendering */}
               <div className="tab-viewport">
-
+                
                 {/* 1. Transcript Tab */}
                 {activeTab === 'transcript' && (
                   <div className="transcript-tab-container">
@@ -1771,25 +1771,25 @@ export default function App() {
                       {/* Collapsible Speaker Contribution Stats */}
                       {activeTranscript?.segments?.length > 0 && (
                         <div className="speaker-stats-card glass">
-                          <div
-                            className="stats-header"
+                          <div 
+                            className="stats-header" 
                             onClick={() => setIsStatsCollapsed(!isStatsCollapsed)}
                             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '10px 14px' }}
                           >
                             <h4 style={{ margin: 0, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <PieChart className="icon-small text-purple" />
+                              <PieChart className="icon-small text-purple" /> 
                               Speaker Contribution Stats
                             </h4>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                               {isStatsCollapsed ? 'Show Details ▼' : 'Hide ▲'}
                             </span>
                           </div>
-
+                          
                           {!isStatsCollapsed && (
                             <div className="stats-body" style={{ padding: '0 14px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                               {getSpeakerStats().map((stat, idx) => (
-                                <div
-                                  key={idx}
+                                <div 
+                                  key={idx} 
                                   className={`speaker-stat-row ${selectedSpeakerFilter === stat.speaker ? 'active-filter' : ''}`}
                                   onClick={() => setSelectedSpeakerFilter(selectedSpeakerFilter === stat.speaker ? null : stat.speaker)}
                                   style={{
@@ -1807,13 +1807,13 @@ export default function App() {
                                     <span style={{ color: 'var(--text-muted)' }}>{stat.percentage}% ({stat.duration}s)</span>
                                   </div>
                                   <div className="progress-bar-bg" style={{ height: '6px', background: 'rgba(0,0,0,0.04)', borderRadius: '3px', overflow: 'hidden' }}>
-                                    <div
-                                      className="progress-bar-fill"
-                                      style={{
-                                        height: '100%',
-                                        width: `${stat.percentage}%`,
+                                    <div 
+                                      className="progress-bar-fill" 
+                                      style={{ 
+                                        height: '100%', 
+                                        width: `${stat.percentage}%`, 
                                         background: idx === 0 ? 'var(--color-primary)' : idx === 1 ? 'var(--color-purple)' : 'var(--color-pink)',
-                                        borderRadius: '3px'
+                                        borderRadius: '3px' 
                                       }}
                                     />
                                   </div>
@@ -1832,19 +1832,19 @@ export default function App() {
                       {/* Active Filter Reset Banner */}
                       {selectedSpeakerFilter && (
                         <div className="filter-active-banner" style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '8px 12px',
-                          background: 'rgba(79, 70, 229, 0.06)',
-                          border: '1px solid rgba(79, 70, 229, 0.12)',
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center', 
+                          padding: '8px 12px', 
+                          background: 'rgba(79, 70, 229, 0.06)', 
+                          border: '1px solid rgba(79, 70, 229, 0.12)', 
                           borderRadius: '8px',
                           fontSize: '12.5px',
                           color: 'var(--color-primary)',
                           marginBottom: '10px'
                         }}>
                           <span>Showing only segments spoken by <strong>{selectedSpeakerFilter}</strong></span>
-                          <button
+                          <button 
                             onClick={() => {
                               setSelectedSpeakerFilter(null);
                               setFilterSpeaker('');
@@ -1867,7 +1867,7 @@ export default function App() {
                         const filteredSegments = activeTranscript?.segments?.filter(seg => {
                           const activeSpeaker = filterSpeaker || selectedSpeakerFilter;
                           if (activeSpeaker && seg.speaker !== activeSpeaker) return false;
-
+                          
                           if (filterType === 'questions') {
                             const isQuestion = seg.text.trim().endsWith('?');
                             if (!isQuestion) return false;
@@ -1875,7 +1875,7 @@ export default function App() {
                             const isQuestion = seg.text.trim().endsWith('?');
                             if (isQuestion) return false;
                           }
-
+                          
                           if (filterTimeMin) {
                             const minSecs = parseFloat(filterTimeMin) * 60;
                             if (seg.start < minSecs) return false;
@@ -1884,14 +1884,14 @@ export default function App() {
                             const maxSecs = parseFloat(filterTimeMax) * 60;
                             if (seg.start > maxSecs) return false;
                           }
-
+                          
                           if (filterKeyword) {
                             const q = filterKeyword.toLowerCase();
                             const matchesText = seg.text.toLowerCase().includes(q);
                             const matchesSpeaker = seg.speaker.toLowerCase().includes(q);
                             if (!matchesText && !matchesSpeaker) return false;
                           }
-
+                          
                           return true;
                         }) || [];
 
@@ -1918,16 +1918,18 @@ export default function App() {
                             </div>
 
                             {filteredSegments.map((seg) => (
-                              <div
-                                key={seg.id}
+                              <div 
+                                key={seg.id} 
                                 id={`segment-${seg.id}`}
-                                className={`transcript-segment-row ${activeSegmentId === seg.id ? 'playing-active' : ''
-                                  } ${highlightedSegmentId === seg.id ? 'rag-highlighted' : ''
-                                  }`}
+                                className={`transcript-segment-row ${
+                                  activeSegmentId === seg.id ? 'playing-active' : ''
+                                } ${
+                                  highlightedSegmentId === seg.id ? 'rag-highlighted' : ''
+                                }`}
                                 onClick={() => seekTo(seg.start, seg.id)}
                               >
                                 <div className="segment-metadata">
-                                  <span
+                                  <span 
                                     className="segment-speaker hover-clickable"
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -1942,7 +1944,7 @@ export default function App() {
                                   >
                                     {seg.speaker}
                                   </span>
-                                  <span
+                                  <span 
                                     className="segment-timestamp"
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -1966,7 +1968,7 @@ export default function App() {
                                         <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '11px' }}>
                                           <span><strong>{comment.user}</strong> · {comment.timestamp}</span>
                                           {comment.user.includes('You') && (
-                                            <button
+                                            <button 
                                               onClick={() => handleDeleteComment(seg.id, comment.id)}
                                               style={{ background: 'transparent', border: 'none', color: 'var(--color-rose)', cursor: 'pointer', fontSize: '10.5px', fontWeight: '600' }}
                                             >
@@ -1981,8 +1983,8 @@ export default function App() {
 
                                   {isCommentingSegmentId === seg.id ? (
                                     <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }} onClick={e => e.stopPropagation()}>
-                                      <input
-                                        type="text"
+                                      <input 
+                                        type="text" 
                                         placeholder="Add a comment..."
                                         value={newCommentText}
                                         onChange={(e) => setNewCommentText(e.target.value)}
@@ -1992,13 +1994,13 @@ export default function App() {
                                           if (e.key === 'Enter') handleAddComment(seg.id);
                                         }}
                                       />
-                                      <button
+                                      <button 
                                         onClick={() => handleAddComment(seg.id)}
                                         style={{ padding: '6px 12px', fontSize: '12px', fontWeight: '600', background: 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
                                       >
                                         Post
                                       </button>
-                                      <button
+                                      <button 
                                         onClick={() => setIsCommentingSegmentId(null)}
                                         style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent', border: '1px solid var(--border-glass)', borderRadius: '6px', color: 'var(--text-muted)', cursor: 'pointer' }}
                                       >
@@ -2006,7 +2008,7 @@ export default function App() {
                                       </button>
                                     </div>
                                   ) : (
-                                    <button
+                                    <button 
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setIsCommentingSegmentId(seg.id);
@@ -2031,7 +2033,7 @@ export default function App() {
                 {/* 2. Insights Tab with Collapsible RAG Citations */}
                 {activeTab === 'insights' && (
                   <div className="insights-tab-container">
-
+                    
                     {/* Left Pane: Pain Points / Key Challenges */}
                     <div className="insights-panel glass">
                       <div className="panel-header">
@@ -2050,8 +2052,8 @@ export default function App() {
                             <div key={pp.id} className="insight-card">
                               <div className="card-header">
                                 <label className="check-label">
-                                  <input
-                                    type="checkbox"
+                                  <input 
+                                    type="checkbox" 
                                     checked={selectedPainPoints.some(p => p.id === pp.id)}
                                     onChange={() => togglePainSelect(pp)}
                                     className="custom-checkbox"
@@ -2063,12 +2065,12 @@ export default function App() {
                                 </span>
                               </div>
                               <p className="description">{pp.description}</p>
-
+                              
                               <div className="citations-block">
                                 <h4 className="cit-title">Grounded Evidence Excerpts:</h4>
                                 {(pp.citations || []).map((cit, idx) => (
-                                  <div
-                                    key={idx}
+                                  <div 
+                                    key={idx} 
                                     className="citation-bubble"
                                     onClick={() => jumpToCitation(cit.segment_id, cit.timestamp)}
                                   >
@@ -2106,8 +2108,8 @@ export default function App() {
                             <div key={feat.id} className="insight-card">
                               <div className="card-header">
                                 <label className="check-label">
-                                  <input
-                                    type="checkbox"
+                                  <input 
+                                    type="checkbox" 
                                     checked={selectedFeatures.some(f => f.id === feat.id)}
                                     onChange={() => toggleFeatureSelect(feat)}
                                     className="custom-checkbox"
@@ -2130,8 +2132,8 @@ export default function App() {
                               <div className="citations-block">
                                 <h4 className="cit-title">Grounded Evidence Excerpts:</h4>
                                 {(feat.citations || []).map((cit, idx) => (
-                                  <div
-                                    key={idx}
+                                  <div 
+                                    key={idx} 
                                     className="citation-bubble"
                                     onClick={() => jumpToCitation(cit.segment_id, cit.timestamp)}
                                   >
@@ -2161,7 +2163,7 @@ export default function App() {
                       <div>
                         <h2>{insights.mode === 'research' ? 'Prioritized Action Plan Backlog' : 'Interactive Roadmap Prioritization Backlog'}</h2>
                         <p className="desc">
-                          {insights.mode === 'research'
+                          {insights.mode === 'research' 
                             ? 'Evaluate and fine-tune strategic recommendation scores. The priority score dynamically updates.'
                             : 'Fine-tune confidence and complexity scores directly in the cells. The RICE score dynamically updates.'}
                         </p>
@@ -2198,75 +2200,75 @@ export default function App() {
                         <tbody>
                           {(insights?.features || []).length === 0 ? (
                             <tr>
-                              <td colSpan="8" style={{ padding: '40px 20px', color: 'var(--text-muted)', textAlign: 'center' }}>
-                                <AlertTriangle className="icon-medium" style={{ margin: '0 auto 8px', display: 'block', color: 'var(--color-purple)' }} />
-                                {insights?.mode === 'research'
-                                  ? 'No strategic recommendations identified to prioritize.'
+                              <td colSpan="8" style={{padding: '40px 20px', color: 'var(--text-muted)', textAlign: 'center'}}>
+                                <AlertTriangle className="icon-medium" style={{margin: '0 auto 8px', display: 'block', color: 'var(--color-purple)'}} />
+                                {insights?.mode === 'research' 
+                                  ? 'No strategic recommendations identified to prioritize.' 
                                   : 'No suggested features identified to prioritize.'}
                               </td>
                             </tr>
                           ) : (
                             (insights?.features || []).map((feat) => {
                               const isSelected = selectedFeatures.some(f => f.id === feat.id);
-                              return (
-                                <tr key={feat.id} className={isSelected ? 'selected-row' : ''}>
-                                  <td className="text-center">
-                                    <input
-                                      type="checkbox"
-                                      checked={isSelected}
-                                      onChange={() => toggleFeatureSelect(feat)}
-                                    />
-                                  </td>
-                                  <td>
-                                    <div className="table-feat-title">{feat.title}</div>
-                                    <div className="table-feat-desc">{feat.description}</div>
-                                  </td>
-                                  <td>
-                                    <button
-                                      onClick={() => cycleMoscow(feat.id)}
-                                      className={`moscow-tag-btn ${(feat.moscow || 'Must-have').toLowerCase().replace('-', '')}`}
-                                    >
-                                      {feat.moscow || 'Must-have'}
-                                    </button>
-                                  </td>
-                                  {/* Reach */}
-                                  <td>
-                                    <div className="metric-adjuster">
-                                      <button onClick={() => updateRiceValue(feat.id, 'reach', -1)}><Minus className="icon-tiny" /></button>
-                                      <span>{feat.rice?.reach || 0}</span>
-                                      <button onClick={() => updateRiceValue(feat.id, 'reach', 1)}><Plus className="icon-tiny" /></button>
-                                    </div>
-                                  </td>
-                                  {/* Impact */}
-                                  <td>
-                                    <div className="metric-adjuster">
-                                      <button onClick={() => updateRiceValue(feat.id, 'impact', -0.25)}><Minus className="icon-tiny" /></button>
-                                      <span>{feat.rice?.impact || 0}</span>
-                                      <button onClick={() => updateRiceValue(feat.id, 'impact', 0.25)}><Plus className="icon-tiny" /></button>
-                                    </div>
-                                  </td>
-                                  {/* Confidence */}
-                                  <td>
-                                    <div className="metric-adjuster">
-                                      <button onClick={() => updateRiceValue(feat.id, 'confidence', -0.1)}><Minus className="icon-tiny" /></button>
-                                      <span>{Math.round((feat.rice?.confidence || 0) * 100)}%</span>
-                                      <button onClick={() => updateRiceValue(feat.id, 'confidence', 0.1)}><Plus className="icon-tiny" /></button>
-                                    </div>
-                                  </td>
-                                  {/* Effort */}
-                                  <td>
-                                    <div className="metric-adjuster">
-                                      <button onClick={() => updateRiceValue(feat.id, 'effort', -1)}><Minus className="icon-tiny" /></button>
-                                      <span>{feat.rice?.effort || 1}</span>
-                                      <button onClick={() => updateRiceValue(feat.id, 'effort', 1)}><Plus className="icon-tiny" /></button>
-                                    </div>
-                                  </td>
-                                  <td className="text-center font-bold text-indigo">
-                                    {feat.rice?.score || 0}
-                                  </td>
-                                </tr>
-                              );
-                            }))}
+                            return (
+                              <tr key={feat.id} className={isSelected ? 'selected-row' : ''}>
+                                <td className="text-center">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => toggleFeatureSelect(feat)}
+                                  />
+                                </td>
+                                <td>
+                                  <div className="table-feat-title">{feat.title}</div>
+                                  <div className="table-feat-desc">{feat.description}</div>
+                                </td>
+                                <td>
+                                  <button 
+                                    onClick={() => cycleMoscow(feat.id)}
+                                    className={`moscow-tag-btn ${(feat.moscow || 'Must-have').toLowerCase().replace('-', '')}`}
+                                  >
+                                    {feat.moscow || 'Must-have'}
+                                  </button>
+                                </td>
+                                {/* Reach */}
+                                <td>
+                                  <div className="metric-adjuster">
+                                    <button onClick={() => updateRiceValue(feat.id, 'reach', -1)}><Minus className="icon-tiny"/></button>
+                                    <span>{feat.rice?.reach || 0}</span>
+                                    <button onClick={() => updateRiceValue(feat.id, 'reach', 1)}><Plus className="icon-tiny"/></button>
+                                  </div>
+                                </td>
+                                {/* Impact */}
+                                <td>
+                                  <div className="metric-adjuster">
+                                    <button onClick={() => updateRiceValue(feat.id, 'impact', -0.25)}><Minus className="icon-tiny"/></button>
+                                    <span>{feat.rice?.impact || 0}</span>
+                                    <button onClick={() => updateRiceValue(feat.id, 'impact', 0.25)}><Plus className="icon-tiny"/></button>
+                                  </div>
+                                </td>
+                                {/* Confidence */}
+                                <td>
+                                  <div className="metric-adjuster">
+                                    <button onClick={() => updateRiceValue(feat.id, 'confidence', -0.1)}><Minus className="icon-tiny"/></button>
+                                    <span>{Math.round((feat.rice?.confidence || 0) * 100)}%</span>
+                                    <button onClick={() => updateRiceValue(feat.id, 'confidence', 0.1)}><Plus className="icon-tiny"/></button>
+                                  </div>
+                                </td>
+                                {/* Effort */}
+                                <td>
+                                  <div className="metric-adjuster">
+                                    <button onClick={() => updateRiceValue(feat.id, 'effort', -1)}><Minus className="icon-tiny"/></button>
+                                    <span>{feat.rice?.effort || 1}</span>
+                                    <button onClick={() => updateRiceValue(feat.id, 'effort', 1)}><Plus className="icon-tiny"/></button>
+                                  </div>
+                                </td>
+                                <td className="text-center font-bold text-indigo">
+                                  {feat.rice?.score || 0}
+                                </td>
+                              </tr>
+                            );
+                          }))}
                         </tbody>
                       </table>
                     </div>
@@ -2279,8 +2281,8 @@ export default function App() {
                     <div className="prd-header">
                       <div>
                         <h2>
-                          {insights.mode === 'research'
-                            ? 'Generated Executive Strategy Brief'
+                          {insights.mode === 'research' 
+                            ? 'Generated Executive Strategy Brief' 
                             : 'Generated PRD Draft'}
                         </h2>
                         <p className="desc">
@@ -2298,7 +2300,7 @@ export default function App() {
                         </button>
                       </div>
                     </div>
-
+                    
                     {/* Rendered markdown view instead of raw textarea */}
                     <div className="prd-rendered">
                       {renderMarkdown(prd)}
@@ -2309,17 +2311,17 @@ export default function App() {
                 {/* 5. Speaker & Topic Analytics Tab */}
                 {activeTab === 'analytics' && (
                   <div className="analytics-tab-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', padding: '10px 0' }}>
-
+                    
                     {/* Left Pane: Speaker Stats */}
                     <div className="analytics-card glass" style={{ padding: '20px', borderRadius: '12px', border: '1px solid var(--border-glass)', background: 'var(--bg-glass)' }}>
                       <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Users className="icon-medium text-purple" /> Speaker Talk-Time & Pace
                       </h3>
-
+                      
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         {(() => {
                           if (!activeTranscript || !activeTranscript.segments) return <div className="no-data">No segments available.</div>;
-
+                          
                           // Calculate statistics
                           const speakerStats = {};
                           let totalSecs = 0;
@@ -2339,7 +2341,7 @@ export default function App() {
                             const percentage = totalSecs > 0 ? Math.round((stats.talkTime / totalSecs) * 100) : 0;
                             const talkMins = stats.talkTime / 60;
                             const wpm = talkMins > 0 ? Math.round(stats.words / talkMins) : 0;
-
+                            
                             // Classification
                             let paceClass = 'Moderate';
                             let paceColor = 'var(--text-main)';
@@ -2354,20 +2356,20 @@ export default function App() {
                             // Alternating colors
                             const colors = ['var(--color-primary)', 'var(--color-purple)', 'var(--color-pink)', 'var(--color-amber)'];
                             const color = colors[idx % colors.length];
-
+                            
                             // Get dynamic keywords for the speaker
                             const speakerKeywords = getSpeakerKeywords(sp);
 
                             return (
-                              <div
-                                key={sp}
+                              <div 
+                                key={sp} 
                                 onClick={() => handleSpeakerClick(sp)}
                                 className="speaker-analytics-row-hover"
                                 title={`Click to filter transcript for ${sp}`}
-                                style={{
-                                  padding: '14px',
-                                  background: 'var(--bg-card)',
-                                  borderRadius: '10px',
+                                style={{ 
+                                  padding: '14px', 
+                                  background: 'var(--bg-card)', 
+                                  borderRadius: '10px', 
                                   border: '1px solid var(--border-glass)',
                                   cursor: 'pointer'
                                 }}
@@ -2378,7 +2380,7 @@ export default function App() {
                                     {percentage}% talk time
                                   </span>
                                 </div>
-
+                                
                                 <div className="progress-bar-bg" style={{ height: '6px', background: 'rgba(0,0,0,0.04)', borderRadius: '3px', overflow: 'hidden', marginBottom: '10px' }}>
                                   <div className="progress-bar-fill" style={{ height: '100%', width: `${percentage}%`, background: color, borderRadius: '3px' }} />
                                 </div>
@@ -2412,45 +2414,45 @@ export default function App() {
                       <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <BarChart2 className="icon-medium text-pink" /> Chronological Topic Map
                       </h3>
-
+                      
                       <div className="topic-timeline-container" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         {(() => {
-                          const topics = insights.topics && insights.topics.length > 0
-                            ? insights.topics
+                          const topics = insights.topics && insights.topics.length > 0 
+                            ? insights.topics 
                             : [
-                              {
-                                id: 't1',
-                                label: 'Introduction & Context Setting',
-                                start_sec: 0,
-                                end_sec: Math.round((activeTranscript?.duration || 600) * 0.2),
-                                summary: 'Welcome, introduction of research parameters, and baseline context setting.',
-                                keywords: ['welcome', 'study', 'baseline', 'roadmap']
-                              },
-                              {
-                                id: 't2',
-                                label: 'User Experience Usability Testing',
-                                start_sec: Math.round((activeTranscript?.duration || 600) * 0.2),
-                                end_sec: Math.round((activeTranscript?.duration || 600) * 0.55),
-                                summary: 'Deep-dive analysis of usability issues, conversion drops, page load latency, and navigation friction.',
-                                keywords: ['conversion', 'usability', 'performance', 'latency']
-                              },
-                              {
-                                id: 't3',
-                                label: 'Prioritization & Core Backlog Discussions',
-                                start_sec: Math.round((activeTranscript?.duration || 600) * 0.55),
-                                end_sec: Math.round((activeTranscript?.duration || 600) * 0.85),
-                                summary: 'RICE prioritization modeling, sizing of backlog cards, and MoSCoW mapping.',
-                                keywords: ['rice', 'moscow', 'effort', 'impact']
-                              },
-                              {
-                                id: 't4',
-                                label: 'Action Items & Meeting Wrap-up',
-                                start_sec: Math.round((activeTranscript?.duration || 600) * 0.85),
-                                end_sec: activeTranscript?.duration || 600,
-                                summary: 'Summary of tasks, assignee alignment, and schedule for compiling PRD drafts.',
-                                keywords: ['prd', 'tasks', 'export', 'stakeholders']
-                              }
-                            ];
+                                {
+                                  id: 't1',
+                                  label: 'Introduction & Context Setting',
+                                  start_sec: 0,
+                                  end_sec: Math.round((activeTranscript?.duration || 600) * 0.2),
+                                  summary: 'Welcome, introduction of research parameters, and baseline context setting.',
+                                  keywords: ['welcome', 'study', 'baseline', 'roadmap']
+                                },
+                                {
+                                  id: 't2',
+                                  label: 'User Experience Usability Testing',
+                                  start_sec: Math.round((activeTranscript?.duration || 600) * 0.2),
+                                  end_sec: Math.round((activeTranscript?.duration || 600) * 0.55),
+                                  summary: 'Deep-dive analysis of usability issues, conversion drops, page load latency, and navigation friction.',
+                                  keywords: ['conversion', 'usability', 'performance', 'latency']
+                                },
+                                {
+                                  id: 't3',
+                                  label: 'Prioritization & Core Backlog Discussions',
+                                  start_sec: Math.round((activeTranscript?.duration || 600) * 0.55),
+                                  end_sec: Math.round((activeTranscript?.duration || 600) * 0.85),
+                                  summary: 'RICE prioritization modeling, sizing of backlog cards, and MoSCoW mapping.',
+                                  keywords: ['rice', 'moscow', 'effort', 'impact']
+                                },
+                                {
+                                  id: 't4',
+                                  label: 'Action Items & Meeting Wrap-up',
+                                  start_sec: Math.round((activeTranscript?.duration || 600) * 0.85),
+                                  end_sec: activeTranscript?.duration || 600,
+                                  summary: 'Summary of tasks, assignee alignment, and schedule for compiling PRD drafts.',
+                                  keywords: ['prd', 'tasks', 'export', 'stakeholders']
+                                }
+                              ];
 
                           return (
                             <>
@@ -2460,12 +2462,12 @@ export default function App() {
                                   const totalDuration = activeTranscript?.duration || 600;
                                   const topicDuration = t.end_sec - t.start_sec;
                                   const widthPct = Math.max((topicDuration / totalDuration) * 100, 5); // min 5% width
-
+                                  
                                   const colors = ['#7C3AED', '#9333EA', '#DB2777', '#D97706', '#059669'];
                                   const color = colors[idx % colors.length];
 
                                   return (
-                                    <div
+                                    <div 
                                       key={t.id}
                                       onClick={() => seekTo(t.start_sec)}
                                       title={`Click to jump to topic: ${t.label} (${Math.floor(t.start_sec / 60)}m - ${Math.floor(t.end_sec / 60)}m)`}
@@ -2502,7 +2504,7 @@ export default function App() {
                                   const color = colors[idx % colors.length];
 
                                   return (
-                                    <div
+                                    <div 
                                       key={t.id}
                                       onClick={() => seekTo(t.start_sec)}
                                       style={{
@@ -2544,29 +2546,29 @@ export default function App() {
                       <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Share2 className="icon-medium text-primary" /> Workspace Collaboration & Engagement Audit
                       </h3>
-
+                      
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-
+                        
                         {/* Invite Collaborator Form & Cards */}
                         <div style={{ padding: '16px', background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border-glass)', display: 'flex', flexDirection: 'column' }}>
                           <h4 style={{ fontSize: '13.5px', fontWeight: '700', marginBottom: '12px', color: 'var(--text-main)' }}>👥 Active Collaborators</h4>
-
+                          
                           <form onSubmit={handleSendInvite} style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                            <input
-                              type="email"
-                              placeholder="colleague's email..."
+                            <input 
+                              type="email" 
+                              placeholder="colleague's email..." 
                               value={inviteEmail}
                               onChange={(e) => setInviteEmail(e.target.value)}
                               style={{ flex: 1, padding: '8px 12px', fontSize: '13px', border: '1px solid var(--border-glass)', borderRadius: '6px', background: 'var(--bg-primary)', color: 'var(--text-main)', outline: 'none' }}
                             />
-                            <button
+                            <button 
                               type="submit"
                               style={{ padding: '8px 16px', fontSize: '13px', fontWeight: '600', background: 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                             >
                               <Plus style={{ width: '14px', height: '14px' }} /> Invite
                             </button>
                           </form>
-
+                          
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
                             {collaborators.map((c, idx) => (
                               <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12.5px' }}>
@@ -2587,7 +2589,7 @@ export default function App() {
                             ))}
                           </div>
                         </div>
-
+                        
                         {/* Live Audit Log Feed */}
                         <div style={{ padding: '16px', background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border-glass)', display: 'flex', flexDirection: 'column' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -2596,7 +2598,7 @@ export default function App() {
                               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-emerald)', display: 'inline-block', animation: 'pulse 1.5s infinite' }} /> Live Feed
                             </span>
                           </div>
-
+                          
                           <div style={{ flex: 1, maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
                             {auditLogs.length === 0 ? (
                               <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>
@@ -2619,7 +2621,7 @@ export default function App() {
                             )}
                           </div>
                         </div>
-
+                        
                       </div>
                     </div>
 
@@ -2627,7 +2629,7 @@ export default function App() {
                 )}
 
               </div>
-
+              
               {/* Sticky bottom Action Dock — only show when insights exist AND not on PRD tab */}
               {(selectedFeatures.length > 0 || selectedPainPoints.length > 0) && activeTab !== 'prd' && (
                 <div className="action-dock glass">
@@ -2645,7 +2647,7 @@ export default function App() {
                       )}
                     </span>
                   </div>
-                  <button
+                  <button 
                     className="btn btn-primary btn-dock-cta"
                     onClick={generatePRD}
                     disabled={isPrdLoading || !!prd}
@@ -2680,8 +2682,8 @@ export default function App() {
                     {Math.floor(currentTime / 60)}:
                     {String(Math.floor(currentTime % 60)).padStart(2, '0')}
                   </span>
-                  <input
-                    type="range"
+                  <input 
+                    type="range" 
                     min={0}
                     max={selectedTranscript.duration}
                     value={currentTime}
@@ -2693,7 +2695,7 @@ export default function App() {
                     {String(Math.floor(selectedTranscript.duration % 60)).padStart(2, '0')}
                   </span>
                 </div>
-                <audio
+                <audio 
                   ref={audioRef}
                   src={audioUrl || ""}
                   onTimeUpdate={handleAudioTimeUpdate}
@@ -2707,7 +2709,7 @@ export default function App() {
 
               <h2>Echo Roadmap Workspace</h2>
               <p className="lead-text">Upload a user-interview recording to isolate customer friction, extract cited pain points, and prioritise your backlog based on quantitative RICE score analysis.</p>
-
+              
               <div className="features-grid">
                 <div className="feat-col">
                   <h4>🎙️ Whisper ASR</h4>
@@ -2724,8 +2726,8 @@ export default function App() {
               </div>
 
               <div className="empty-state-cta">
-                <a
-                  href={`${API_BASE}/api/extension/download`}
+                <a 
+                  href={`${API_BASE}/api/extension/download`} 
                   className="btn btn-secondary btn-extension-hero"
                   download
                 >
@@ -2747,7 +2749,7 @@ export default function App() {
               </div>
               <button className="btn-close-chat" onClick={() => setIsChatSidebarOpen(false)}>×</button>
             </div>
-
+            
             <div className="chat-messages-area">
               {chatMessages.length === 0 ? (
                 <div className="chat-empty-state">
@@ -2790,9 +2792,9 @@ export default function App() {
                 </div>
               )}
             </div>
-
+            
             <div className="chat-input-dock">
-              <input
+              <input 
                 type="text"
                 placeholder="Ask about this meeting..."
                 value={chatQuestion}
@@ -2801,7 +2803,7 @@ export default function App() {
                 disabled={isChatLoading}
                 className="chat-input-field"
               />
-              <button
+              <button 
                 onClick={sendChatMessage}
                 disabled={isChatLoading || !chatQuestion.trim()}
                 className="btn btn-primary btn-chat-send"
@@ -2811,86 +2813,86 @@ export default function App() {
             </div>
           </aside>
         )}
-        {/* Floating Chat Trigger Button — only visible when a transcript is active and chat sidebar is closed */}
-        {selectedTranscript && !isChatSidebarOpen && (
-          <button
-            className="chat-floating-trigger"
-            onClick={() => setIsChatSidebarOpen(true)}
-            title="Open AI Meeting Copilot"
-          >
-            <Bot className="icon-medium" />
-          </button>
-        )}
+      {/* Floating Chat Trigger Button — only visible when a transcript is active and chat sidebar is closed */}
+      {selectedTranscript && !isChatSidebarOpen && (
+        <button 
+          className="chat-floating-trigger"
+          onClick={() => setIsChatSidebarOpen(true)}
+          title="Open AI Meeting Copilot"
+        >
+          <Bot className="icon-medium" />
+        </button>
+      )}
 
-        {/* 6. Collaboration Share Modal */}
-        {isShareModalOpen && (
-          <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-            <div className="modal-content glass" style={{ width: '90%', maxWidth: '500px', padding: '24px', borderRadius: '16px', background: '#ffffff', border: '1px solid var(--border-glass)', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Share2 style={{ width: '18px', height: '18px', color: 'var(--color-primary)' }} /> Share Discovery Workspace
-                </h3>
-                <button
-                  onClick={() => setIsShareModalOpen(false)}
-                  style={{ background: 'transparent', border: 'none', fontSize: '20px', fontWeight: '700', cursor: 'pointer', color: 'var(--text-muted)' }}
-                >
-                  &times;
-                </button>
-              </div>
-
-              <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
-                Invite your team members to review transcript evidence, participate in chatbot chats, and align on PRD scopes.
-              </p>
-
-              {/* Invite input field */}
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-                <input
-                  type="text"
-                  readOnly
-                  value={shareUrl || `https://echo-voice-to-roadmap-aastha381.vercel.app/?share=${selectedId}`}
-                  style={{ flex: 1, padding: '10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '8px', color: 'var(--text-main)', outline: 'none' }}
-                />
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(shareUrl || `https://echo-voice-to-roadmap-aastha381.vercel.app/?share=${selectedId}`);
-                    setIsCopied(true);
-                    setTimeout(() => setIsCopied(false), 2000);
-                  }}
-                  style={{ padding: '0 16px', borderRadius: '8px', fontSize: '12.5px', fontWeight: '600', background: 'var(--color-purple)', color: '#ffffff', border: 'none', cursor: 'pointer' }}
-                >
-                  {isCopied ? 'Copied! ✓' : 'Copy Link'}
-                </button>
-              </div>
-
-              {/* Engagement Audit Tracker */}
-              <div style={{ borderTop: '1px solid rgba(15,23,42,0.08)', paddingTop: '16px' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '10px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Users style={{ width: '15px', height: '15px', color: 'var(--color-pink)' }} /> Collaborator Access Log
-                </h4>
-                <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '4px' }}>
-                  {auditLogs.length === 0 ? (
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '12px 0' }}>
-                      No collaborator activity logged yet.
-                    </div>
-                  ) : (
-                    auditLogs.map((log, idx) => (
-                      <div key={idx} style={{ display: 'flex', padding: '8px', background: 'rgba(15,23,42,0.02)', borderRadius: '6px', fontSize: '11.5px', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <strong style={{ color: 'var(--text-main)' }}>{log.user}</strong>
-                          <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>{log.details}</span>
-                        </div>
-                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                          {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
+      {/* 6. Collaboration Share Modal */}
+      {isShareModalOpen && (
+        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="modal-content glass" style={{ width: '90%', maxWidth: '500px', padding: '24px', borderRadius: '16px', background: '#ffffff', border: '1px solid var(--border-glass)', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Share2 style={{ width: '18px', height: '18px', color: 'var(--color-primary)' }} /> Share Discovery Workspace
+              </h3>
+              <button 
+                onClick={() => setIsShareModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', fontSize: '20px', fontWeight: '700', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                &times;
+              </button>
             </div>
+
+            <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
+              Invite your team members to review transcript evidence, participate in chatbot chats, and align on PRD scopes.
+            </p>
+
+            {/* Invite input field */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+              <input 
+                type="text" 
+                readOnly
+                value={shareUrl || `https://echo-voice-to-roadmap-aastha381.vercel.app/?share=${selectedId}`}
+                style={{ flex: 1, padding: '10px', fontSize: '12.5px', background: 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.08)', borderRadius: '8px', color: 'var(--text-main)', outline: 'none' }}
+              />
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(shareUrl || `https://echo-voice-to-roadmap-aastha381.vercel.app/?share=${selectedId}`);
+                  setIsCopied(true);
+                  setTimeout(() => setIsCopied(false), 2000);
+                }}
+                style={{ padding: '0 16px', borderRadius: '8px', fontSize: '12.5px', fontWeight: '600', background: 'var(--color-purple)', color: '#ffffff', border: 'none', cursor: 'pointer' }}
+              >
+                {isCopied ? 'Copied! ✓' : 'Copy Link'}
+              </button>
+            </div>
+
+            {/* Engagement Audit Tracker */}
+            <div style={{ borderTop: '1px solid rgba(15,23,42,0.08)', paddingTop: '16px' }}>
+              <h4 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '10px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Users style={{ width: '15px', height: '15px', color: 'var(--color-pink)' }} /> Collaborator Access Log
+              </h4>
+              <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '4px' }}>
+                {auditLogs.length === 0 ? (
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '12px 0' }}>
+                    No collaborator activity logged yet.
+                  </div>
+                ) : (
+                  auditLogs.map((log, idx) => (
+                    <div key={idx} style={{ display: 'flex', padding: '8px', background: 'rgba(15,23,42,0.02)', borderRadius: '6px', fontSize: '11.5px', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <strong style={{ color: 'var(--text-main)' }}>{log.user}</strong>
+                        <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>{log.details}</span>
+                      </div>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                        {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
           </div>
-        )}
+        </div>
+      )}
       </main>
     </div>
   );

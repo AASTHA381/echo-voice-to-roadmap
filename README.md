@@ -22,9 +22,11 @@ Upload any customer interview, meeting recording, or research audio. Echo automa
 2. **Classifies** the conversation context — Software Feedback vs. General Research
 3. **Extracts** validated pain points and proposed features, each linked to a timestamped audio citation
 4. **Prioritizes** them in an interactive RICE/MoSCoW backlog
-5. **Drafts** a full PRD or Executive Strategy Brief — in seconds
+5. **Answers** follow-up questions through a transcript-grounded AI meeting copilot
+6. **Visualizes** speaker participation, speaking pace, keywords, and the chronological topic flow
+7. **Drafts** a full PRD or Executive Strategy Brief — in seconds
 
-Every single AI claim is **100% grounded** in exact transcript quotes. No hallucinations.
+Extracted insights and roadmap citations are programmatically checked against exact transcript quotes. The meeting copilot is instructed to answer only from the active transcript and clearly identify information that was not discussed.
 
 ---
 
@@ -40,6 +42,8 @@ graph TD
         Backlog[RICE Backlog Spreadsheet]
         PRDEditor[PRD / Brief Editor + Export]
         ChatBot[AI Copilot Sidebar Chat]
+        Analytics[Speaker Analytics + Topic Map]
+        Collaboration[Local Collaboration Prototype]
     end
 
     subgraph Backend ["⚡ FastAPI (Python · Port 8000)"]
@@ -55,7 +59,7 @@ graph TD
 
     subgraph AI ["☁️ Groq Cloud APIs"]
         GroqWhisper[Whisper Large v3 — ASR]
-        GroqLlama[Llama 3.3 70B Versatile — NLP]
+        GroqLlama[GPT-OSS 120B — NLP]
     end
 
     subgraph Storage ["💾 Local Cache"]
@@ -76,6 +80,9 @@ graph TD
     UI -->|Chat Message| API --> GroqLlama -->|Response| UI
     UI -->|Generate PRD| API --> AnalyzerSvc -->|Markdown| PRDEditor
     UI -->|Export PPTX| API --> PPTXGen -->|.pptx File| UI
+    Transcript --> Analytics
+    Analytics -->|Seek Timestamp| Player
+    Collaboration -->|Local UI State| UI
 
     Player -->|Seek Timestamp| Transcript
     Insights -->|Click Citation| Player
@@ -115,14 +122,28 @@ graph TD
 
 ### 💬 5. AI Copilot Chat Sidebar
 - Ask follow-up questions about the transcript in natural language
-- Powered by **Llama 3.3 70B** with full transcript context injected
-- Suggested quick-questions auto-populate for fast exploration
+- Powered by **GPT-OSS 120B on Groq** with the active transcript and chat history injected
+- Transcript-specific suggested questions auto-populate for fast exploration
+- Responses render structured Markdown and explicitly identify questions the transcript cannot answer
+- The sidebar can collapse to preserve analysis workspace on smaller screens
 
-### 🌐 6. Chrome Extension Integration
+### 📈 6. Speaker & Topic Analytics
+- Compare talk time, word count, speaking pace, and recurring keywords by speaker
+- Click a speaker to filter the transcript to that participant
+- Explore an AI-generated chronological topic map with summaries and keywords
+- Click a topic segment or card to seek the recording to its start time
+
+### 🤝 7. Workspace Collaboration Prototype
+- Invite collaborators and display participant presence in the workspace UI
+- Add transcript comments and review an engagement audit trail
+- Share transcript evidence and align on PRD scope from the same workspace
+- Current collaboration behavior is a **local product prototype** with simulated presence; authentication, email delivery, and real-time multi-user sync are not yet implemented
+
+### 🌐 8. Chrome Extension Integration
 - Record live **Google Meet** and **Zoom** calls directly from the browser
 - Recordings automatically sync to Echo for instant processing
 
-### 📱 7. Progressive Web App (PWA)
+### 📱 9. Progressive Web App (PWA)
 - Installable as a desktop app with offline support via service worker
 - Fully responsive layout for tablet and mobile screens
 
@@ -138,7 +159,7 @@ graph TD
 | **Backend** | FastAPI, Python 3.13, Pydantic, Uvicorn |
 | **Embeddings** | SentenceTransformers `all-MiniLM-L6-v2` (local) |
 | **ASR** | Groq Whisper Large v3 |
-| **LLM** | Groq Llama 3.3 70B Versatile |
+| **LLM** | OpenAI GPT-OSS 120B via Groq |
 | **Vector Search** | Numpy cosine-similarity index (local JSON) |
 | **Export** | python-pptx (PowerPoint), Markdown |
 | **Deployment** | Vercel (Frontend) + Local FastAPI (Backend) |
@@ -208,7 +229,7 @@ echo-voice-to-roadmap/
 │   ├── main.py                # API router & static file serving
 │   └── services/
 │       ├── analyzer.py        # RAG engine + LLM synthesis
-│       ├── transcriber.py     # Whisper ASR integration
+│       ├── transcription.py   # Whisper ASR integration
 │       └── vector_store.py    # Local embedding index
 │
 ├── generate_pptx.py           # PowerPoint export utility
@@ -249,10 +270,10 @@ The UI uses a **Warm-Stone Professional Light Theme** with violet accents — in
 
 ## 🔮 Roadmap
 
-- [ ] **Multi-speaker Diarization** — Advanced speaker identification with named labels
+- [ ] **Named Speaker Diarization** — Persist participant names across recordings
 - [ ] **Real-time Streaming** — Live transcription during ongoing calls
 - [ ] **Jira/Linear Integration** — Push backlog items directly to project management tools
-- [ ] **Team Collaboration** — Shared workspaces with comment threads on transcript segments
+- [ ] **Production Collaboration** — Replace simulated presence with authenticated workspaces, email invitations, and real-time sync
 - [ ] **Multi-language Support** — Whisper-powered transcription in 50+ languages
 - [ ] **Trend Analysis** — Aggregate insights across multiple interviews to detect recurring themes
 
